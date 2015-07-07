@@ -1,0 +1,115 @@
+variable
+nusr 1
+ccount 1
+end
+
+device
+cpu
+end
+
+lan
+lan1
+end
+
+host machine[2]
+cpu count ccount
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+task t1
+cpu servt 0.1
+end
+
+task t2
+cpu servt 0.05
+end
+ 
+
+task t3
+cpu servt 0.1
+end
+
+task t4
+cpu servt 0.05
+end
+
+task t5
+cpu servt 0.1
+end
+
+task t6
+cpu servt 0.05
+end
+
+task t7
+cpu servt 0.1
+end
+
+task t8
+cpu servt 0.05
+end
+
+task t9
+cpu servt 0.1
+end
+
+server s1
+thread count 3
+thread buffer 99999
+thread schedP fcfs
+task t1
+task t3
+task t5
+task t7
+task t9
+end
+
+
+server s2
+thread count 2
+thread buffer 99999
+thread schedP fcfs
+task t2
+task t4
+task t6
+task t8
+end
+
+deploy s1 machine[1]
+deploy s2 machine[2]
+
+deploy machine[1] lan1
+deploy machine[2] lan1
+
+scenario sc1 prob 1
+    t1  t2 200 SYNC
+    t2  t3 200
+    t3  t4 200 SYNC
+    t4  t5 200
+    t5  t6 200 SYNC
+    t6  t7 200
+    t7  t8 200 SYNC
+    t8  t9 200
+end
+
+
+loadparams
+   noofusers    nusr
+   thinktime    exp(1)
+end
+
+modelparams
+    method simulation
+    type closed
+    confint true
+    replicationno 5
+    startupsampleno 8000
+    noofrequests 30000
+end
+
+print "NumberofUsers	SC-1ResponseTime	s1-Throughput	s1-Utilization	s2-Throughput	s2-Utilization	Machine1CPU-Utilization	Machine2CPU-Utilization"
+while(nusr < 25)
+print nusr + "	"+ respt(sc1) + "	" + tput(machine[1]:s1) + "	" + util(machine[1]:s1) + "	" + tput(machine[2]:s2) + "	" + util(machine[2]:s2)  + "	" + util(machine[1]:cpu) + "	" + util(machine[2]:cpu)
+nusr = nusr + 2
+end

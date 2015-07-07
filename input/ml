@@ -1,0 +1,189 @@
+//1 1 35
+variable
+//nusr NUSRHOLDER
+//nusr 1
+probeint 0.010
+upthr 80
+downthr 20
+dayweb 0
+daydb 0
+weekweb 0
+weekdb 0
+monthweb 0
+monthweb2 0
+monthdb 0
+sendtodb_st 0.005
+end
+
+device
+corei5
+xeon
+disk
+end
+
+
+powermanagement xeon
+speed_levels 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.3 end
+power_consumed 2.3620833333 2.4125 2.5570833333 2.5508333333 2.51 2.7266666667 2.8025 2.87625 2.9504166667  end 
+idlepower 1.7204166667 1.7208333333 1.7820833333 1.7091666667 1.6933333333 1.685 1.6566666667 1.71375 1.7045833333  end 
+probe_interval probeint
+governor_up_threshold upthr
+governor_down_threshold downthr
+end
+
+host arpa[1]
+corei5 count 4
+corei5 buffer 99999
+corei5 schedP fcfs
+disk count 1
+disk buffer 99999
+disk schedP fcfs
+disk speedup 1
+end
+
+host pol[1]
+xeon count 8
+xeon buffer 99999
+xeon schedP fcfs
+xeon power_managed governor ondemand
+disk count 1
+disk buffer 99999
+disk schedP fcfs
+disk speedup 1
+end
+
+task send_to_db
+xeon servt sendtodb_st
+end
+
+task change_to_html_day
+xeon servt dayweb
+end
+
+task change_to_html_week
+xeon servt weekweb
+end
+
+task change_to_html_month
+xeon servt monthweb
+end
+
+task change_to_html_month2
+xeon servt monthweb2
+end
+
+task get_entries_by_day
+corei5 servt daydb
+end
+
+task get_entries_by_week
+corei5 servt weekdb
+end
+
+task get_entries_by_month
+corei5 servt monthdb
+end
+
+server web
+thread count 150
+thread buffer 0
+thread schedP fcfs
+task send_to_db
+task change_to_html_week
+task change_to_html_month
+task change_to_html_month2
+task change_to_html_day
+end
+
+server db
+thread count 150
+thread buffer 0
+thread schedP fcfs
+task get_entries_by_week
+task get_entries_by_month
+task get_entries_by_day
+end
+
+lan
+lan1
+end
+
+deploy arpa[1] lan1
+deploy pol[1] lan1
+
+deploy db arpa[1]
+deploy web pol[1]
+
+scenario Day prob 0.334
+	send_to_db get_entries_by_day 200 SYNC
+	get_entries_by_day change_to_html_day 100
+end
+
+scenario Week prob 0.407
+	send_to_db get_entries_by_week 200 SYNC
+	get_entries_by_week change_to_html_week 100
+end
+
+scenario Month prob 0.0518
+	send_to_db get_entries_by_month 200 SYNC
+	get_entries_by_month change_to_html_month 100
+end
+
+scenario Month2 prob 0.2072
+	send_to_db get_entries_by_month 200 SYNC
+	get_entries_by_month change_to_html_month2 100
+end
+
+workload cyclic
+noofusers  400 70 5 end
+interval 	300 240 180 end
+end
+
+loadparams
+	thinktime exp(4)
+end
+
+modelparams
+	method simulation
+	type closed
+	simendtime 2160
+	confint false
+	warnings disable
+end
+
+	dayweb = 0.1186 - sendtodb_st
+	daydb = 0.002262
+	
+	weekweb = 0.122 - sendtodb_st
+	weekdb = 0.003458
+	
+	monthweb = 0.4 - sendtodb_st
+	monthweb2 = 0.15 - sendtodb_st
+	monthdb = 0.0029
+		
+	print "respt:"
+	print respt()
+	
+	print "tput:"
+	print tput()
+	
+	print "avgservt(arpa[1]:corei5):"
+	print avgservt(arpa[1]:corei5)
+
+	print "avgservt(pol[1]:xeon)"
+	print avgservt(pol[1]:xeon)
+	
+	print "util(arpa[1]:corei5)"
+	print util(arpa[1]:corei5)
+	
+	print "util(pol[1]:xeon)"
+	print util(pol[1]:xeon)
+	
+	print "waitt(pol[1]:xeon)"
+	print waitt(pol[1]:xeon)
+
+	print "freq(pol[1]:xeon)"
+	print freq(pol[1]:xeon)
+	
+	print "power(pol[1]:xeon)"
+	print power(pol[1]:xeon)

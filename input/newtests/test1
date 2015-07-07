@@ -1,0 +1,285 @@
+//1 1 35
+variable
+//nusr NUSRHOLDER
+nusr 8
+probeint 0.080
+upthr 80
+downthr 20
+loginweb 0
+logindb 0
+loginwebmax 0
+logindbmin 0
+dayweb 0
+daydb 0
+weekweb 0
+weekdb 0
+monthweb 0
+monthdb 0
+viewweb 0
+viewdb 0
+todayweb 0
+todaydb 0
+sendtodb_st 0.05
+end
+
+device
+corei5
+core2duo
+disk
+end
+
+/*powermanagement corei5
+speed_levels 1.2 2.26 2.39 2.53 2.66 2.79 2.93 3.06 3.19 3.19 end
+power_consumed 10.36 69.259 81.911 97.166 112.926 130.306 150.922 171.916 194.771 194.771 end //6f^3=Power
+idlepower 65
+probe_interval probeint
+probe_interval_min probeint
+probe_interval_max probeint
+governor_up_threshold upthr
+governor_down_threshold downthr
+end*/
+
+/*powermanagement core2duo
+speed_levels 1.2 1.6 2.2 end
+power_consumed 12.096 28.672 74.536 end //7f^3=Power
+idlepower 55
+probe_interval probeint
+probe_interval_min probeint
+probe_interval_max probeint
+governor_up_threshold upthr
+governor_down_threshold downthr
+end*/
+
+host arpa[1]
+corei5 count 1
+corei5 buffer 99999
+corei5 schedP fcfs
+//corei5 speedup 0.3762
+//corei5 power_managed governor powersaver
+disk count 1
+disk buffer 99999
+disk schedP fcfs
+disk speedup 1
+end
+
+host little[1]
+core2duo count 1
+core2duo buffer 99999
+core2duo schedP fcfs
+//core2duo speedup 0.5455
+//core2duo power_managed governor powersaver
+disk count 1
+disk buffer 99999
+disk schedP fcfs
+disk speedup 1
+end
+
+task send_to_db1
+corei5 servt sendtodb_st
+end
+task send_to_db2
+corei5 servt sendtodb_st
+end
+task send_to_db3
+corei5 servt sendtodb_st
+end
+task send_to_db4
+corei5 servt sendtodb_st
+end
+task send_to_db5
+corei5 servt sendtodb_st
+end
+task send_to_db6
+corei5 servt sendtodb_st
+end
+
+task change_to_html_login
+corei5 servt loginweb
+end
+
+task change_to_html_day
+corei5 servt dayweb
+end
+
+task change_to_html_week
+corei5 servt weekweb
+end
+
+task change_to_html_month
+corei5 servt monthweb
+end
+
+task change_to_html_view_entry
+corei5 servt viewweb
+end
+
+task change_to_html_today
+corei5 servt todayweb
+end
+
+task get_credentials
+core2duo servt logindb
+end
+
+task get_entries_by_day
+core2duo servt daydb
+end
+
+task get_entries_by_week
+core2duo servt weekdb
+end
+
+task get_entries_by_month
+core2duo servt monthdb
+end
+
+task get_event_details
+core2duo servt viewdb
+end
+
+task get_entries_by_today
+core2duo servt todaydb
+end
+
+server web
+thread count 150
+thread buffer 0
+thread schedP fcfs
+task send_to_db1
+task send_to_db2
+task send_to_db3
+task send_to_db4
+task send_to_db5
+task send_to_db6
+task change_to_html_week
+task change_to_html_month
+task change_to_html_day
+task change_to_html_view_entry
+task change_to_html_login
+task change_to_html_today
+end
+
+server db
+thread count 150
+thread buffer 0
+thread schedP fcfs
+task get_entries_by_week
+task get_entries_by_month
+task get_entries_by_day
+task get_credentials
+task get_event_details
+task get_entries_by_today
+end
+
+lan
+lan1
+end
+
+deploy arpa[1] lan1
+deploy little[1] lan1
+
+deploy web arpa[1]
+deploy db little[1]
+
+scenario Login prob 0.18846
+	send_to_db1 get_credentials 0 SYNC
+	get_credentials change_to_html_login 0
+end
+
+scenario ViewToday prob 0.18846
+	send_to_db2 				get_entries_by_today 0 SYNC
+	get_entries_by_today 	change_to_html_today 0
+end
+
+scenario Day prob 0.34429
+	send_to_db3 get_entries_by_day 0 SYNC
+	get_entries_by_day change_to_html_day 0
+end
+
+scenario Week prob 0.04993
+	send_to_db4 get_entries_by_week 0 SYNC
+	get_entries_by_week change_to_html_week 0
+end
+
+scenario Month prob 0.16347
+	send_to_db5 get_entries_by_month 0 SYNC
+	get_entries_by_month change_to_html_month 0
+end
+
+scenario ViewEntry prob 0.06539
+	send_to_db6 get_event_details 0 SYNC
+	get_event_details change_to_html_view_entry 0
+end
+
+loadparams
+	noofusers nusr
+	thinktime exp(6)
+end
+
+modelparams
+	method analytical
+	type closed
+	noofrequests 10000
+	//startupsampleno 3000
+	confint false
+	//replicationno 5
+	warnings disable
+end
+
+print "##!! header"
+print "nusr" + "," + "respt()" + "," + "tput()" + "," + "avgservt(arpa[1]:corei5)" + "," + "avgservt(little[1]:core2duo)" + "," + "util(arpa[1]:corei5)" + "," + "util(little[1]:core2duo)"
+print "##@@ 1"
+print "#### nusr range ##"
+//for nusr = 1 to 40 incr 1
+//nusr = 11
+	todayweb = 0.2
+	todaydb = 0.003
+	
+	loginweb = 0.486486 - sendtodb_st - todayweb
+	logindb=0.00653595 - todaydb
+	
+	dayweb = 0.276572 - sendtodb_st
+	daydb = 0.0240654667
+	
+	weekweb = 0.276097 - sendtodb_st
+	weekdb = 0.0285087667
+	
+	monthweb = 0.347962 - sendtodb_st
+	monthdb = 0.0262584667
+	
+	viewweb = 0.273897 - sendtodb_st
+	viewdb = 0.1629826667
+
+	/*print loginweb + "				" + logindb
+	print dayweb + "				" + daydb
+	print weekweb + "				" + weekdb
+	print monthweb + "				" + monthdb
+	print viewweb + "				" + viewdb*/
+
+	print "nusr: " + nusr
+	print "respt():" + respt()
+	print "respt(arpa[1]:corei5):" + respt(arpa[1]:corei5)
+	print "respt(little[1]:core2duo):" + respt(little[1]:core2duo)
+	print "respt(Login):" + respt(Login)
+	
+	print "tput():" + tput()
+	print "tput(arpa[1]:corei5):" + tput(arpa[1]:corei5)
+	print "tput(little[1]:core2duo):" + tput(little[1]:core2duo)
+	print "tput(Login):" + tput(Login)
+	print "tput(arpa[1]:web):" + tput(arpa[1]:web)
+	print "tput(little[1]:db):" + tput(little[1]:db)
+	
+	//print "avgservt():" + avgservt()
+	print "avgservt(arpa[1]:corei5):" + avgservt(arpa[1]:corei5)
+	print "avgservt(little[1]:core2duo):" + avgservt(little[1]:core2duo)
+
+	print "waitt(arpa[1]:corei5):" + waitt(arpa[1]:corei5)
+	print "waitt(little[1]:core2duo):" + waitt(little[1]:core2duo)
+	print "waitt(arpa[1]:web):" + waitt(arpa[1]:web)
+	print "waitt(little[1]:db):" + waitt(little[1]:db)
+	
+	print "util(arpa[1]:corei5):" + util(arpa[1]:corei5)
+	print "util(little[1]:core2duo):" + util(little[1]:core2duo)
+	print "util(arpa[1]:web):" + util(arpa[1]:web)
+	print "util(little[1]:db):" + util(little[1]:db)
+//end

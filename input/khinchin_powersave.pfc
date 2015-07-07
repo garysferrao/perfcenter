@@ -1,0 +1,171 @@
+variable 
+nusr 1
+end 
+
+device
+cpu
+cpu2
+disk
+end
+
+powermanagement cpu
+speed_levels   1.4      1.7     2.0     2.4     2.8     end
+power_consumed 750 750 750 750 750 end 
+idlepower      250 250 250 250 250 end 
+probe_interval 0.080
+governor_up_threshold 80
+governor_down_threshold 20
+end
+
+host H1[1]
+cpu count 8
+cpu speedup 1 //0.538*0.8
+cpu schedP fcfs 
+cpu buffer 999999 
+cpu power_managed governor conservative
+disk count 1 
+disk speedup 1 
+disk schedP fcfs 
+disk  buffer 999999
+end
+
+host H2[1]
+cpu2 count 2
+cpu2 speedup 1.0 
+cpu2 schedP fcfs 
+cpu2 buffer 999999 
+disk count 1 
+disk speedup 1 
+disk schedP fcfs 
+disk  buffer 999999 
+end
+
+task task1_Week_Web
+cpu servt 0.0662924050
+disk servt 0.0000000011
+end
+
+task task2_Week_DB
+cpu2 servt 0.0020396321
+disk servt 0.0000000014
+end
+
+task task3_Week_Web
+cpu servt 0.0662924050
+disk servt 0.0000000011
+end
+
+task task1_Day_Web
+cpu servt 0.0539507932
+disk servt 0.0000000009
+end
+
+task task2_Day_DB
+cpu2 servt 0.0016730272
+disk servt 0.0000000012
+end
+
+task task3_Day_Web
+cpu servt 0.0539507932
+disk servt 0.0000000009
+end
+
+task task1_Month_Web
+cpu servt 0.0415034254
+disk servt 0.0000000007
+end
+
+task task2_Month_DB
+cpu2 servt 0.0012967360
+disk servt 0.0000000009
+end
+
+task task3_Month_Web
+cpu servt 0.0415034254
+disk servt 0.0000000007
+end
+
+
+server DB
+thread count 150
+thread buffer 0
+thread schedP fcfs
+task task2_Week_DB
+task task2_Day_DB
+task task2_Month_DB
+end 
+
+server Web
+thread count 150
+thread buffer 0
+thread schedP fcfs
+task task1_Week_Web
+task task3_Week_Web
+task task1_Day_Web
+task task3_Day_Web
+task task1_Month_Web
+task task3_Month_Web
+end 
+
+
+lan 
+lan1
+end
+ 
+
+deploy DB H2[1]
+deploy Web H1[1]
+
+deploy H2[1] lan1
+deploy H1[1] lan1
+
+scenario Week prob 0.407
+task1_Week_Web   task2_Week_DB 200  SYNC 
+task2_Week_DB   task3_Week_Web 200 
+end
+
+scenario Day prob 0.334
+task1_Day_Web   task2_Day_DB 200  SYNC 
+task2_Day_DB   task3_Day_Web 200 
+end
+
+scenario Month prob 0.259
+task1_Month_Web   task2_Month_DB 200  SYNC 
+task2_Month_DB   task3_Month_Web 200 
+end
+
+
+workload cyclic
+noofusers 45 250 45 end// 250 45 end
+interval 120 60 120 end// 60 120 end
+end
+
+loadparams 
+//noofusers nusr 
+thinktime exp(4) 
+end 
+
+modelparams 
+method simulation 
+type closed 
+simendtime 1200
+warnings disable
+end 
+
+//print "Load,respt(),tput(),util(H1:cpu),freq(H1:cpu),power(H1:cpu)"
+//print nusr+","+respt()+","+tput()+","+util(H1[1]:cpu)+","+freq(H1[1]:cpu)+","+power(H1[1]:cpu)
+
+print "respt"
+print respt()
+
+print "tput"
+print tput()
+
+print "util"
+print util(H1[1]:cpu)
+
+print "freq"
+print freq(H1[1]:cpu)
+
+print "power"
+print power(H1[1]:cpu)

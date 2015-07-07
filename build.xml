@@ -1,0 +1,29 @@
+<project name="PerfCenter" basedir=".">
+<description>
+simple example build file
+</description>
+<!-- set global properties for this build -->
+<property name="src" location="src"/>
+<property name="bin" location="bin"/>
+<!-- Create the build directory structure used by compile -->
+<mkdir dir="${bin}"/>
+
+<target name="compile" 
+description="compile the source " >
+<!-- Compile the java code from ${src} into ${build} -->
+<javac 
+      includeantruntime="false"
+      srcdir="${src}" 
+      destdir="${bin}"
+      classpath=".:jars/log4j-1.2.14.jar:jars/Blas.jar:jars/optimization.jar:jars/ssj.jar:jars/colt.jar:jars/repast.jar:jars/jgrapht-0.8.2.jar">
+</javac>
+<copy file="${src}/log4j.properties" todir="${bin}" />
+</target>
+
+<target name="clean"
+description="clean up" >
+<!-- Delete the ${bin} -->
+<delete dir="${bin}/perfcenter"/>
+<delete file="${bin}/log4j.properties" />
+</target>
+</project>

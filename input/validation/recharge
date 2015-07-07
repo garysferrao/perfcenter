@@ -1,0 +1,196 @@
+variable
+nusr 1
+end
+
+device
+cpu
+disk
+end
+
+lan
+lan1
+end
+
+host machine[4]
+cpu count 1
+cpu buffer 99999
+cpu schedP fcfs
+disk count 1
+disk buffer 99999
+disk schedP fcfs
+end
+
+task confirm_password
+cpu servt 0.001
+end
+
+task password_verify
+disk servt 0.07
+end
+
+task show_homepage
+cpu servt 0.009
+disk servt 0.04
+end
+
+task authenticate
+cpu servt 0.01
+end
+
+task session_verify
+cpu servt 0.1
+end
+ 
+
+task recharge
+cpu servt 0.01
+end
+
+task verify_recharge
+cpu servt 0.01
+end
+
+task check_catalogue
+disk servt 0.07
+end
+
+task update_account_bal
+cpu servt 0.005
+end
+
+task insert_recharge
+disk servt 0.035
+cpu servt 0.007
+end
+
+task recharge_done
+cpu servt 0.006
+disk servt 0.03
+end
+
+task add_transaction
+cpu servt 0.002
+end
+
+task insert_transaction
+disk servt 0.028
+end
+
+task successful_recharge
+cpu servt 0.001
+end
+
+task auth_agent
+cpu servt 0.006
+end
+
+task check_agent
+disk servt 0.06
+end
+
+task recharge_smsg
+cpu servt 0.001
+end
+
+task send_confirmation
+cpu servt 0.004
+disk servt 0.02
+end
+
+server web
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task confirm_password
+task show_homepage
+task authenticate
+task recharge
+task add_transaction
+task successful_recharge
+end
+
+
+server auth
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task password_verify
+task session_verify
+end
+
+server database
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task insert_transaction
+end
+
+server recharge_server
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task verify_recharge
+task update_account_bal
+task recharge_done
+end
+
+server catalogue
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task check_catalogue
+end
+
+server accounts_db
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task insert_recharge
+end
+
+
+deploy web machine[1]
+deploy auth machine[2]
+deploy recharge_server machine[3]
+deploy database machine[4]
+deploy catalogue machine[4]
+deploy accounts_db machine[4]
+
+deploy machine[1] lan1
+deploy machine[2] lan1
+deploy machine[3] lan1
+deploy machine[4] lan1
+
+scenario login prob 0.2
+    confirm_password  password_verify 200 SYNC
+    password_verify  show_homepage 200
+end
+
+scenario web_based_recharge prob 0.8
+    authenticate session_verify 200 SYNC
+    session_verify recharge 200
+    recharge verify_recharge 200 SYNC
+    verify_recharge check_catalogue 200 SYNC
+    check_catalogue update_account_bal 200
+    update_account_bal insert_recharge 200 SYNC
+    insert_recharge recharge_done 200
+    recharge_done add_transaction 200
+    add_transaction insert_transaction 200 SYNC
+    insert_transaction successful_recharge 200
+end
+
+
+loadparams
+   noofusers    nusr
+   thinktime    exp(0.05)
+end
+
+modelparams
+    method analytical
+    type closed
+end
+
+while (nusr < 20)
+print nusr + "	" + util(machine[1]:web)
+nusr = nusr + 1
+end

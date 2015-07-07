@@ -1,0 +1,122 @@
+//Experiment 1: different procesor speeds
+
+//variable definition block
+variable
+nusr 1
+end
+
+//devices are defined below
+device
+cpu
+end
+
+//lan definition block
+lan
+lan1
+end
+
+//hosts definition blocks
+
+host machine1[1]
+cpu count 3
+cpu buffer 99999
+cpu schedP fcfs
+cpu speedup 4
+end
+
+host machine2[1]
+cpu count 3
+cpu buffer 99999
+cpu schedP fcfs
+cpu speedup 2
+end
+
+//tasks definition block
+task A1
+cpu servt 0.030
+end
+
+task A2 
+cpu servt 0.020
+end
+ 
+
+task B1
+cpu servt 0.010
+end 
+
+task B2 
+cpu servt 0.010
+end 
+
+task C1
+cpu servt 0.025
+end 
+
+task C2 
+cpu servt 0.020
+end 
+
+
+//servers definition
+server web
+thread count 400
+thread buffer 99999
+thread schedP fcfs
+task A1
+task A2
+end
+
+
+server auth
+thread count 400
+thread buffer 99999
+thread schedP fcfs
+task B1
+task B2
+end
+
+server imap
+thread count 400
+thread buffer 99999
+thread schedP fcfs
+task C2
+task C1
+end
+
+//server deployed onto hosts
+deploy web machine1[1]
+deploy auth machine2[1]
+deploy imap machine2[1]
+
+
+//host deployed onto lans
+deploy machine1[1] lan1
+deploy machine2[1] lan1
+ 
+
+//scenario definitions
+scenario Login prob 1
+    A1  B1 200 SYNC
+    B1  C1 200 SYNC 
+    C1 B2 200  
+    B2  A2 2000
+end
+
+
+loadparams
+   arate 10
+end
+
+//This block has parameters for simulation
+modelparams
+    method analytical
+    type open
+end
+
+print "Resource Utilization"
+print bottleneck()
+
+qparms(machine1[1]:cpu)
+qparms(machine1[1]:web)
+

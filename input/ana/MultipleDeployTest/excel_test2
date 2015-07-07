@@ -1,0 +1,115 @@
+variable
+nusr 25
+ccount 20
+s1thread 1
+end
+
+device
+cpu
+end
+
+lan
+lan1
+end
+
+host machine[2]
+cpu count ccount
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+task t1
+cpu servt 0.1
+end
+
+task t2
+cpu servt 0.030
+end
+ 
+
+task t3
+cpu servt 0.070
+end
+
+task t4
+cpu servt 0.030
+end
+
+task t5
+cpu servt 0.040
+end
+
+task t6
+cpu servt 0.020
+end
+
+task t7
+cpu servt 0.040
+end
+
+task t8
+cpu servt 0.010
+end
+
+server s1
+thread count s1thread
+thread buffer 99999
+thread schedP fcfs
+task t1
+task t2
+task t6
+task t8
+end
+
+
+server s2
+thread count s1thread
+thread buffer 99999
+thread schedP fcfs
+task t3
+task t4
+end
+
+server s3
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task t5
+task t7
+end
+
+deploy s1 machine[1]
+deploy s2 machine[1]
+deploy s3 machine[2]
+
+deploy machine[1] lan1
+deploy machine[2] lan1
+
+scenario sc1 prob 0.5
+	t1 t3 200 SYNC
+	t3 t2 200
+end
+scenario sc2 prob 0.5
+	t6 t7 200 SYNC
+	t7 t8 200
+end
+
+loadparams
+   noofusers    nusr
+   thinktime    exp(0.1)
+end
+
+modelparams
+    method analytical
+    type closed
+end
+
+while(s1thread<=8)	   
+print "Number of users: " + nusr
+print "Number of threads: " +s1thread
+print "Server s3 response time " +respt(machine[2]:s3)
+print "Web server utilization " +util(machine[1]:s1)
+print "Web server s3 utilization " +util(machine[2]:s3)
+print "Throughput " +tput(machine[2]:s3)
+s1thread = s1thread+1
+end

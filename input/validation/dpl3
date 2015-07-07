@@ -1,0 +1,196 @@
+device
+cpu
+disk
+end
+
+lan
+lan1
+lan2
+end
+
+host machine[4]
+cpu count 1
+cpu buffer 99999
+cpu schedP fcfs
+disk count 1
+disk buffer 99999
+disk schedP fcfs
+end
+
+link lk1 lan1 lan2
+trans 10bps
+mtu 256B
+prop 2.3us
+trans 10Mbps
+end
+
+task authenticate
+cpu servt 0.02
+disk servt 0.01
+end
+
+task verify_passwd
+cpu servt 0.08
+disk servt 0.05
+end
+ 
+
+task get_homepage_data
+cpu servt 0.07
+disk servt 0.02
+end
+
+task send_data
+cpu servt 0.05
+disk servt 0.2
+end
+
+task show_home
+cpu servt 0.09
+disk servt 0.02
+end
+
+task show_invalid
+cpu servt 0.01
+disk servt 0.01
+end
+
+task get_course_data
+cpu servt 0.05
+disk servt 0.07
+end
+
+task verify_session
+cpu servt 0.09
+disk servt 0.07
+end
+
+task get_data_db
+cpu servt 0.05
+disk servt 0.01
+end
+
+task send_course_data
+cpu servt 0.02
+disk servt 0.09
+end
+
+task show_course_page
+cpu servt 0.06
+disk servt 0.02
+end
+
+task add_topic
+cpu servt 0.05
+disk servt 0.01
+end
+
+task send_topic_data
+cpu servt 0.02
+disk servt 0.03
+end
+
+task insert_topic_data
+cpu servt 0.04
+disk servt 0.15
+end
+
+task show_topic_page
+cpu servt 0.07
+disk servt 0.03
+end
+
+server web
+thread count 5
+thread buffer 99999
+thread schedP fcfs
+task authenticate
+task get_homepage_data
+task show_home
+task show_invalid
+task get_course_data
+task get_data_db
+task show_course_page
+task add_topic
+task send_topic_data
+task show_topic_page
+end
+
+
+server auth
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task verify_session
+end
+
+server ldap
+thread count 2
+thread buffer 99999
+thread schedP fcfs
+task verify_passwd
+end
+
+server database
+thread count 4
+thread buffer 99999
+thread schedP fcfs
+task send_data
+task send_course_data
+task insert_topic_data
+end
+
+deploy web machine[1]
+deploy auth machine[1]
+deploy database machine[2]
+deploy ldap machine[3]
+
+deploy machine[1] lan1
+deploy machine[2] lan1
+deploy machine[3] lan2
+
+scenario Login prob 0.4
+	authenticate verify_passwd 200 SYNC
+	branch prob 0.2
+		verify_passwd show_invalid 128
+	end
+	branch prob 0.8
+		verify_passwd get_homepage_data 128
+		get_homepage_data send_data 512 SYNC
+		send_data show_home 2048
+	end
+end
+
+scenario add_topic prob 0.3
+	add_topic verify_session 200 SYNC
+	branch prob 0.05
+		verify_session show_invalid 128
+	end
+	branch prob 0.95
+		verify_session send_topic_data 128
+		send_topic_data insert_topic_data 512 SYNC
+		insert_topic_data show_topic_page 2048
+	end
+end
+
+scenario get_course_data prob 0.3
+	get_course_data verify_session 200 SYNC
+	branch prob 0.05
+		verify_session show_invalid 128
+	end
+	branch prob 0.95
+		verify_session get_data_db 128
+		get_data_db send_course_data 512 SYNC
+		send_course_data show_course_page 2048
+	end
+end
+
+loadparams
+   noofusers    6
+   thinktime    exp(1)
+end
+
+modelparams
+    method analytical
+    type closed
+end

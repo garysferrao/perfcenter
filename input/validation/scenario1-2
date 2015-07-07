@@ -1,0 +1,87 @@
+variable
+nusr 1
+ccount 1
+end
+
+device
+cpu
+end
+
+lan
+lan1
+end
+
+host machine1[1]
+cpu count ccount
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+host machine2[1]
+cpu count ccount
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+task t1
+cpu servt 0.05
+end
+
+task t2
+cpu servt 0.05
+end
+ 
+
+task t3
+cpu servt 0.05
+end
+
+server s1
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task t1
+task t3
+end
+
+
+server s2
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task t2
+end
+
+deploy s1 machine1[1]
+deploy s1 machine2[1]
+deploy s2 machine2[1]
+
+deploy machine1[1] lan1
+deploy machine2[1] lan1
+
+scenario sc1 prob 1
+    t1  t2 200 SYNC
+    t2  t3 200
+end
+
+
+loadparams
+   noofusers    nusr
+   thinktime    exp(1)
+end
+
+modelparams
+    method simulation
+    type closed
+    confint true
+    replicationno 3
+    startupsampleno 3000
+    noofrequests 10000
+end
+
+print "NumberofUsers	SC-1ResponseTime	s1-Throughput	s1-Utilization	s2-Throughput	s2-Utilization	Machine1CPU-Throughput	Machine1CPU-Utilization	Machine2CPU-Throughput	Machine2CPU-Utilization"
+
+while(nusr < 15)
+print nusr + "	"+ respt(sc1) + "	" + tput(machine1[1]:s1) + "	" + util(machine1[1]:s1) + "	" + tput(machine2[1]:s2) + "	" + util(machine2[1]:s2) + "	" + tput(machine1[1]:cpu) + "	" + util(machine1[1]:cpu) + "	" + tput(machine2[1]:cpu) + "	" + util(machine2[1]:cpu)
+nusr = nusr + 2
+end

@@ -1,0 +1,56 @@
+run:
+Input file /home/mayur/NetBeansProjects/MTP/perfcenter_src/PerfParser/input/ana/othertasktest_ana
+Started at 2012-01-20 16:04:46
+Method:Analytical
+Number of users: 4.0
+Scenario 1 response time Lineno0. Warning:Task "user" does not have any  device
+Warning:Lan "lan1" is not connected to other lans 
+0.09735477023939101
+Scenario 2 response time 0.07235477023939102
+Web server utilization 0.10183691668001099
+Number of users: 5.0
+Scenario 1 response time 0.09999665231727864
+Scenario 2 response time 0.07499665231727864
+Web server utilization 0.12760647016256765
+Number of users: 6.0
+Scenario 1 response time 0.10279685188273097
+Scenario 2 response time 0.07779685188273097
+Web server utilization 0.15349126988064457
+Number of users: 7.0
+Scenario 1 response time 0.105769257108555
+Scenario 2 response time 0.08076925710855502
+Web server utilization 0.17948606995045488
+Number of users: 8.0
+Scenario 1 response time 0.1089293212056865
+Scenario 2 response time 0.08392932120568651
+Web server utilization 0.20558504511147507
+Number of users: 9.0
+Scenario 1 response time 0.11229427297456723
+Scenario 2 response time 0.08729427297456724
+Web server utilization 0.23178169848162397
+Number of users: 10.0
+Scenario 1 response time 0.11588335921571764
+Scenario 2 response time 0.09088335921571765
+Web server utilization 0.2580687549765488
+Number of users: 11.0
+Scenario 1 response time 0.11971812408579606
+Scenario 2 response time 0.09471812408579604
+Web server utilization 0.28443803800836015
+Number of users: 12.0
+Scenario 1 response time 0.12382273125335878
+Scenario 2 response time 0.09882273125335879
+Web server utilization 0.3108803267092606
+Number of users: 13.0
+Scenario 1 response time 0.12822433555020396
+Scenario 2 response time 0.10322433555020397
+Web server utilization 0.3373851905186079
+Number of users: 14.0
+Scenario 1 response time 0.13295351171167985
+Scenario 2 response time 0.10795351171167987
+Web server utilization 0.3639407975367271
+Number of users: 15.0
+Scenario 1 response time 0.13804474871731287
+Scenario 2 response time 0.1130447487173129
+Web server utilization 0.39053369260274035
+Completed at 2012-01-20 16:04:46
+BUILD SUCCESSFUL (total time: 1 second)

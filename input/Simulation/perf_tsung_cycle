@@ -1,0 +1,221 @@
+//Configuration for scenario 
+
+variable
+nuser 20
+end
+
+device
+cpu1
+cpu2
+disk
+end
+
+lan
+lan1
+end
+
+
+
+/*workload cyclic
+noofusers 100 100 200 200 300 300 400 400 300 300 200 200 100 100 end
+interval  100 100 100 100 100 100 100 100 100 100 100 100 100 100 end
+end*/
+
+/*workload cyclic
+noofusers 100 100 400 400 100 200 100 end
+interval  100 100 100 100 100 100 100 end
+end*/
+
+/*workload cyclic
+arate 80 70 140 140 210 210 280 280 280 210 210 140 140 70 70 70 70 end
+interval 10 10 10 10 10 10 10 10 10  10 10 10 10 10 10 10 10 end
+end*/
+
+workload cyclic
+noofusers 10 40 end
+interval  20 20 end
+end
+
+
+powermanagement cpu1
+speed_levels 1 1.37 1.83 end
+power_consumed 1.2 1.6 2.2 end
+idlepower 0
+probe_interval 0.2
+governor_up_threshold 30 
+governor_down_threshold 15
+end
+
+/*powermanagement cpu2
+speed_levels 1 1.37 1.83 end
+power_consumed 45 55 65 end
+idlepower 40
+probe_interval 1
+governor_up_threshold 80 
+governor_down_threshold 20
+end*/
+
+
+task send_to_sell
+cpu1 servt const(0.000825)
+disk servt const(0.0021)
+end
+
+task send_to_aboutme
+cpu1 servt const(0.00146)
+disk servt const(0.0021)
+end
+
+task send_to_browse
+cpu1 servt const(0.000955)
+disk servt const(0.0021)
+end
+
+
+
+task process_sell
+cpu2 servt const(0.000183)
+end
+
+task process_aboutme
+cpu2 servt const(0.00146)
+end
+
+task process_browse
+cpu2 servt const(0.00106)
+end
+
+
+host machine[1]
+cpu1 count 1
+cpu1 buffer 999999
+cpu1 schedP fcfs
+cpu1 power_managed governor conservative
+disk count 2
+disk buffer 999999
+disk schedP fcfs
+end
+
+host machine2[1]
+cpu2 count 2
+cpu2 buffer 999999
+cpu2 schedP fcfs
+//cpu2 power_managed governor powersaver
+/*disk count 2
+disk buffer 999999
+disk schedP fcfs*/
+end
+
+
+server s1
+thread count 6
+thread buffer 99999
+thread schedP fcfs
+task send_to_sell
+task send_to_aboutme
+task send_to_browse
+end
+
+server s2
+thread count 10
+thread buffer 99999
+thread schedP fcfs
+task process_sell
+task process_aboutme
+task process_browse
+end
+
+loadparams 
+	thinktime const(1.2)
+end
+
+deploy s1 machine[1]
+deploy s2 machine2[1]
+deploy machine[1] lan1
+deploy machine2[1] lan1
+
+
+scenario Sell prob 0.33
+    send_to_sell process_sell 10 SYNC
+    process_sell send_to_sell 10
+end
+
+scenario AboutMe prob 0.33
+    send_to_aboutme process_aboutme 10 SYNC
+   process_aboutme send_to_aboutme 10
+end
+
+scenario Browse prob 0.34
+    send_to_browse process_browse 10 SYNC
+   process_browse send_to_browse 10
+end
+
+
+
+
+
+modelparams
+	method simulation
+	type closed
+		replicationno 0
+   		simendtime 40
+		confint false
+	warnings disable
+end
+
+
+
+/*print "Time	Arate	EnergyPerRequest	EnergyDelayproduct	Energyefficiency	TotalEnergy	Utilization	Throughput		ResponseTime" */
+
+/*print "Tput	Respt	Web-Util	DB-Util"
+print tput()
+print respt()
+print util(machine[1]:cpu1)
+print util(machine2[1]:cpu2)
+print peff(machine[1]:s1)
+print edp(machine[1]:s1)
+print eperr(machine[1]:s1)
+
+Print "Response time verification"
+print "Sell RespT"
+print respt(Sell)
+print "Browse RespT"
+print respt(Browse)
+print "AboutMe"
+print respt(AboutMe)
+print "---------------------------------------------"*/
+print "Response time"
+print respt()
+print "Throughput"
+print tput()
+print "Utilization of machine1"
+print util(machine[1]:cpu1)
+print "Utilization of machine2"
+print util(machine2[1]:cpu2)
+print "Energy consumption of machine1"
+print energy(machine[1]:cpu1)
+print "Energy consumption of server s1"
+print energy(machine[1]:s1)
+//print "Energy consumption of server s2"
+//print energy(machine2[1]:s2)
+/*print "Power efficiency"
+print peff(machine[1]:s1)
+print "Energy delay product"
+print edp(machine[1]:s1)
+print "Energy per request"
+print eperr(machine[1]:s1)*/
+
+//print "Users	Response time 	Throughput	CPU utilization of machine1	Utilization of machine2 "
+
+/*while(nuser < 82)
+print nuser+"	"+respt()+"		"+tput()+"	"+util(machine[1]:cpu1)+"	"+util(machine2[1]:cpu2)
+nuser = nuser + 10
+end*/
+//0.00719	0.004878	0.002316
+
+
+
+
+
+
+

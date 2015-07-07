@@ -1,0 +1,76 @@
+variable
+nusr 4
+ccount 1
+end
+
+device
+cpu
+end
+
+lan
+lan1
+end
+
+host machine[2]
+cpu count ccount
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+task t1
+cpu servt 0.030
+end
+
+task t2
+cpu servt 0.050
+end
+ 
+
+task t3
+cpu servt 0.010
+end
+
+server s1
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task t1
+task t3
+end
+
+
+server s2
+thread count 1
+thread buffer 99999
+thread schedP fcfs
+task t2
+end
+
+deploy s1 machine[1]
+deploy s2 machine[2]
+
+deploy machine[1] lan1
+deploy machine[2] lan1
+
+scenario sc1 prob 1
+    t1  t2 200 SYNC
+    t2  t3 200
+end
+
+
+loadparams
+   noofusers    nusr
+   thinktime    exp(3)
+end
+
+modelparams
+    method analytical
+    type closed
+end
+
+while(nusr<=15)	   
+print "Number of users: " + nusr
+print "Scenario 1 response time " +respt(sc1)
+print "Web server utilization " +util(machine[1]:s1)
+nusr = nusr+1
+end

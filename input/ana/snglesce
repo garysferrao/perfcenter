@@ -1,0 +1,132 @@
+//Experiment 1: different procesor speeds
+
+//variable definition block
+variable
+nusr 1
+ccount 10
+end
+
+//devices are defined below
+device
+cpu
+end
+
+//lan definition block
+lan
+lan1
+end
+
+//hosts definition blocks
+host machine1[5]
+cpu count ccount
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+host machine2[1]
+cpu count 3
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+virtres logfilewrite 
+cpu servt 0.005
+end 
+
+//tasks definition block
+task send_to_auth
+cpu servt 0.030
+//logfilewrite
+end
+
+task send_to_imap 
+cpu servt 0.020
+end
+ 
+
+task change_to_html
+cpu servt 0.010
+//logfilewrite
+end 
+
+task verify_passwd 
+cpu servt 0.010
+//logfilewrite
+end 
+
+task list_message
+cpu servt 0.025
+//logfilewrite
+end 
+
+task read_message 
+cpu servt 0.020
+//logfilewrite
+end 
+
+task delete_message 
+cpu servt 0.015
+//logfilewrite
+end
+
+//servers definition
+server web
+thread count 400
+thread buffer 99999
+thread schedP fcfs
+task send_to_auth
+task send_to_imap
+task change_to_html
+end
+
+
+server auth
+thread count 400
+thread buffer 99999
+thread schedP fcfs
+task verify_passwd
+end
+
+server imap
+thread count 400
+thread buffer 99999
+thread schedP fcfs
+task list_message
+task read_message
+task delete_message
+end
+
+//server deployed onto hosts
+deploy web machine1[1]
+deploy auth machine1[1]
+deploy imap machine2[1]
+
+
+//host deployed onto lans
+deploy machine1[1] lan1
+deploy machine2[1] lan1
+ 
+
+//scenario definitions
+scenario Login prob 1
+    user  send_to_auth 0 SYNC
+    send_to_auth  verify_passwd 128 SYNC
+    verify_passwd  change_to_html 128     
+    change_to_html user 0
+end
+
+loadparams
+   noofusers 20
+   thinktime 2
+end
+
+//This block has parameters for simulation
+modelparams
+    method analytical
+    type closed
+    //noofrequests 1    
+end
+
+print "Overall tput "+ tput()
+
+
