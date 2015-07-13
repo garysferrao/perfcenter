@@ -97,6 +97,7 @@ TOKEN : {
 	<PS: "ps"> | //scheduling policy
 	<FCFS: "fcfs"> |
 	<LCFS: "lcfs"> |
+	<XCS: "xcs" >  |
 	<DEPLOY: "deploy"> |
 	<UNDEPLOY: "undeploy"> |
 	<HOST: "host"> |
@@ -671,7 +672,8 @@ SchedulingPolicy SchedPolicy():{}
 {
 	<PS> { return SchedulingPolicy.PS;} |
 	<LCFS> { return SchedulingPolicy.LCFS;} |
-	<FCFS> {return SchedulingPolicy.FCFS;}
+	<FCFS> {return SchedulingPolicy.FCFS;} |
+	<XCS> {return SchedulingPolicy.XCS;} | 	 
 }
 
 //Validations: Checks if name is already defined

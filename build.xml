@@ -7,7 +7,9 @@ simple example build file
 <property name="bin" location="bin"/>
 <!-- Create the build directory structure used by compile -->
 <mkdir dir="${bin}"/>
-
+<path id="classpath">
+	<path refid=".:jars/log4j-1.2.14.jar:jars/Blas.jar:jars/optimization.jar:jars/ssj.jar:jars/colt.jar:jars/repast.jar:jars/jgrapht-0.8.2.jar"/>
+</path>
 <target name="compile" 
 description="compile the source " >
 <!-- Compile the java code from ${src} into ${build} -->
@@ -20,6 +22,17 @@ description="compile the source " >
 <copy file="${src}/log4j.properties" todir="${bin}" />
 </target>
 
+<target name="build"
+	description="Build the source">
+	<!--Enter later -->
+	<jar destfile="PerfCenter.jar" 
+		basedir="bin">
+		<manifest>
+			<attribute name="Main-Class" value="perfcenter.parser.PerfParser"/>
+			<attribute name="Class-Path" value="jars/log4j-1.2.14.jar:jars/Blas.jar:jars/optimization.jar:jars/ssj.jar:jars/colt.jar:jars/repast.jar:jars/jgrapht-0.8.2.jar"/>
+		</manifest>
+	</jar>
+</target>
 <target name="clean"
 description="clean up" >
 <!-- Delete the ${bin} -->

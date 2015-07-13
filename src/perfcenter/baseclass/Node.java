@@ -53,7 +53,7 @@ public class Node {
 
 	/** has the name of compound task this node is part of */
 	public String belongsToCT;
-
+	
 	/** a node can have list of children nodes */
 	public ArrayList<Node> children = new ArrayList<Node>();
 
