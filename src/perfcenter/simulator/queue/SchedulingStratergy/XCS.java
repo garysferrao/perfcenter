@@ -2,6 +2,7 @@ package perfcenter.simulator.queue.SchedulingStratergy;
 
 import java.util.HashMap;
 
+import perfcenter.simulator.HostSim;
 import perfcenter.simulator.ScenarioSim;
 import perfcenter.simulator.queue.QueueServer;
 import perfcenter.simulator.queue.QueueSim;
@@ -9,16 +10,15 @@ import perfcenter.simulator.request.Request;
 
 public class XCS extends QueueSim{
 	private int cap = 16000; //FIXME: No hard coding please
-	private HashMap<String, int> creditMap = new HashMap<String, int>(); //Softservername and their credits
+	public HashMap<String, Integer> creditMap = new HashMap<String, Integer>(); //Softservername and their credits
 
-	
 	//private HashMap
 	public XCS(Integer buffSize, Integer numInstances, /* String resType, */QueueServer qs) {
 		super(buffSize, numInstances,/* resType, */qs);
-		
-		for(int credit:credits){
-			credit = cap;
-		}
+//		
+////		for(int credit:credits){
+////			credit = cap;
+////		}
 	}
 	
 	public void enqueue(Request req, double currTime) throws Exception {
@@ -42,10 +42,10 @@ public class XCS extends QueueSim{
 			//Some instance of device is free, so schedule the request
 			//ADDHERE xcs specific things here
 			/********/
-			if(credits.size() == 0){
+			if(creditMap.size() == 0){
 				
 			}else if(creditMap.containsKey(req.hostObject.getServer(req.softServerName))){
-				creditMap.put(req.hostObject.getServer(req.softServerName), cap);
+				creditMap.put(req.hostObject.getServer(req.softServerName).name, cap);
 				
 			}
 			
