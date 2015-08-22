@@ -44,7 +44,7 @@ public class DistributedSystemAna extends DistributedSystem {
 		scenarios = ds.scenarios;
 		lans = ds.lans;
 		links = ds.links;
-		this.overallResponseTime.setValue((double) 0);
+		this.overallRespTime.setValue((double) 0);
 		this.overallThroughput.setValue((double) 0);
 		this.overallArrivalRate.setValue((double) 0);
 		softServerAna = new ArrayList<SoftServerAna>();
@@ -54,7 +54,7 @@ public class DistributedSystemAna extends DistributedSystem {
 				// object in ModelParams.ds and the software server object inside the host are different. Don't know why
 				// this is happening. To fix this, I have taken the object from the ModelParams.ds rather than from host object. --Mayur
 				SoftServer s1 = (SoftServer) s;
-				SoftServerAna sa = new SoftServerAna(ModelParameters.inputDistributedSystem.getServer(s1.getName()), h.name);
+				SoftServerAna sa = new SoftServerAna(ModelParameters.inputDistSys.getServer(s1.getName()), h.name);
 				softServerAna.add(sa);
 			}
 

@@ -104,8 +104,8 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 				/**
 				 * chk this for sync request reply softwareArrival time , softwareStart time. bug fixed (params to syncreq changed)- akhila
 				 */
-				SyncRequest sr = new SyncRequest(req.hostObject, req.softServerName, req.taskName, req.threadNum, req.id, req.softServerArrivalTime,
-						req.softServerStartTime);
+				SyncRequest sr = new SyncRequest(req.hostObject, req.softServName, req.taskName, req.threadNum, req.id, req.softServArrivalTime,
+						req.softServStartTime);
 				req.synReqVector.add(sr);
 			}
 		}
@@ -208,9 +208,9 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		 * if request (i.e. compound task) is done (i.e. there are no more synch calls), then stats are updated and resources freed else nothing is
 		 * done ...the thread held simply blocks
 		 */
-		if (!rq.isSyncRequest(rq.softServerName, rq.taskName, instanceId, rq.id, rq.softServerArrivalTime, rq.softServerStartTime)) {
+		if (!rq.isSyncRequest(rq.softServName, rq.taskName, instanceId, rq.id, rq.softServArrivalTime, rq.softServStartTime)) {
 
-			// queue book keeping structures are updated
+			// queue book keeping structures are updated`
 			endService(rq,instanceId, currTime);
 		} else {
 			//System.err.println("Thread blocked permanently on a request - This usually means wrong configuration of SYNC parameter in the Scenario block of input file. Response from downstream server to upstream server (db to web) should not be SYNC!!");
@@ -221,9 +221,9 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		// check if the request is timed out during service,
 		// if so, then do not process the request further and declear the request as done with timeout flag set.
 		if (ModelParameters.timeoutEnabled == true) {
-			if ((SimulationParameters.currentTime >= rq.scenarioTimeout)) {
+			if ((SimulationParameters.currTime >= rq.scenarioTimeout)) {
 				rq.timeoutFlagAfterService = true;
-				Event ev = new Event(SimulationParameters.currentTime, EventType.REQUEST_DONE, rq);
+				Event ev = new Event(SimulationParameters.currTime, EventType.REQUEST_DONE, rq);
 				SimulationParameters.offerEvent(ev);
 				return;
 			}
@@ -233,7 +233,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		if ((rq.nextNode == null) || (rq.nextNode.name.compareToIgnoreCase("user") == 0)) {
 			// this was the last node.. now create a new event of request
 			// completed.
-			Event ev = new Event(SimulationParameters.currentTime, EventType.REQUEST_DONE, rq);
+			Event ev = new Event(SimulationParameters.currTime, EventType.REQUEST_DONE, rq);
 			SimulationParameters.offerEvent(ev);
 		} else {
 			// System.out.println("Calling for : "+ rq.nextNode.name);
@@ -244,10 +244,10 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 
 	// request is offered to the hardware device
 	public void processTaskStartEvent(Request r, double currTime) throws Exception {
-
+			
 		if (r.virtResStack.isEmpty() == false) {
 			throw new Exception("Stack not empty");
-		} // FIXME: remove comments: find out why this check is put here?
+		} // FIXME: remove comments: find out why this check is put here? // CHECK
 
 		// task is the first virtual resource hence just add it
 		// to the stack
@@ -288,7 +288,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		rq.nwDataSize = (int) rq.currentNode.pktsize.getValue();
 		rq.srcLanName = srcLanName;
 		rq.destLanName = destLanName;
-		lks.enqueue(rq, SimulationParameters.currentTime);
+		lks.enqueue(rq, SimulationParameters.currTime);
 		return true;
 	}
 
@@ -305,25 +305,25 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		rq.virtualResIndex = 0;
 		rq.virtualResInstance = 0;
 		rq.clearRequestFromFlags();
-		rq.softServerName = rq.currentNode.servername;
+		rq.softServName = rq.currentNode.servername;
 
 		// here we detect whether the request is a reply for a
 		// previous sync request.
-		if (rq.isSyncReply(rq.softServerName)) {
+		if (rq.isSyncReply(rq.softServName)) {
 			// this is sync reply
 
 			// retrieve sync request state saved on the vector to
 			// get information about the thread etc. to be used
 			// and remove it from the vector
-			rq.softServerArrivalTime = rq.getServerArrivalTime(rq.softServerName, rq.id);
-			rq.softServerStartTime = rq.getServerStartTime(rq.softServerName, rq.id);
+			rq.softServArrivalTime = rq.getServerArrivalTime(rq.softServName, rq.id);
+			rq.softServStartTime = rq.getServerStartTime(rq.softServName, rq.id);
 
 			// get the thread num where compound task had started execution
-			rq.threadNum = rq.getThreadNum(rq.softServerName, rq.id);
+			rq.threadNum = rq.getThreadNum(rq.softServName, rq.id);
 
 			// the host name on which a sync req ends should be same
 			// as the host that has started the sync req. Akhila
-			rq.setHostName(rq.getHostName(rq.softServerName, rq.id));
+			rq.setHostName(rq.getHostName(rq.softServName, rq.id));
 
 			// check if link exists between the nodes. if it exists
 			// request is offered to link
@@ -333,27 +333,27 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 
 				// This request is not added to queue, but processing begins
 				// immediately
-				rq.hostObject.getServer(rq.softServerName).createStartTaskEvent(rq, rq.threadNum, SimulationParameters.currentTime);
+				rq.hostObject.getServer(rq.softServName).createStartTaskEvent(rq, rq.threadNum, SimulationParameters.currTime);
 			}
 
 		} else {
 			// If soft server is deployed on more than one host then get a random
 			// host name
-			rq.hostObject = SimulationParameters.distributedSystemSim.getServer(rq.softServerName).getRandomHostObject();
+			rq.hostObject = SimulationParameters.distributedSystemSim.getServer(rq.softServName).getRandomHostObject();
 			// get soft server
 			// this is not sync reply, but an ordinary request
-			rq.softServerArrivalTime = SimulationParameters.currentTime;
+			rq.softServArrivalTime = SimulationParameters.currTime;
 
 			// offer request to link
 			boolean isReqOfferedToLink = offerRequestToLink(srcLanName, rq);
 			if (!isReqOfferedToLink) {
 				// link not present. add to software queue for processing
-				rq.hostObject.getServer(rq.softServerName).enqueue(rq, SimulationParameters.currentTime);
+				rq.hostObject.getServer(rq.softServName).enqueue(rq, SimulationParameters.currTime);
 			}
 		}
 	}
 	
-	public void clearValuesButKeepConfInts() {
-		((QueueSim) resourceQueue).clearValuesButKeepConfInts();
+	public void clearValuesButKeepConfIvals() {
+		((QueueSim) resourceQueue).clearValuesButKeepConfIvals();
 	}
 }

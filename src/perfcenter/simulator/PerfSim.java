@@ -29,7 +29,7 @@ import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.Scenario;
 import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.Variable;
-import perfcenter.baseclass.enums.SystemType;
+import perfcenter.baseclass.enums.SysType;
 import perfcenter.simulator.request.Request;
 
 /**
@@ -47,8 +47,8 @@ public class PerfSim {
 		SimulationParameters.distributedSystemSim = new DistributedSystemSim(perfc);
 		SimulationParameters.requestMap = new HashMap<Integer, Request>();
 		SimulationParameters.eventQueue = new PriorityQueue<Event>();
-		SimulationParameters.requestIDGenerator = 0;
-		SimulationParameters.currentTime = 0.0;
+		SimulationParameters.reqIdGenerator = 0;
+		SimulationParameters.currTime = 0.0;
 		SimulationParameters.clearIntervalSlotCounter();
 	}
 
@@ -57,9 +57,9 @@ public class PerfSim {
 		// execute replications for the given set of arrival rates for the different
 		// scenarios. the performance measures generated from these scenarios are
 		// then used to generate confidence intervals.
-		for (SimulationParameters.replicationNumber = 0;
-				SimulationParameters.replicationNumber < ModelParameters.getNumberOfReplications();
-				SimulationParameters.replicationNumber++) {
+		for (SimulationParameters.replicationNo = 0;
+				SimulationParameters.replicationNo < ModelParameters.getNumberOfReplications();
+				SimulationParameters.replicationNo++) {
 
 			// before starting each simulation iteration, we will have to reset
 			// bookkeeping data structures to get rid of info from previous run
@@ -67,8 +67,8 @@ public class PerfSim {
 			createObjectReferences();
 			startSimulation();
 		}
-		SimulationParameters.replicationNumber--;
-		SimulationParameters.distributedSystemSim.calculateConfidenceIntervalsAtTheEndOfReplications();
+		SimulationParameters.replicationNo--;
+		SimulationParameters.distributedSystemSim.computeConfIvalsAtEndOfRepl();
 		return SimulationParameters.distributedSystemSim;
 	}
 
@@ -113,11 +113,11 @@ public class PerfSim {
 	private static void clearValuesButKeepConfInts() {
 		SimulationParameters.requestMap.clear();
 		SimulationParameters.eventQueue.clear();
-		SimulationParameters.currentTime = 0.0;
-		SimulationParameters.totalRequestsArrived = 0;
-		SimulationParameters.distributedSystemSim.clearValuesButKeepConfInts();
-		SimulationParameters.requestIDGenerator = 0;
-		SimulationParameters.currentEventBeingHandled = null;
+		SimulationParameters.currTime = 0.0;
+		SimulationParameters.totalReqArrived = 0;
+		SimulationParameters.distributedSystemSim.clearValuesButKeepConfIvals();
+		SimulationParameters.reqIdGenerator = 0;
+		SimulationParameters.currEventBeingHandled = null;
 		SimulationParameters.lastScenarioArrivalTime = 0.0;
 		SimulationParameters.clearIntervalSlotCounter();
 	}
@@ -138,7 +138,7 @@ public class PerfSim {
 	public void startSimulation() throws Exception {
 		// generate requests and add them to the request list
 		// and add corresponding arrival events to event list
-		if (ModelParameters.getSystemType() == SystemType.OPEN) {
+		if (ModelParameters.getSystemType() == SysType.OPEN) {
 			generateRequestsForOpenSystem();
 		} else {
 			generateRequestsForClosedSystem();
@@ -148,13 +148,13 @@ public class PerfSim {
 		while (true) {
 			Event currentEventToBeHandled = SimulationParameters.eventQueue.poll();
 
-			SimulationParameters.currentEventBeingHandled = currentEventToBeHandled;
+			SimulationParameters.currEventBeingHandled = currentEventToBeHandled;
 			if (currentEventToBeHandled == null) {
 				assert false;
 				throw new Error("No event in event list. It should NEVER happen. This is a bug.");
 			}
 			
-			logger.debug("Event: " + currentEventToBeHandled.type + "\t\ttime: " + currentEventToBeHandled.time);
+			logger.debug("Event: " + currentEventToBeHandled.type + "\t\ttime: " + currentEventToBeHandled.timestamp);
 			switch (currentEventToBeHandled.type) {
 			case NO_OF_USERS_CHANGES:
 				currentEventToBeHandled.numberOfUserChanged();
@@ -216,8 +216,8 @@ public class PerfSim {
 			case SIMULATION_COMPLETE:
 				SimulationParameters.recordIntervalSlotRunTime();
 				SimulationParameters.distributedSystemSim.recordCISampleAtTheEndOfSimulation();
-				logger.debug("Sim end at : " + SimulationParameters.currentTime);
-				System.out.println("Sim TotalReq Processed : " + SimulationParameters.getTotalRequestProcessed());
+				logger.debug("Sim end at : " + SimulationParameters.currTime);
+				//System.out.println("Sim TotalReq Processed : " + SimulationParameters.getTotalRequestProcessed());
 				return;
 
 			default:
@@ -239,7 +239,7 @@ public class PerfSim {
 				System.out.println("Please check the pair of rate and associate interval ");
 				System.exit(1);
 			}
-			double eventTime = SimulationParameters.currentTime + SimulationParameters.getCurrentSlotLength();
+			double eventTime = SimulationParameters.currTime + SimulationParameters.getCurrentSlotLength();
 			Event ev = new Event(eventTime, EventType.ARRIVAL_RATE_CHANGES);
 			SimulationParameters.offerEvent(ev);
 		}
@@ -276,13 +276,13 @@ public class PerfSim {
 				System.out.println("Please check the pair of users and associate interval ");
 				System.exit(1);
 			}
-			double event_time = SimulationParameters.currentTime + SimulationParameters.getCurrentSlotLength();
+			double event_time = SimulationParameters.currTime + SimulationParameters.getCurrentSlotLength();
 			
 			Event ev = new Event(event_time, EventType.NO_OF_USERS_CHANGES);
 			SimulationParameters.offerEvent(ev);
 
 			// find the max users that this workload has use perticularly when workload is cyclic.... added by yogesh
-			double musers = findMaxUsers(ModelParameters.numberofUsers);
+			double musers = findMaxUsers(ModelParameters.noOfUsersCyclic);
 			ModelParameters.setMaxUsers(musers);
 		}
 
@@ -327,8 +327,8 @@ public class PerfSim {
 	/** this is where we create the request and add it to requestList */
 	void generateScenarioArrivalEvent(ScenarioSim sceName, double time) {
 
-		logger.debug("reqID: " + SimulationParameters.requestIDGenerator);
-		Request req = new Request(SimulationParameters.requestIDGenerator++, sceName, time);
+		logger.debug("reqID: " + SimulationParameters.reqIdGenerator);
+		Request req = new Request(SimulationParameters.reqIdGenerator++, sceName, time);
 		// req.scenarioArrivalTime = time;
 
 		/***** All the scenarios are added into request list here *****/
@@ -339,8 +339,8 @@ public class PerfSim {
 		Event ev = new Event(time, EventType.SCENARIO_ARRIVAL, req);
 
 		// change lastscenarioarrivaltime only if scenario arrival event have greater value
-		if (SimulationParameters.lastScenarioArrivalTime < ev.time) {
-			SimulationParameters.lastScenarioArrivalTime = ev.time;
+		if (SimulationParameters.lastScenarioArrivalTime < ev.timestamp) {
+			SimulationParameters.lastScenarioArrivalTime = ev.timestamp;
 		}
 
 		SimulationParameters.offerEvent(ev);

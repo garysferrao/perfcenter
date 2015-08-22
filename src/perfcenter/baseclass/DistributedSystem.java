@@ -53,14 +53,14 @@ public class DistributedSystem {
 	public ArrayList<LanLink> links;
 	
 	// parameters across all scenarios
-	public Metric overallResponseTime = new Metric();
+	public Metric overallRespTime = new Metric();
 	public Metric overallThroughput = new Metric();
 	public Metric overallBadput = new Metric();
 	public Metric overallGoodput = new Metric();
 	public Metric overallBuffTimeout = new Metric();
 	public Metric overallDroprate = new Metric();
 	public Metric overallArrivalRate = new Metric();
-	public Metric overallBlockingProbability = new Metric();
+	public Metric overallBlockProb = new Metric();
 
 	// this list contains different device types and used to copy attributes
 	// from this device to other devices of same type: rakesh
@@ -92,7 +92,7 @@ public class DistributedSystem {
 //		sdummy.addHost("dummy");
 		softServers.add(sdummy);
 		
-		t.server = "user";
+		t.softServerName = "user";
 		tasks.add(t);
 		
 		// why these things are here? they are local variables which are being used nowhere else
@@ -252,7 +252,7 @@ public class DistributedSystem {
 
 	public Scenario getScenario(String name) {
 		for (Scenario sce : scenarios) {
-			if (sce.scenarioName.compareToIgnoreCase(name) == 0) {
+			if (sce.name.compareToIgnoreCase(name) == 0) {
 				return sce;
 			}
 		}
@@ -261,7 +261,7 @@ public class DistributedSystem {
 
 	public boolean isScenario(String name) {
 		for (Scenario sce : scenarios) {
-			if (sce.scenarioName.compareToIgnoreCase(name) == 0) {
+			if (sce.name.compareToIgnoreCase(name) == 0) {
 				return true;
 			}
 		}
@@ -303,7 +303,8 @@ public class DistributedSystem {
 		}
 		return false;
 	}
-
+	
+	//CHECK : This method is not used anywhere
 	// deploying server on host or host on lan
 	public void deploy(String name1, String name2) {
 		SoftServer srv;
@@ -345,15 +346,15 @@ public class DistributedSystem {
 	// check that sum of all scenario prob is one
 	public void checkParameters() throws IOException {
 		double total_prob = 0;
-		for (Scenario sc : ModelParameters.inputDistributedSystem.scenarios) {
+		for (Scenario sc : ModelParameters.inputDistSys.scenarios) {
 			total_prob += sc.getProbability();
 		}
 		if (total_prob != 1) {
 			throw new Error("Sum of scenario probability is not equal to 1");
 		}
 
-		if (ModelParameters.outputFileString.length() > 0) {
-			FileAppender fa = new FileAppender(new PatternLayout(), ModelParameters.outputFileString, false);
+		if (ModelParameters.outputFileStr.length() > 0) {
+			FileAppender fa = new FileAppender(new PatternLayout(), ModelParameters.outputFileStr, false);
 			Logger l = Logger.getLogger("DistributedSystem");
 			l.addAppender(fa);
 		}
@@ -362,7 +363,7 @@ public class DistributedSystem {
 	// scenario arrival rate is based on scenario probability
 	public void setScenarioArrivalRate() {
 		for (int slot = 0; slot < ModelParameters.intervalSlotCount; slot++) {
-			for (Scenario sc : ModelParameters.inputDistributedSystem.scenarios) {
+			for (Scenario sc : ModelParameters.inputDistSys.scenarios) {
 				sc.setArateToScenario(slot, ModelParameters.getArrivalRate(slot).getValue() * sc.getProbability());
 			}
 		}

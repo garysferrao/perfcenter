@@ -29,24 +29,25 @@ package perfcenter.baseclass;
 public class Queue {
 
 	//queue parameters
-	public Metric averageQueueLength = new Metric();
-	public Metric averageResponseTime = new Metric();
-	public Metric averageUtilization = new Metric();
-	public Metric averageThroughput = new Metric();
-	public Metric averagePowerConsumed = new Metric();
-	public Metric averageEnergyConsumptionPerRequest = new Metric();
+	public Metric avgQueueLen = new Metric();
+	public Metric avgRespTime = new Metric();
+	public Metric avgUtil = new Metric();
+	public Metric avgThroughput = new Metric();
+	public Metric avgPowerConsumed = new Metric();
+	public Metric avgEnergyConsumptionPerReq = new Metric();
 	
 	public Metric powerDelayProduct = new Metric();
 	public Metric powerEfficiency = new Metric();
 
-	public Metric averageWaitingTime = new Metric();
-	public Metric averageArrivalRate = new Metric();
+	public Metric avgWaitingTime = new Metric();
+	public Metric avgArrivalRate = new Metric();
 
-	public Metric averageServiceTime = new Metric();
-	public Metric blockingProbability = new Metric();
+	public Metric avgServiceTime = new Metric();
+	public Metric blockProb = new Metric();
 	
-	// device name
-	public String deviceName; //RIGHTNOW: later convert this to reference
+	// CHECK : Introuduce a new member called queueAt : HOST, SERVER, DEVICE // VIRTUALIZATION: Add vm, dom0 to the list
+	// CHECK : Combine below three variables into one
+	public String devName; //RIGHTNOW: later convert this to reference
 	public String serverName; //RIGHTNOW: later convert this to reference
 	
 	public String hostName;
@@ -56,21 +57,21 @@ public class Queue {
 	}
 
 	public void initialize() {
-		averageWaitingTime.initialize();
-		averageUtilization.initialize();
-		averageThroughput.initialize();
-		averageResponseTime.initialize();
-		averageQueueLength.initialize();
+		avgWaitingTime.initialize();
+		avgUtil.initialize();
+		avgThroughput.initialize();
+		avgRespTime.initialize();
+		avgQueueLen.initialize();
 
-		averageArrivalRate.initialize();
-		averageServiceTime.initialize();
-		blockingProbability.initialize();
+		avgArrivalRate.initialize();
+		avgServiceTime.initialize();
+		blockProb.initialize();
 		serverName = null;
-		deviceName = null;
+		devName = null;
 		hostName = null;
 	}
 
 	public double getBlockingProbability() {
-		return blockingProbability.getValue();
+		return blockProb.getValue();
 	}
 }

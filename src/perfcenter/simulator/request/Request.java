@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.Node;
 import perfcenter.baseclass.Task;
-import perfcenter.baseclass.enums.SystemType;
+import perfcenter.baseclass.enums.SysType;
 import perfcenter.simulator.DeviceSim;
 import perfcenter.simulator.Event;
 import perfcenter.simulator.EventType;
@@ -55,13 +55,13 @@ public class Request {
 	public double scenarioArrivalTime;
 
 	/** time when the request arrived at the current s/w server */
-	public double softServerArrivalTime;
+	public double softServArrivalTime;
 
 	/** time when the thread was allocated to the request at current s/w server */
-	public double softServerStartTime;
+	public double softServStartTime;
 
 	/** id of the current software server */
-	public String softServerName; //comes from Node class
+	public String softServName; //comes from Node class
 
 	/** Name of current server to which request belongs, added by nikhil */
 	public String fromServer;
@@ -153,10 +153,10 @@ public class Request {
 		this.taskName = another.taskName;
 		timeoutFlagAfterService = another.timeoutFlagAfterService;
 		timeoutFlagInBuffer = another.timeoutFlagInBuffer;
-		this.softServerName = another.softServerName;
+		this.softServName = another.softServName;
 		nextNode = another.nextNode;
-		softServerArrivalTime = another.softServerArrivalTime;
-		softServerStartTime = another.softServerStartTime;
+		softServArrivalTime = another.softServArrivalTime;
+		softServStartTime = another.softServStartTime;
 		fromServer = another.fromServer;
 		srcLanName = another.srcLanName;
 		destLanName = another.destLanName;
@@ -330,7 +330,7 @@ public class Request {
 		try {
 			while (synReqVector.size() > 0) {
 				SyncRequest sr = synReqVector.get(synReqVector.size() - 1);
-				sr.getHostObject().getServer(sr.softServerName).abortThread(sr.threadNum, SimulationParameters.currentTime);
+				sr.getHostObject().getServer(sr.softServerName).abortThread(sr.threadNum, SimulationParameters.currTime);
 				synReqVector.remove(synReqVector.size() - 1);
 			}
 		} catch (Exception e) {
@@ -348,9 +348,9 @@ public class Request {
 		nextNode = null;
 		scenarioArrivalTime = 0;
 		scenarioTimeout = 0;
-		softServerArrivalTime = 0;
-		softServerStartTime = 0;
-		this.softServerName = "";
+		softServArrivalTime = 0;
+		softServStartTime = 0;
+		this.softServName = "";
 		hostObject = null;
 		this.devName = null;
 		this.taskName = "";
@@ -383,7 +383,7 @@ public class Request {
 		while (virtResStack.size() > 1) {
 			VirResVector vv = virtResStack.pop();
 			VirtualResSim vrs = vv.getHostObject().getVirtualRes(vv.virtResName_);
-			vrs.abort(vv.instanceNo_, SimulationParameters.currentTime);
+			vrs.abort(vv.instanceNo_, SimulationParameters.currTime);
 		}
 
 		if (isHoldingResourcesSync()) {
@@ -391,10 +391,10 @@ public class Request {
 		}
 
 		// update the scenario measures
-		scenario.numOfRequestsDropped.recordValue(1);
+		scenario.noOfReqDropped.recordValue(1);
 
 		// check if dropped request should be retried or not.
-		processRequest(SimulationParameters.currentTime);
+		processRequest(SimulationParameters.currTime);
 	}
 
 	/** get next virtual resource name from virtual res */
@@ -411,7 +411,7 @@ public class Request {
 
 	/** get next virtual resource name from task */
 	public String getVirtualResourceNameFromTask() {
-		return hostObject.getServer(softServerName).getSimpleTask(taskName).getNextVirtualResName(virtualResIndex);
+		return hostObject.getServer(softServName).getSimpleTask(taskName).getNextVirtualResName(virtualResIndex);
 	}
 
 	/**
@@ -420,7 +420,7 @@ public class Request {
 	public String getNextDeviceName() throws Exception { 
 		String dev = null;
 		if (this.requestFromTask) {
-			Task t = hostObject.getServer(softServerName).getSimpleTask(taskName);
+			Task t = hostObject.getServer(softServName).getSimpleTask(taskName);
 			dev = t.getNextDeviceName(deviceIndex);
 		} else if (this.requestFromVirtRes) {
 			VirtualResSim sr = (VirtualResSim) hostObject.getVirtualRes(virtResName);
@@ -462,7 +462,7 @@ public class Request {
 
 	public void processRequest(double time) throws Exception {
 		ScenarioSim newScenarioName = scenario;
-		double newArrivalTime = SimulationParameters.currentTime;
+		double newArrivalTime = SimulationParameters.currTime;
 		boolean retryFlag = false;
 
 		// check if the request should retry
@@ -470,11 +470,11 @@ public class Request {
 			numberOfRetries++;
 			retryFlag = true;
 		}
-		if (ModelParameters.getSystemType() == SystemType.CLOSED) {
+		if (ModelParameters.getSystemType() == SysType.CLOSED) {
 			// If request is not subject to retry, develop new data.
 			if (retryFlag == false) {
 				newScenarioName = SimulationParameters.getRandomScenarioSimBasedOnProb();
-				newArrivalTime = SimulationParameters.currentTime + ModelParameters.getThinkTime().nextRandomVal(1);
+				newArrivalTime = SimulationParameters.currTime + ModelParameters.getThinkTime().nextRandomVal(1);
 			}
 			Request previous = new Request(this);
 			clear();
@@ -494,17 +494,17 @@ public class Request {
 
 				// if timeout in Buffer then just remove that request and deque next request to process
 				if (previous.timeoutFlagInBuffer) { //XXX requests timed out during service should also be counted as blocked requests
-					SimulationParameters.currentTime = time;
+					SimulationParameters.currTime = time;
 					Request temprq = new Request(previous);
 
-					temprq.hostObject.getServer(temprq.softServerName).processTaskEndEventTimeout(
-							temprq, temprq.threadNum, SimulationParameters.currentTime);
+					temprq.hostObject.getServer(temprq.softServName).processTaskEndEventTimeout(
+							temprq, temprq.threadNum, SimulationParameters.currTime);
 				}
 			}
 		}
 
 		// if open loop remove the request from the list.
-		if (ModelParameters.getSystemType() == SystemType.OPEN) {
+		if (ModelParameters.getSystemType() == SysType.OPEN) {
 
 			// check if the request should retry, and create new arrival accordingly.
 			if (retryFlag == true && (numberOfRetries <= ModelParameters.getMaxRetry())) {
@@ -526,18 +526,18 @@ public class Request {
 
 				// if timeout in Buffer then deque the next request and remove the current request
 				if (previousRequest.timeoutFlagInBuffer) {
-					SimulationParameters.currentTime = time;
+					SimulationParameters.currTime = time;
 					Request temprq = new Request(previousRequest);
 
 					// get the host and server object
-					temprq.hostObject.getServer(temprq.softServerName).processTaskEndEventTimeout(
-							temprq, temprq.threadNum, SimulationParameters.currentTime);
+					temprq.hostObject.getServer(temprq.softServName).processTaskEndEventTimeout(
+							temprq, temprq.threadNum, SimulationParameters.currTime);
 				}
 			} else if (timeoutFlagInBuffer) {
 				// when the request gets timeout at buffer we have to deque next requests by generating START_SOFTWARE_TASK event for that request
-				SimulationParameters.currentTime = time;
+				SimulationParameters.currTime = time;
 
-				hostObject.getServer(softServerName).processTaskEndEventTimeout(this, threadNum, SimulationParameters.currentTime);
+				hostObject.getServer(softServName).processTaskEndEventTimeout(this, threadNum, SimulationParameters.currTime);
 				SimulationParameters.removeRequest(id);
 			} else {
 				// Depending upon the request if not timeout at all or timeout after receiving service then just remove that request

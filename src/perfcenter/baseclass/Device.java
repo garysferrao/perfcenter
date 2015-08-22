@@ -227,11 +227,11 @@ public class Device extends QueuingResource {
 		for (QServerInstance qsi : ((QueueSim) resourceQueue).qServerInstances) // devQ has devices of type cpu
 		{
 			System.out.println("------>>   device name: " + name + "\t instance: " + i + "\t Device instance util:" + qsi.totalBusyTime.getTotalValue()
-					/ SimulationParameters.currentTime + "\t Device instance speedup: " + qsi.avgSpeedup);
+					/ SimulationParameters.currTime + "\t Device instance speedup: " + qsi.avgSpeedup);
 
 			// sum(qsi.util * qsi.avg_speedup)
-			avgDeviceSpeedup += (qsi.totalBusyTime.getTotalValue() / SimulationParameters.currentTime) * qsi.avgSpeedup;
-			qsi_util += qsi.totalBusyTime.getTotalValue() / SimulationParameters.currentTime;
+			avgDeviceSpeedup += (qsi.totalBusyTime.getTotalValue() / SimulationParameters.currTime) * qsi.avgSpeedup;
+			qsi_util += qsi.totalBusyTime.getTotalValue() / SimulationParameters.currTime;
 			i++;
 		}
 		avgDeviceSpeedup = avgDeviceSpeedup / qsi_util;

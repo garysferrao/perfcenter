@@ -29,7 +29,7 @@ public class FunctionDefinition {
 
 	public void addTemp2(String name) {
 		tempname2 = name;
-		tempname3 = ")"; // if further the value if tempname3 is changed then we can recognised that third paramter is specified.
+		tempname3 = ")"; //if tempname3 is changed then we can recognize that third parameter is specified.
 	}
 
 	public void addTemp3(String name) {
@@ -79,7 +79,7 @@ public class FunctionDefinition {
 			Output o = new Output();
 			
 			if (name_.compareTo("printcfg") == 0) {
-				ModelParameters.inputDistributedSystem.printConfiguration();
+				ModelParameters.inputDistSys.printConfiguration();
 				return "";
 			} else if (name_.compareTo("respt") == 0) {
 				if (scenario != null) {

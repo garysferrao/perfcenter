@@ -58,8 +58,8 @@ public class DistributedSystemSim extends DistributedSystem {
 	public ManuallyComputedMetric overallThroughputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 	public ManuallyComputedMetric overallDroprateSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 	public ManuallyComputedMetric overallBuffTimeoutSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
-	public ManuallyComputedMetric overallResponseTimeSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
-	public ManuallyComputedMetric overallBlockingProbabilitySim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
+	public ManuallyComputedMetric overallRespTimeSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
+	public ManuallyComputedMetric overallBlockingProbSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 
 	public DistributedSystemSim() {
 		logger.debug("breakpoint");
@@ -114,33 +114,33 @@ public class DistributedSystemSim extends DistributedSystem {
 	}
 
 	// clear all the variables but keep the confidence interval calculations
-	public void clearValuesButKeepConfInts() {
+	public void clearValuesButKeepConfIvals() {
 		for (Host h : hosts) {
 			for (SoftServer softServer : h.softServers) {
-				((SoftServerSim) softServer).clearValuesButKeepConfInts();
+				((SoftServerSim) softServer).clearValuesButKeepConfIvals();
 //				softServerSim.resourceQueue = QueueSim.loadSchedulingPolicyClass(softServerSim.schedp.toString(), buffSizeTemp, (int) softServerSim.thrdCount.getValue(), softServerSim);
 			}
 			for (Object dev : h.devices) {
-				((DeviceSim) dev).clearValuesButKeepConfInts();
+				((DeviceSim) dev).clearValuesButKeepConfIvals();
 //				deviceSim.resourceQueue = QueueSim.loadSchedulingPolicyClass(deviceSim.schedulingPolicy.toString(), buffSizeTemp, ((QueueSim) deviceSim.resourceQueue).numberOfInstances, /* "hwRes", */deviceSim);
 			}
 		}
 		for (Object lk : links) {
 			LanLinkSim lnk = (LanLinkSim) lk;
-			((QueueSim) lnk.linkQforward).clearValuesButKeepConfInts();
-			((QueueSim) lnk.linkQreverse).clearValuesButKeepConfInts();
+			((QueueSim) lnk.linkQforward).clearValuesButKeepConfIvals();
+			((QueueSim) lnk.linkQreverse).clearValuesButKeepConfIvals();
 		}
 		for (Object sce : scenarios) {
-			((ScenarioSim) sce).clearValuesButKeepConfInts();
+			((ScenarioSim) sce).clearValuesButKeepConfIvals();
 		}
 		
-		overallGoodputSim.clearValuesButKeepConfInts();
-		overallBadputSim.clearValuesButKeepConfInts();
-		overallBlockingProbabilitySim.clearValuesButKeepConfInts();
-		overallThroughputSim.clearValuesButKeepConfInts();
-		overallDroprateSim.clearValuesButKeepConfInts();
-		overallBuffTimeoutSim.clearValuesButKeepConfInts();
-		overallResponseTimeSim.clearValuesButKeepConfInts();
+		overallGoodputSim.clearValuesButKeepConfIvals();
+		overallBadputSim.clearValuesButKeepConfIvals();
+		overallBlockingProbSim.clearValuesButKeepConfIvals();
+		overallThroughputSim.clearValuesButKeepConfIvals();
+		overallDroprateSim.clearValuesButKeepConfIvals();
+		overallBuffTimeoutSim.clearValuesButKeepConfIvals();
+		overallRespTimeSim.clearValuesButKeepConfIvals();
 	}
 	
 	/**
@@ -154,35 +154,35 @@ public class DistributedSystemSim extends DistributedSystem {
 	 */
 	// calculates confidence interval for each queue and
 	// addes the results to the queue variables
-	public void calculateConfidenceIntervalsAtTheEndOfReplications() {
+	public void computeConfIvalsAtEndOfRepl() {
 		for (Host host : hosts) {
 			for (SoftServer softServer : host.softServers) {
-				((QueueSim) ((SoftServerSim) softServer).resourceQueue).calculateConfidenceIntervalsAtTheEndOfReplications();
+				((QueueSim) ((SoftServerSim) softServer).resourceQueue).computeConfIvalsAtEndOfRepl();
 				// so.setThroughput(((QueueSim) so.softQ).giveMeThroughtput());
 			}
 			for (Device device : host.devices) {
 				// calculate RAM utilization for current host if device is RAM.
 				if (device.name.equals("ram")) {
 					//XXX argument passing redundant in next line
-					((QueueSim) ((DeviceSim) device).resourceQueue).calculateConfidenceIntervalsForRAM(ModelParameters.inputDistributedSystem.getHost(host.name));
+					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsForRAM(ModelParameters.inputDistSys.getHost(host.name));
 				} else {
-					((DeviceSim) device).averageFrequencySim.calculateConfidenceIntervalsAtTheEndOfReplications();
-					DistributedSystemSim.calculateConfidenceIntervalForMetric(device.averageFrequency, ((DeviceSim) device).averageFrequencySim);
+					((DeviceSim) device).avgFreqSim.computeConfIvalsAtEndOfRepl();
+					DistributedSystemSim.computeConfIvalForMetric(device.averageFrequency, ((DeviceSim) device).avgFreqSim);
 					
-					((QueueSim) ((DeviceSim) device).resourceQueue).calculateConfidenceIntervalsAtTheEndOfReplications();
+					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsAtEndOfRepl();
 				}
 			}
 		}
 		for (LanLink lanLink : links) {
-			((QueueSim) ((LanLinkSim) lanLink).linkQforward).calculateConfidenceIntervalsAtTheEndOfReplications();
-			((QueueSim) ((LanLinkSim) lanLink).linkQreverse).calculateConfidenceIntervalsAtTheEndOfReplications();
+			((QueueSim) ((LanLinkSim) lanLink).linkQforward).computeConfIvalsAtEndOfRepl();
+			((QueueSim) ((LanLinkSim) lanLink).linkQreverse).computeConfIvalsAtEndOfRepl();
 		}
 		
 		for(Scenario scenario : scenarios) {
-			((ScenarioSim) scenario).calculateConfidenceIntervalsAtTheEndOfReplications();
+			((ScenarioSim) scenario).computeConfIvalsAtEndOfRepl();
 		}
 		
-		calculateScenarioEndToEndValuesAtTheEndOfReplications();
+		computeScenarioEndToEndValuesAtTheEndOfRepl();
 	}
 	
 	/**
@@ -190,16 +190,16 @@ public class DistributedSystemSim extends DistributedSystem {
 	 * BuffTimeout.
 	 * 
 	 */
-	void calculateScenarioEndToEndValuesAtTheEndOfReplications() {
+	void computeScenarioEndToEndValuesAtTheEndOfRepl() {
 		DistributedSystemSim dss = SimulationParameters.distributedSystemSim;
 
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(dss.overallGoodput, dss.overallGoodputSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(dss.overallBadput, dss.overallBadputSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(dss.overallThroughput, dss.overallThroughputSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(dss.overallDroprate, dss.overallDroprateSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(dss.overallBuffTimeout, dss.overallBuffTimeoutSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(dss.overallResponseTime, dss.overallResponseTimeSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(dss.overallBlockingProbability, dss.overallBlockingProbabilitySim);
+		DistributedSystemSim.computeConfIvalForMetric(dss.overallGoodput, dss.overallGoodputSim);
+		DistributedSystemSim.computeConfIvalForMetric(dss.overallBadput, dss.overallBadputSim);
+		DistributedSystemSim.computeConfIvalForMetric(dss.overallThroughput, dss.overallThroughputSim);
+		DistributedSystemSim.computeConfIvalForMetric(dss.overallDroprate, dss.overallDroprateSim);
+		DistributedSystemSim.computeConfIvalForMetric(dss.overallBuffTimeout, dss.overallBuffTimeoutSim);
+		DistributedSystemSim.computeConfIvalForMetric(dss.overallRespTime, dss.overallRespTimeSim);
+		DistributedSystemSim.computeConfIvalForMetric(dss.overallBlockProb, dss.overallBlockingProbSim);
 	}
 
 	private void recordScenarioEndToEndCISamplesAtTheEndOfSimulation() {
@@ -215,14 +215,14 @@ public class DistributedSystemSim extends DistributedSystem {
 			for (Object scenario : SimulationParameters.distributedSystemSim.scenarios) {
 				ScenarioSim scenarioSim = (ScenarioSim) scenario;
 
-				totResponseTime += scenarioSim.averageResponseTimeSim.getTotalValue(slot);
-				totNumOfReq += scenarioSim.numOfRequestsCompletedSuccessfully.getTotalValue(slot)
-						+ scenarioSim.numOfRequestsTimedoutDuringService.getTotalValue(slot);
-				overallGoodput += scenarioSim.averageGoodputSim.getValue(slot, SimulationParameters.replicationNumber);
-				overallBadput += scenarioSim.averageBadputSim.getValue(slot, SimulationParameters.replicationNumber);
-				overallThroughput += scenarioSim.averageThroughputSim.getValue(slot, SimulationParameters.replicationNumber);
-				overallBuffTimeout += scenarioSim.buffTimeoutSim.getValue(slot, SimulationParameters.replicationNumber);
-				overallDroprate += scenarioSim.dropRateSim.getValue(slot, SimulationParameters.replicationNumber);
+				totResponseTime += scenarioSim.avgRespTimeSim.getTotalValue(slot);
+				totNumOfReq += scenarioSim.noOfReqCompletedSuccessfully.getTotalValue(slot)
+						+ scenarioSim.noOfReqTimedoutDuringService.getTotalValue(slot);
+				overallGoodput += scenarioSim.avgGoodputSim.getValue(slot, SimulationParameters.replicationNo);
+				overallBadput += scenarioSim.avgBadputSim.getValue(slot, SimulationParameters.replicationNo);
+				overallThroughput += scenarioSim.avgThroughputSim.getValue(slot, SimulationParameters.replicationNo);
+				overallBuffTimeout += scenarioSim.buffTimeoutSim.getValue(slot, SimulationParameters.replicationNo);
+				overallDroprate += scenarioSim.dropRateSim.getValue(slot, SimulationParameters.replicationNo);
 				overallArrivalRate += scenarioSim.arateToScenarioDuringSimulation.getValue(slot);
 			}
 
@@ -231,8 +231,8 @@ public class DistributedSystemSim extends DistributedSystem {
 			dss.overallThroughputSim.recordCISample(slot, overallThroughput);
 			dss.overallBuffTimeoutSim.recordCISample(slot, overallBuffTimeout);
 			dss.overallDroprateSim.recordCISample(slot, overallDroprate);
-			dss.overallResponseTimeSim.recordCISample(slot, totResponseTime / totNumOfReq);
-			dss.overallBlockingProbabilitySim.recordCISample(slot, (overallDroprate + overallBuffTimeout)/totNumOfReq);
+			dss.overallRespTimeSim.recordCISample(slot, totResponseTime / totNumOfReq);
+			dss.overallBlockingProbSim.recordCISample(slot, (overallDroprate + overallBuffTimeout)/totNumOfReq);
 
 			dss.overallArrivalRate.setValue(slot, overallArrivalRate);
 		}
@@ -294,8 +294,8 @@ public class DistributedSystemSim extends DistributedSystem {
 		return null;
 	}
 
-	public static void calculateConfidenceIntervalForMetric(Metric metric, MetricSim metricSim) {
-		metricSim.calculateConfidenceIntervalsAtTheEndOfReplications();
+	public static void computeConfIvalForMetric(Metric metric, MetricSim metricSim) {
+		metricSim.computeConfIvalsAtEndOfRepl();
 		for (int slot = 0; slot < ModelParameters.intervalSlotCount; slot++) {
 			//nadeesh Store the Slot level Metric value
 			metric.setValue(slot, metricSim.getMean(slot));
@@ -306,7 +306,7 @@ public class DistributedSystemSim extends DistributedSystem {
 				for(String srvName:srvList){
 					//nadeesh Store the server level Metric value
 					metric.setValue(slot,srvName,metricSim.getMean(slot,srvName));
-					metric.setConfidenceInterval(slot,srvName, metricSim.getCI(slot,srvName));
+					metric.setConfIval(slot,srvName, metricSim.getCI(slot,srvName));
 				}
 			}
 		}

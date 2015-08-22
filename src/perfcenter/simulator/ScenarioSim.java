@@ -33,112 +33,112 @@ import perfcenter.simulator.request.Request;
 public class ScenarioSim extends Scenario {
 
 	// used by simulation part
-	public SummationMetric numOfRequestsCompletedSuccessfully = new SummationMetric();
-	public SummationMetric numOfRequestsProcessed = new SummationMetric();
-	public SummationMetric numOfRequestsTimedoutDuringService = new SummationMetric();
-	public SummationMetric numOfRequestsTimedoutInBuffer = new SummationMetric();
-	public SummationMetric numOfRequestsDropped = new SummationMetric();
-	public SummationMetric numOfRequestsArrived = new SummationMetric();
+	public SummationMetric noOfReqCompletedSuccessfully = new SummationMetric();
+	public SummationMetric noOfReqProcessed = new SummationMetric();
+	public SummationMetric noOfReqTimedoutDuringService = new SummationMetric();
+	public SummationMetric noOfReqTimedoutInBuffer = new SummationMetric();
+	public SummationMetric noOfReqDropped = new SummationMetric();
+	public SummationMetric noOfReqArrived = new SummationMetric();
 
-	public DiscreteSampleAverageMetric averageResponseTimeSim = new DiscreteSampleAverageMetric(ModelParameters.getResptCILevel());
-	public ManuallyComputedMetric averageThroughputSim = new ManuallyComputedMetric(ModelParameters.getTputCILevel());
-	public ManuallyComputedMetric averageBadputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
-	public ManuallyComputedMetric averageGoodputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
+	public DiscreteSampleAverageMetric avgRespTimeSim = new DiscreteSampleAverageMetric(ModelParameters.getResptCILevel());
+	public ManuallyComputedMetric avgThroughputSim = new ManuallyComputedMetric(ModelParameters.getTputCILevel());
+	public ManuallyComputedMetric avgBadputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
+	public ManuallyComputedMetric avgGoodputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 	public ManuallyComputedMetric buffTimeoutSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 	public ManuallyComputedMetric dropRateSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
-	public ManuallyComputedMetric blockingProbabilitySim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
+	public ManuallyComputedMetric blockProbSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 	public ManuallyComputedMetric arateToScenarioDuringSimulationSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 
 	public ScenarioSim(Scenario s) {
-		scenarioName = s.getName();
-		scenarioProbability = s.scenarioProbability;
-		rootNodeOfScenario = s.rootNodeOfScenario; // root node of scenario tree
+		name = s.getName();
+		scenarioProb = s.scenarioProb;
+		rootNode = s.rootNode; // root node of scenario tree
 		arateToScenario.copy(s.arateToScenario); // scenario arrival rate
 	}
 
 	public void updateMeasuresAtTheEndOfRequestCompletion(Request rq) {
-		numOfRequestsProcessed.recordValue(1);
-		averageResponseTimeSim.recordValue(SimulationParameters.currentTime - rq.scenarioArrivalTime);
+		noOfReqProcessed.recordValue(1);
+		avgRespTimeSim.recordValue(SimulationParameters.currTime - rq.scenarioArrivalTime);
 		
 		if (ModelParameters.timeoutEnabled == true) {
-			if ((SimulationParameters.currentTime < rq.scenarioTimeout)) {
-				numOfRequestsCompletedSuccessfully.recordValue(1);
+			if ((SimulationParameters.currTime < rq.scenarioTimeout)) {
+				noOfReqCompletedSuccessfully.recordValue(1);
 			} else {
-				numOfRequestsTimedoutDuringService.recordValue(1);
+				noOfReqTimedoutDuringService.recordValue(1);
 				rq.timeoutFlagAfterService = true;
 			}
 		} else {
-			numOfRequestsCompletedSuccessfully.recordValue(1);
+			noOfReqCompletedSuccessfully.recordValue(1);
 		}
 	}
 
 	public int getNumOfRequestsCompletedSuccessfully() {
-		return (int) numOfRequestsCompletedSuccessfully.getTotalValue();
+		return (int) noOfReqCompletedSuccessfully.getTotalValue();
 	}
 
 	public int getNumOfRequestsProcessed() {
-		return (int) numOfRequestsProcessed.getTotalValue();
+		return (int) noOfReqProcessed.getTotalValue();
 	}
 
 	public int getNumOfRequestsTimedoutDuringService() {
-		return (int) numOfRequestsTimedoutDuringService.getTotalValue();
+		return (int) noOfReqTimedoutDuringService.getTotalValue();
 	}
 
 	public int getNumOfRequestsTimedoutInBuffer() {
-		return (int) numOfRequestsTimedoutInBuffer.getTotalValue();
+		return (int) noOfReqTimedoutInBuffer.getTotalValue();
 	}
 
 	public int getNumOfRequestsDropped() {
-		return (int) numOfRequestsDropped.getTotalValue();
+		return (int) noOfReqDropped.getTotalValue();
 	}
 
 	public int getNumOfRequestsArrived() {
-		return (int)numOfRequestsArrived.getTotalValue();
+		return (int)noOfReqArrived.getTotalValue();
 	}
 
 	public double getAverageResponseTimeSim() {
-		return averageResponseTimeSim.getMean();
+		return avgRespTimeSim.getMean();
 	}
 	
-	public void calculateConfidenceIntervalsAtTheEndOfReplications() {
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(averageResponseTime, averageResponseTimeSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(averageThroughput, averageThroughputSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(averageBadput, averageBadputSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(averageGoodput, averageGoodputSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(buffTimeout, buffTimeoutSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(dropRate, dropRateSim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(blockingProb, blockingProbabilitySim);
-		DistributedSystemSim.calculateConfidenceIntervalForMetric(arateToScenarioDuringSimulation, arateToScenarioDuringSimulationSim);
+	public void computeConfIvalsAtEndOfRepl() {
+		DistributedSystemSim.computeConfIvalForMetric(avgRespTime, avgRespTimeSim);
+		DistributedSystemSim.computeConfIvalForMetric(avgThroughput, avgThroughputSim);
+		DistributedSystemSim.computeConfIvalForMetric(avgBadput, avgBadputSim);
+		DistributedSystemSim.computeConfIvalForMetric(avgGoodput, avgGoodputSim);
+		DistributedSystemSim.computeConfIvalForMetric(buffTimeout, buffTimeoutSim);
+		DistributedSystemSim.computeConfIvalForMetric(dropRate, dropRateSim);
+		DistributedSystemSim.computeConfIvalForMetric(blockingProb, blockProbSim);
+		DistributedSystemSim.computeConfIvalForMetric(arateToScenarioDuringSimulation, arateToScenarioDuringSimulationSim);
 	}
 	
-	public void clearValuesButKeepConfInts() {
-		numOfRequestsCompletedSuccessfully.clearValuesButKeepConfInts();
-		numOfRequestsProcessed.clearValuesButKeepConfInts();
-		numOfRequestsTimedoutDuringService.clearValuesButKeepConfInts();
-		numOfRequestsTimedoutInBuffer.clearValuesButKeepConfInts();
-		numOfRequestsDropped.clearValuesButKeepConfInts();
-		numOfRequestsArrived.clearValuesButKeepConfInts();
+	public void clearValuesButKeepConfIvals() {
+		noOfReqCompletedSuccessfully.clearValuesButKeepConfInts();
+		noOfReqProcessed.clearValuesButKeepConfInts();
+		noOfReqTimedoutDuringService.clearValuesButKeepConfInts();
+		noOfReqTimedoutInBuffer.clearValuesButKeepConfInts();
+		noOfReqDropped.clearValuesButKeepConfInts();
+		noOfReqArrived.clearValuesButKeepConfInts();
 		
-		averageResponseTimeSim.clearValuesButKeepConfInts();
-		averageThroughputSim.clearValuesButKeepConfInts();
-		averageBadputSim.clearValuesButKeepConfInts();
-		averageGoodputSim.clearValuesButKeepConfInts();
-		buffTimeoutSim.clearValuesButKeepConfInts();
-		dropRateSim.clearValuesButKeepConfInts();
-		blockingProbabilitySim.clearValuesButKeepConfInts();
-		arateToScenarioDuringSimulationSim.clearValuesButKeepConfInts();
+		avgRespTimeSim.clearValuesButKeepConfInts();
+		avgThroughputSim.clearValuesButKeepConfIvals();
+		avgBadputSim.clearValuesButKeepConfIvals();
+		avgGoodputSim.clearValuesButKeepConfIvals();
+		buffTimeoutSim.clearValuesButKeepConfIvals();
+		dropRateSim.clearValuesButKeepConfIvals();
+		blockProbSim.clearValuesButKeepConfIvals();
+		arateToScenarioDuringSimulationSim.clearValuesButKeepConfIvals();
 	}
 
 	public void recordCISampleAtTheEndOfSimulation() {
 		for (int slot = 0; slot < ModelParameters.intervalSlotCount; slot++) {
-			averageResponseTimeSim.recordCISample(slot);
-			averageThroughputSim.recordCISample(slot, (numOfRequestsTimedoutDuringService.getTotalValue(slot) + numOfRequestsCompletedSuccessfully.getTotalValue(slot)) / SimulationParameters.getIntervalSlotRunTime(slot));
-			averageBadputSim.recordCISample(slot, numOfRequestsTimedoutDuringService.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
-			averageGoodputSim.recordCISample(slot, numOfRequestsCompletedSuccessfully.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
-			buffTimeoutSim.recordCISample(slot, numOfRequestsTimedoutInBuffer.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
-			dropRateSim.recordCISample(slot, numOfRequestsDropped.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
-			blockingProbabilitySim.recordCISample(slot, (numOfRequestsDropped.getTotalValue(slot) + numOfRequestsTimedoutInBuffer.getTotalValue(slot)) / numOfRequestsArrived.getTotalValue(slot));
-			arateToScenarioDuringSimulationSim.recordCISample(slot, numOfRequestsArrived.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
+			avgRespTimeSim.recordCISample(slot);
+			avgThroughputSim.recordCISample(slot, (noOfReqTimedoutDuringService.getTotalValue(slot) + noOfReqCompletedSuccessfully.getTotalValue(slot)) / SimulationParameters.getIntervalSlotRunTime(slot));
+			avgBadputSim.recordCISample(slot, noOfReqTimedoutDuringService.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
+			avgGoodputSim.recordCISample(slot, noOfReqCompletedSuccessfully.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
+			buffTimeoutSim.recordCISample(slot, noOfReqTimedoutInBuffer.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
+			dropRateSim.recordCISample(slot, noOfReqDropped.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
+			blockProbSim.recordCISample(slot, (noOfReqDropped.getTotalValue(slot) + noOfReqTimedoutInBuffer.getTotalValue(slot)) / noOfReqArrived.getTotalValue(slot));
+			arateToScenarioDuringSimulationSim.recordCISample(slot, noOfReqArrived.getTotalValue(slot) / SimulationParameters.getIntervalSlotRunTime(slot));
 		}
 	}
 }

@@ -95,7 +95,7 @@ public class PerfAnaClosedOpen {
 		for (Host h : ds.hosts) {
 			for (Object s : h.softServers) {
 				for (Scenario sce : ds.scenarios) {
-					((SoftServerAna) s).createCompoundTaskObjectsForGivenSoftServer(sce.rootNodeOfScenario, sce.getName());
+					((SoftServerAna) s).createCompoundTaskObjectsForGivenSoftServer(sce.rootNode, sce.getName());
 				}
 			}
 		}
@@ -129,7 +129,7 @@ public class PerfAnaClosedOpen {
 	void initializeTaskArrivalRates() {
 		for (Scenario s : ds.scenarios) {
 			logger.debug("In task arrival calculation for Scenario " + s.getName());
-			dfsInitArr(s.rootNodeOfScenario);
+			dfsInitArr(s.rootNode);
 		}
 	}
 
@@ -553,10 +553,10 @@ public class PerfAnaClosedOpen {
 		for (Scenario sc : ds.scenarios) {
 			sc_resptime = 0;
 			arr_rate = 0;
-			if (sc.rootNodeOfScenario.name.compareToIgnoreCase("user") == 0) {
-				curr = sc.rootNodeOfScenario.children.get(0);
+			if (sc.rootNode.name.compareToIgnoreCase("user") == 0) {
+				curr = sc.rootNode.children.get(0);
 			} else {
-				curr = sc.rootNodeOfScenario;
+				curr = sc.rootNode;
 			}
 			String taskname = curr.name;
 			for (Host host : ds.hosts) {
@@ -583,7 +583,7 @@ public class PerfAnaClosedOpen {
 			ete_resptime += (s.getArateToScenario() * s.getAverageResponseTime());
 			tot_arrate += s.getArateToScenario();
 		}
-		ds.overallResponseTime.setValue(ete_resptime / tot_arrate);
+		ds.overallRespTime.setValue(ete_resptime / tot_arrate);
 	}
 
 	void calculateDeviceThinkTimes() throws Exception {
@@ -861,7 +861,7 @@ public class PerfAnaClosedOpen {
 												if (!task1.name.equalsIgnoreCase(task2.name)) {
 													for (Scenario sc : ds.scenarios) {
 
-														link_arate = link_arate + dfs(sc.rootNodeOfScenario, task1.name, task2.name)
+														link_arate = link_arate + dfs(sc.rootNode, task1.name, task2.name)
 																/ softserv1.getNumCopies();
 
 													}
@@ -944,7 +944,7 @@ public class PerfAnaClosedOpen {
 	double sizeOfMsg(String task1_name, String task2_name) {
 		double length_of_msg;
 		for (Scenario sc : ds.scenarios) {
-			length_of_msg = sizeOfMsg(sc.rootNodeOfScenario, task1_name, task2_name);
+			length_of_msg = sizeOfMsg(sc.rootNode, task1_name, task2_name);
 			if (length_of_msg > 0)
 				return length_of_msg;
 		}

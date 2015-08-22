@@ -29,7 +29,7 @@ import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.Task;
 import perfcenter.baseclass.Variable;
 import perfcenter.baseclass.VirtualResource;
-import perfcenter.baseclass.enums.SystemType;
+import perfcenter.baseclass.enums.SysType;
 
 //! To be filled in after understanding
 /*! 
@@ -48,14 +48,14 @@ public class PerfAnalytic {
 
 	public DistributedSystemAna performAnalysis() throws Exception {
 
-		if (ModelParameters.getSystemType() == SystemType.OPEN) {
+		if (ModelParameters.getSystemType() == SysType.OPEN) {
 			PerfAnaClosedOpen pco;
 			pco = new PerfAnaClosedOpen(resultDistributedSystemAna);
 			// resultDistributedSystem = pco.performAnalysisOpen();
 			PerfAnaOpen po;
 			po = new PerfAnaOpen(resultDistributedSystemAna);
 			resultDistributedSystemAna = po.performAnalysisOpen();
-		} else if (ModelParameters.getSystemType() == SystemType.CLOSED) {
+		} else if (ModelParameters.getSystemType() == SysType.CLOSED) {
 			PerfAnaClosed pc;
 			pc = new PerfAnaClosed(resultDistributedSystemAna);
 			resultDistributedSystemAna = pc.performAnalysisClosed();
@@ -178,7 +178,7 @@ public class PerfAnalytic {
 				}
 
 				for (Scenario sce : inputDistributedSystem.scenarios) {
-					Node n = dfs(sce.rootNodeOfScenario, simpletask.name);
+					Node n = dfs(sce.rootNode, simpletask.name);
 
 					if (n != null) {
 						Node n1 = n.getCopy();// change n1.name to
@@ -190,7 +190,7 @@ public class PerfAnalytic {
 
 				}
 				for (Scenario sce : inputDistributedSystem.scenarios) {
-					this.dfsprint(sce.rootNodeOfScenario);
+					this.dfsprint(sce.rootNode);
 				}
 
 			}

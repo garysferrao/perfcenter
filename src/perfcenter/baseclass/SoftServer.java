@@ -226,7 +226,7 @@ public class SoftServer extends QueuingResource {
 			h.deployVirtualRes(vr, this.name);
 
 			// check if the virtual res calls other virtual resource.
-			VirtualResource currvr = ModelParameters.inputDistributedSystem.getVirtualRes(vr);
+			VirtualResource currvr = ModelParameters.inputDistSys.getVirtualRes(vr);
 			if (currvr.virtRes.size() != 0) {
 				deployVirtResRecursive(h, currvr.virtRes);
 			}
@@ -242,7 +242,7 @@ public class SoftServer extends QueuingResource {
 			h.unDeployVirtualRes(vr, this.name);
 
 			// check if the virtual resource calls other virtual resources
-			VirtualResource currvr = ModelParameters.inputDistributedSystem.getVirtualRes(vr);
+			VirtualResource currvr = ModelParameters.inputDistSys.getVirtualRes(vr);
 			if (currvr.virtRes.size() == 0) {
 				undeployVirtResRecursive(h, currvr.virtRes);
 			}

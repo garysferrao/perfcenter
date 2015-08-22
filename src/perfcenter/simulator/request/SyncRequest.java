@@ -20,6 +20,7 @@ package perfcenter.simulator.request;
 import perfcenter.simulator.HostSim;
 
 /** Synchronous request between two servers */
+//CHECK
 public class SyncRequest {
 
 	int reqID;

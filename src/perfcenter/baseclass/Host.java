@@ -259,7 +259,7 @@ public class Host {
 			sr.addSoftServer(srvName);
 		} else {
 			// get new copy of virtual resource and add to list
-			VirtualResource sr = ModelParameters.inputDistributedSystem.getVirtualRes(srName);
+			VirtualResource sr = ModelParameters.inputDistSys.getVirtualRes(srName);
 			VirtualResource srcpy = sr.getCopy();
 			srcpy.addSoftServer(srvName);
 			virResources.add(srcpy);
@@ -316,7 +316,7 @@ public class Host {
 		device.governor = PowerManagementGovernor.ONDEMAND;
 
 		// Set other PowerManaged attributes of this device
-		for (Device dev : ModelParameters.inputDistributedSystem.powerManagedDevicePrototypes) {
+		for (Device dev : ModelParameters.inputDistSys.powerManagedDevicePrototypes) {
 			if (dev.name.equalsIgnoreCase(name)) // device type is found
 			{
 				// copy all attributes from device type object to this device
@@ -334,7 +334,7 @@ public class Host {
 
 			}
 		}
-		ModelParameters.inputDistributedSystem.addPowerManagedDevices(device);
+		ModelParameters.inputDistSys.addPowerManagedDevices(device);
 	}
 
 	/** Set governor of power-managed devices */

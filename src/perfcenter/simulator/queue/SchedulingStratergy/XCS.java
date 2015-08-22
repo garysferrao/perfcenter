@@ -2,23 +2,21 @@ package perfcenter.simulator.queue.SchedulingStratergy;
 
 import java.util.HashMap;
 
+import perfcenter.simulator.DeviceSim;
+import perfcenter.simulator.SoftServerSim;
+import perfcenter.simulator.VirtualResSim;
 import perfcenter.simulator.HostSim;
 import perfcenter.simulator.ScenarioSim;
 import perfcenter.simulator.queue.QueueServer;
 import perfcenter.simulator.queue.QueueSim;
 import perfcenter.simulator.request.Request;
 
-public class XCS extends QueueSim{
-	private int cap = 16000; //FIXME: No hard coding please
-	public HashMap<String, Integer> creditMap = new HashMap<String, Integer>(); //Softservername and their credits
+public class XCS extends QueueSim{	
 
-	//private HashMap
+	//This is incomplete. QuantumOver event needs to be added. 
 	public XCS(Integer buffSize, Integer numInstances, /* String resType, */QueueServer qs) {
 		super(buffSize, numInstances,/* resType, */qs);
-//		
-////		for(int credit:credits){
-////			credit = cap;
-////		}
+//				
 	}
 	
 	public void enqueue(Request req, double currTime) throws Exception {
@@ -42,19 +40,46 @@ public class XCS extends QueueSim{
 			//Some instance of device is free, so schedule the request
 			//ADDHERE xcs specific things here
 			/********/
-			if(creditMap.size() == 0){
+			int cap = req.hostObject.cap;
+			int deduction = req.hostObject.deduction;
+			HashMap<String, Integer> creditMap;
+			HashMap<String, Integer> statusMap;
+			String name;
+			if(qServer instanceof DeviceSim){
+				creditMap = req.hostObject.deviceCreditMap;
+				statusMap = req.hostObject.deviceStatusMap;
+				name = req.devName;
+			}else if(qServer instanceof SoftServerSim){
+				creditMap = req.hostObject.softServerCreditMap;
+				statusMap = req.hostObject.softServerStatusMap;
+				name = req.softServName;
+			}else{
+				assert qServer instanceof VirtualResSim == true;
+				creditMap = req.hostObject.virtResCreditMap;
+				statusMap = req.hostObject.virtResStatusMap;
+				name = req.virtResName;
+			}
+			int tempCredit = creditMap.get(name);
+			int tempStatus = statusMap.get(name);
+			if(tempStatus == 1){
+				creditMap.put(name, new Integer(tempCredit-deduction));
+				if(tempCredit-deduction >= 0)
+					statusMap.put(name, 1);
+				else
+					statusMap.put(name, 0);
+				/**********/	
+				req.qServerInstanceID = idleDeviceId;
+				createStartTaskEvent(req, idleDeviceId, currTime);
+				//Update the average waiting time for this resource
+				averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
 				
-			}else if(creditMap.containsKey(req.hostObject.getServer(req.softServerName))){
-				creditMap.put(req.hostObject.getServer(req.softServerName).name, cap);
-				
+				/**********/
+			}else{
+				//FIXME If status of this softServer is "under", then check for all softServer's status. 
+				// If one of them has status "over", then schedule task for that softServer
+				//else assign this server cpu instance.
 			}
 			
-			
-			/********/
-			req.qServerInstanceID = idleDeviceId;
-			createStartTaskEvent(req, idleDeviceId, currTime);
-			//Update the average waiting time for this resource
-			averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
 		}
 
 	}
@@ -68,6 +93,51 @@ public class XCS extends QueueSim{
 		 *    softserver is "Over", then and only then return it. Otherwise don't return it.    
 		 */
 		Request req = getRequestFromBuffer(0, currTime);
+		int idleDeviceId = getIdleInstanceId();
+		/*************/
+		int cap = req.hostObject.cap;
+		int deduction = req.hostObject.deduction;
+		HashMap<String, Integer> creditMap;
+		HashMap<String, Integer> statusMap;
+		String name;
+		if(qServer instanceof DeviceSim){
+			creditMap = req.hostObject.deviceCreditMap;
+			statusMap = req.hostObject.deviceStatusMap;
+			name = req.devName;
+		}else if(qServer instanceof SoftServerSim){
+			creditMap = req.hostObject.softServerCreditMap;
+			statusMap = req.hostObject.softServerStatusMap;
+			name = req.softServName;
+		}else{
+			assert qServer instanceof VirtualResSim == true;
+			creditMap = req.hostObject.virtResCreditMap;
+			statusMap = req.hostObject.virtResStatusMap;
+			name = req.virtResName;
+		}
+		int tempCredit = creditMap.get(name);
+		int tempStatus = statusMap.get(name);
+		if(tempStatus == 1){
+			creditMap.put(name, new Integer(tempCredit-deduction));
+			if(tempCredit-deduction >= 0)
+				statusMap.put(name, 1);
+			else
+				statusMap.put(name, 0);
+		/********************/
+			req.qServerInstanceID = idleDeviceId;
+			createStartTaskEvent(req, idleDeviceId, currTime);
+			//Update the average waiting time for this resource
+			averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
+		/*********************/	
+		}else{
+			//"over" status
+			//FIXME If status of this softServer is "under", then check for all softServer's status. 
+			// If one of them has status "over", then schedule task for that softServer
+			//else assign this server cpu instance.
+		}
+		
+		/******************/
+		
+		
 	}
 }
 

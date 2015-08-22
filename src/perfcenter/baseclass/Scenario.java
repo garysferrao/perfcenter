@@ -29,18 +29,18 @@ import perfcenter.simulator.SimulationParameters;
  */
 public class Scenario {
 
-	protected String scenarioName;
+	protected String name;
 
-	public Variable scenarioProbability;
+	public Variable scenarioProb;
 
 	/** Pointer to root node of scenario */
-	public Node rootNodeOfScenario;
+	public Node rootNode;
 
 	//DOUBT: add power here?
-	public Metric averageResponseTime = new Metric();
-	public Metric averageThroughput = new Metric();
-	public Metric averageBadput = new Metric(); //rate at which requests timeout
-	public Metric averageGoodput = new Metric();
+	public Metric avgRespTime = new Metric();
+	public Metric avgThroughput = new Metric();
+	public Metric avgBadput = new Metric(); //rate at which requests timeout
+	public Metric avgGoodput = new Metric();
 	public Metric buffTimeout = new Metric();
 	public Metric dropRate = new Metric();
 	public Metric blockingProb = new Metric();
@@ -53,19 +53,19 @@ public class Scenario {
 	public Scenario() {}
 
 	public Scenario(String scename) {
-		scenarioName = scename;
+		name = scename;
 	}
 
 	public void setAverageResponseTime(double rtime) {
-		averageResponseTime.setValue(rtime);
+		avgRespTime.setValue(rtime);
 	}
 
 	public double getAverageResponseTime() {
-		return averageResponseTime.getValue();
+		return avgRespTime.getValue();
 	}
 
 	public String getName() {
-		return scenarioName;
+		return name;
 	}
 
 	public void setArateToScenario(int slot, double value) {
@@ -77,11 +77,11 @@ public class Scenario {
 	}
 
 	public double getProbability() {
-		return scenarioProbability.value;
+		return scenarioProb.value;
 	}
 
 	public void setProbability(Variable val) {
-		scenarioProbability = val;
+		scenarioProb = val;
 	}
 
 	/** prints the tree present in scenario */
@@ -93,25 +93,25 @@ public class Scenario {
 	}
 
 	public void modifyProbability(double var1) {
-		if (scenarioProbability.name.compareToIgnoreCase("local") == 0) {
-			scenarioProbability.value = var1;
+		if (scenarioProb.name.compareToIgnoreCase("local") == 0) {
+			scenarioProb.value = var1;
 			return;
 		}
-		throw new Error("Attempt to modify the arrival rate of scenario " + scenarioName + " instead variable " + scenarioProbability.name
+		throw new Error("Attempt to modify the arrival rate of scenario " + name + " instead variable " + scenarioProb.name
 				+ " should be modified");
 	}
 
 	/** finds arrival rate and probability for each node in the scenario */
 	public void initialize() {
 		// reset tree parameter
-		initializeTree(rootNodeOfScenario);
+		initializeTree(rootNode);
 
 		// set the arrival root of the root node
 		//HACK: following field is used only for the analytical part, hence assigning arate of slot zero to it
-		rootNodeOfScenario.arrate = arateToScenario.getValue(0);
+		rootNode.arrate = arateToScenario.getValue(0);
 
 		// find arrival rate to each of the nodes
-		findArrivalRateTree(rootNodeOfScenario, rootNodeOfScenario.arrate, 1.0);
+		findArrivalRateTree(rootNode, rootNode.arrate, 1.0);
 	}
 
 	/** 

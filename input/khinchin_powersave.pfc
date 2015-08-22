@@ -155,6 +155,12 @@ end
 //print "Load,respt(),tput(),util(H1:cpu),freq(H1:cpu),power(H1:cpu)"
 //print nusr+","+respt()+","+tput()+","+util(H1[1]:cpu)+","+freq(H1[1]:cpu)+","+power(H1[1]:cpu)
 
+print "Load : " + nusr
+print "Response Time : " + respt()
+//print "Throughput : " + tput()
+print "Utilization of H1:cpu : " + util(H1[1]:cpu)
+print "Utilization of H1:Frequency : " + freq(H1[1]:cpu)
+print "Utilization of H1:Power : " + power(H1[1]:cpu)
 print "respt"
 print respt()
 
@@ -169,3 +175,4 @@ print freq(H1[1]:cpu)
 
 print "power"
 print power(H1[1]:cpu)
+

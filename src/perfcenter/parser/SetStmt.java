@@ -134,55 +134,55 @@ public class SetStmt {
 			if (host != null) {
 				if (server != null) {
 					if (count >= 0) {
-						((SoftServer) ModelParameters.inputDistributedSystem.getHost(host).getServer(server)).modifyThreadCount(count);
+						((SoftServer) ModelParameters.inputDistSys.getHost(host).getServer(server)).modifyThreadCount(count);
 						return;
 					} else if (buffer >= 0) {
-						((SoftServer) ModelParameters.inputDistributedSystem.getHost(host).getServer(server)).modifyThreadBuffer(buffer);
+						((SoftServer) ModelParameters.inputDistSys.getHost(host).getServer(server)).modifyThreadBuffer(buffer);
 						return;
 					} else if (pol != null) {
-						((SoftServer) ModelParameters.inputDistributedSystem.getHost(host).getServer(server)).setSchedPolicy(pol);
+						((SoftServer) ModelParameters.inputDistSys.getHost(host).getServer(server)).setSchedPolicy(pol);
 						return;
 					}
 
 				} else if (device != null) {
 					if (count >= 0) {
-						ModelParameters.inputDistributedSystem.getHost(host).modifyDeviceCount(device, count);
+						ModelParameters.inputDistSys.getHost(host).modifyDeviceCount(device, count);
 						return;
 					} else if (buffer >= 0) {
-						ModelParameters.inputDistributedSystem.getHost(host).modifyDeviceBuffer(device, buffer);
+						ModelParameters.inputDistSys.getHost(host).modifyDeviceBuffer(device, buffer);
 						return;
 					} else if (pol != null) {
-						ModelParameters.inputDistributedSystem.getHost(host).modifyDeviceSchedPol(device, pol);
+						ModelParameters.inputDistSys.getHost(host).modifyDeviceSchedPol(device, pol);
 						return;
 					} else if (probe_interval > 0) { // modify probe interval of device, added by rakesh
-						ModelParameters.inputDistributedSystem.getHost(host).modifyProbeInterval(device, probe_interval);
+						ModelParameters.inputDistSys.getHost(host).modifyProbeInterval(device, probe_interval);
 						return;
 					} else if (gov_up_threshold.getValue() > 0) { // modify governor up threshold of device, added by rakesh //BHAVIN
-						ModelParameters.inputDistributedSystem.getHost(host).modifyGovUpThreshold(device, gov_up_threshold.getValue()); //BHAVIN
+						ModelParameters.inputDistSys.getHost(host).modifyGovUpThreshold(device, gov_up_threshold.getValue()); //BHAVIN
 						return;
 					} else if (gov_down_threshold.getValue() > 0) {// modify governor down threshold of device, added by rakesh //BHAVIN
 //						ModelParameters.inputDistributedSystem.getHost(host).modifyGovDownThreshold(device, gov_down_threshold);
-						ModelParameters.inputDistributedSystem.getHost(host).modifyGovDownThreshold(device, gov_down_threshold.getValue()); //BHAVIN
+						ModelParameters.inputDistSys.getHost(host).modifyGovDownThreshold(device, gov_down_threshold.getValue()); //BHAVIN
 						return;
 					}
 				}
 			} else if (lan1 != null) {
 				if (mtu > 0) {
-					ModelParameters.inputDistributedSystem.getLink(lan1, lan2).modifyMTU(mtu, mtuUnit);
+					ModelParameters.inputDistSys.getLink(lan1, lan2).modifyMTU(mtu, mtuUnit);
 					return;
 				} else if (prop >= 0) {
-					ModelParameters.inputDistributedSystem.getLink(lan1, lan2).modifyPropDelay(prop, propUnit);
+					ModelParameters.inputDistSys.getLink(lan1, lan2).modifyPropDelay(prop, propUnit);
 					return;
 				} else if (trans >= 0) {
-					ModelParameters.inputDistributedSystem.getLink(lan1, lan2).modifyTransRate(trans, transUnit);
+					ModelParameters.inputDistSys.getLink(lan1, lan2).modifyTransRate(trans, transUnit);
 					return;
 				}
 			} else if (task != null) {
-				ModelParameters.inputDistributedSystem.getTask(task).modifyServiceTime(device, dist);
+				ModelParameters.inputDistSys.getTask(task).modifyServiceTime(device, dist);
 			} else if (var != null) {
-				ModelParameters.inputDistributedSystem.getVariable(var).setValue(varval);
+				ModelParameters.inputDistSys.getVariable(var).setValue(varval);
 			} else if (scenario != null) {
-				ModelParameters.inputDistributedSystem.getScenario(scenario).modifyProbability(prob);
+				ModelParameters.inputDistSys.getScenario(scenario).modifyProbability(prob);
 			}
 		} catch (Error e) {
 			throw new Error("Line no:" + lineno + " " + e.getMessage());

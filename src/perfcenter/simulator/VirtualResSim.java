@@ -87,18 +87,18 @@ public class VirtualResSim extends VirtualResource implements QueueServer {
 		rq.virtualResIndex = rq.virtualResIndex + 1;
 
 		// Offer request to next virtual resource
-		nextSoftResFound2 = rq.hostObject.offeredRequestToVirtualRes(rq, SimulationParameters.currentTime);
+		nextSoftResFound2 = rq.hostObject.offeredRequestToVirtualRes(rq, SimulationParameters.currTime);
 		if (nextSoftResFound2 == true) {
 			return;
 		}
 
 		// there is no next virtual res
 		if (rq.virtResStack.size() == 1) {
-			Event ev2 = new Event(SimulationParameters.currentTime, EventType.SOFTWARE_TASK_ENDS, rq);
+			Event ev2 = new Event(SimulationParameters.currTime, EventType.SOFTWARE_TASK_ENDS, rq);
 			SimulationParameters.offerEvent(ev2);
 			return;
 		} else {
-			Event ev = new Event(SimulationParameters.currentTime, EventType.VIRTUALRES_TASK_ENDS, rq);
+			Event ev = new Event(SimulationParameters.currTime, EventType.VIRTUALRES_TASK_ENDS, rq);
 			SimulationParameters.offerEvent(ev);
 			return;
 		}
@@ -120,7 +120,7 @@ public class VirtualResSim extends VirtualResource implements QueueServer {
 
 	// this is called by the queue and also from deviceSim
 	public void dropRequest(Request r, double currTime) throws Exception {
-		r.hostObject.getServer(r.softServerName).abortThread(r.threadNum, SimulationParameters.currentTime);
+		r.hostObject.getServer(r.softServName).abortThread(r.threadNum, SimulationParameters.currTime);
 		r.drop();
 	}
 

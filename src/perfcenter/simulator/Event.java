@@ -22,7 +22,7 @@ import org.apache.log4j.Logger;
 import perfcenter.baseclass.Host;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.Node;
-import perfcenter.baseclass.enums.SystemType;
+import perfcenter.baseclass.enums.SysType;
 import perfcenter.simulator.queue.QServerInstance;
 import perfcenter.simulator.queue.QueueSim;
 import perfcenter.simulator.request.Request;
@@ -37,46 +37,47 @@ public class Event implements Comparable<Event> {
 	//ARCHITECTURE: convert each event to its own class
 
 	/** the time at which the event is supposed to happen. */
-	double time;
+	double timestamp;
 	/** type of the event */
 	EventType type;
 	/** Request object associated with this event. This can be null. */
-	private Request requestObject;
+	private Request reqObj;
 
 	/** keep track of event name and device name for powermanaged devices */
-	private HostSim hostObject = null;
-	private DeviceSim deviceObject = null;
+	private HostSim hostObj = null;
+	private DeviceSim devObj = null;
 
 	Logger logger = Logger.getLogger("Event");
 
 	public Event(double evTime, EventType evType, Request rqId) {
-		time = evTime;
+		timestamp = evTime;
 		type = evType;
-		requestObject = rqId;
+		reqObj = rqId;
 	}
 
 	/** added for changing workload model */
 	public Event(double evTime, EventType evType) {
-		time = evTime;
+		timestamp = evTime;
 		type = evType;
-		requestObject = null;
+		reqObj = null;
 	}
 
 	/** added for device probe event */
 	Event(double evTime, EventType eventType, HostSim host, DeviceSim device) {
-		time = evTime;
+		timestamp = evTime;
 		type = eventType;
-		this.hostObject = host;
-		this.deviceObject = device;
-		requestObject = null;
+		this.hostObj = host;
+		this.devObj = device;
+		reqObj = null;
 	}
-
+	
+	//CHECK: What if timestamps of both events is similar
 	/** comparator implemented. Comparing is on "time" */
 	public int compareTo(Event o) {
 		Event r = (Event) o;
-		if (time < r.time) {
+		if (timestamp < r.timestamp) {
 			return -1;
-		} else if (time > r.time) {
+		} else if (timestamp > r.timestamp) {
 			return 1;
 		} else {
 			return 0;
@@ -91,20 +92,20 @@ public class Event implements Comparable<Event> {
 	 */
 	public void scenarioArrival() throws Exception {
 		// update current time
-		SimulationParameters.currentTime = time;
-		SimulationParameters.totalRequestsArrived++;
+		SimulationParameters.currTime = timestamp;
+		SimulationParameters.totalReqArrived++;
 
 		// get the request object corresponding to this arrival event from request list
-		logger.debug("request: " + requestObject.scenario);
+		logger.debug("request: " + reqObj.scenario);
 
 		// for open loop simulation generate next external arrival event
 		// for the scenario. check if its not the retry event: yogesh
-		if (!requestObject.retryRequest) {
-			if (ModelParameters.getSystemType() == SystemType.OPEN) {
+		if (!reqObj.retryRequest) {
+			if (ModelParameters.getSystemType() == SysType.OPEN) {
 				// if arrival rate is zero do not generate any events/requests.
-				if (requestObject.scenario.getArateToScenario() > 0) {
-					double arrivalTime = time + SimulationParameters.exp.nextExp(1 / requestObject.scenario.getArateToScenario());
-					Request newRequest = new Request(SimulationParameters.requestIDGenerator++, requestObject.scenario, arrivalTime);
+				if (reqObj.scenario.getArateToScenario() > 0) {
+					double arrivalTime = timestamp + SimulationParameters.exp.nextExp(1 / reqObj.scenario.getArateToScenario());
+					Request newRequest = new Request(SimulationParameters.reqIdGenerator++, reqObj.scenario, arrivalTime);
 					newRequest.scenarioArrivalTime = arrivalTime;
 					SimulationParameters.addRequest(newRequest);
 
@@ -120,36 +121,36 @@ public class Event implements Comparable<Event> {
 			}
 		}
 
-		requestObject.scenarioArrivalTime = SimulationParameters.currentTime;
-		requestObject.scenarioTimeout = SimulationParameters.currentTime + ModelParameters.getTimeout().nextRandomVal(1);
+		reqObj.scenarioArrivalTime = SimulationParameters.currTime;
+		reqObj.scenarioTimeout = SimulationParameters.currTime + ModelParameters.getTimeout().nextRandomVal(1);
 
 		// identify the software server to which this request was submitted
-		requestObject.scenario.numOfRequestsArrived.recordValue(1);
+		reqObj.scenario.noOfReqArrived.recordValue(1);
 
 		// The request will directly go to the first software server i.e. the root node of the scenario.
 		Node currentNode;
-		if (requestObject.scenario.rootNodeOfScenario.name.compareToIgnoreCase("user") == 0) {
-			currentNode = requestObject.scenario.rootNodeOfScenario.children.get(0);
+		if (reqObj.scenario.rootNode.name.compareToIgnoreCase("user") == 0) {
+			currentNode = reqObj.scenario.rootNode.children.get(0);
 		} else {
-			currentNode = requestObject.scenario.rootNodeOfScenario;
+			currentNode = reqObj.scenario.rootNode;
 		}
-		requestObject.currentNode = currentNode;
-		requestObject.nextNode = SimulationParameters.distributedSystemSim.findNextNode(currentNode);
-		requestObject.taskName = currentNode.name;
-		requestObject.softServerName = currentNode.servername;
-		requestObject.hostObject = ((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(requestObject.softServerName)).getRandomHostObject();
-		if(requestObject.hostObject == null) {
-			System.out.println(((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(requestObject.softServerName)));
+		reqObj.currentNode = currentNode;
+		reqObj.nextNode = SimulationParameters.distributedSystemSim.findNextNode(currentNode);
+		reqObj.taskName = currentNode.name;
+		reqObj.softServName = currentNode.servername;
+		reqObj.hostObject = ((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)).getRandomHostObject();
+		if(reqObj.hostObject == null) {
+			System.out.println(((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)));
 		}
-		requestObject.softServerArrivalTime = SimulationParameters.currentTime;
+		reqObj.softServArrivalTime = SimulationParameters.currTime;
 
 		// get the soft server object to which this request will be offered
-		SoftServerSim sserver = requestObject.hostObject.getServer(requestObject.softServerName);
-		logger.debug("Task_Name: " + requestObject.taskName);
-		logger.debug("Server_Name: " + requestObject.softServerName);
-		logger.debug("Host_Name: " + requestObject.hostObject.getName());
+		SoftServerSim sserver = reqObj.hostObject.getServer(reqObj.softServName);
+		logger.debug("Task_Name: " + reqObj.taskName);
+		logger.debug("Server_Name: " + reqObj.softServName);
+		logger.debug("Host_Name: " + reqObj.hostObject.getName());
 
-		sserver.enqueue(requestObject, SimulationParameters.currentTime);
+		sserver.enqueue(reqObj, SimulationParameters.currTime);
 	}
 
 	/**
@@ -158,21 +159,21 @@ public class Event implements Comparable<Event> {
 	 * eventList. if no, then queue the request into the hardware.
 	 */
 	public void softwareTaskStarts() throws Exception {
-		SimulationParameters.currentTime = time;
+		SimulationParameters.currTime = timestamp;
 
 		// get the request object
 		logger.debug("request: ");
-		logger.debug("scenario_name: " + requestObject.scenario);
-		logger.debug("s/w server name: " + requestObject.softServerName);
-		logger.debug("task_name: " + requestObject.taskName);
-		logger.debug("timeout_time: " + requestObject.scenarioTimeout);
+		logger.debug("scenario_name: " + reqObj.scenario);
+		logger.debug("s/w server name: " + reqObj.softServName);
+		logger.debug("task_name: " + reqObj.taskName);
+		logger.debug("timeout_time: " + reqObj.scenarioTimeout);
 
 		// check if timed out in buffer.
-		if ((ModelParameters.timeoutEnabled == true) && (requestObject.scenarioTimeout < SimulationParameters.currentTime)) {
+		if ((ModelParameters.timeoutEnabled == true) && (reqObj.scenarioTimeout < SimulationParameters.currTime)) {
 			timeoutInBuffer();
 		} else {
-			SoftServerSim softServerSim = requestObject.hostObject.getServer(requestObject.softServerName);
-			softServerSim.processTaskStartEvent(requestObject, SimulationParameters.currentTime);
+			SoftServerSim softServerSim = reqObj.hostObject.getServer(reqObj.softServName);
+			softServerSim.processTaskStartEvent(reqObj, SimulationParameters.currTime);
 		}
 	}
 
@@ -180,25 +181,25 @@ public class Event implements Comparable<Event> {
 	 * Begins processing of Hardware execution
 	 */
 	public void hardwareTaskStarts() throws Exception {
-		SimulationParameters.currentTime = time;
+		SimulationParameters.currTime = timestamp;
 
-		requestObject.hostObject.getDevice(requestObject.devName).processTaskStartEvent(requestObject, SimulationParameters.currentTime);
+		reqObj.hostObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
 	/**
 	 * Hardware execution ending is handled.
 	 */
 	public void hardwareTaskEnds() throws Exception {
-		SimulationParameters.currentTime = time;
-		requestObject.hostObject.getDevice(requestObject.devName).processTaskEndEvent(requestObject, requestObject.devInstance, SimulationParameters.currentTime);
+		SimulationParameters.currTime = timestamp;
+		reqObj.hostObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
 	}
 
 	/**
 	 * Called when the software task ends.
 	 */
 	public void softwareTaskEnds() throws Exception {
-		SimulationParameters.currentTime = time;
-		requestObject.hostObject.getServer(requestObject.softServerName).processTaskEndEvent(requestObject, requestObject.threadNum, SimulationParameters.currentTime);
+		SimulationParameters.currTime = timestamp;
+		reqObj.hostObject.getServer(reqObj.softServName).processTaskEndEvent(reqObj, reqObj.threadNum, SimulationParameters.currTime);
 	}
 
 	/**
@@ -208,7 +209,7 @@ public class Event implements Comparable<Event> {
 	 * @throws Exception
 	 */
 	public void numberOfUserChanged() throws Exception {
-		SimulationParameters.currentTime = time;
+		SimulationParameters.currTime = timestamp;
 		SimulationParameters.recordIntervalSlotRunTime();
 
 		for (Host host : SimulationParameters.distributedSystemSim.hosts) {
@@ -219,9 +220,9 @@ public class Event implements Comparable<Event> {
 				// If the device is busy at the time of collection then find then appropriately update the value of totalBusyTime
 				for (QServerInstance qServerInstance : ((QueueSim) deviceSim.resourceQueue).qServerInstances) {
 					if (qServerInstance.isBusyStatus()) {
-						qServerInstance.totalBusyTime.recordValue(SimulationParameters.currentTime - qServerInstance.reqStartTime);
-						qServerInstance.reqStartTime = SimulationParameters.currentTime;
-						qServerInstance.reqArrivalTime = SimulationParameters.currentTime;
+						qServerInstance.totalBusyTime.recordValue(SimulationParameters.currTime - qServerInstance.reqStartTime);
+						qServerInstance.reqStartTime = SimulationParameters.currTime;
+						qServerInstance.reqArrivalTime = SimulationParameters.currTime;
 					}
 				}
 			}
@@ -231,9 +232,9 @@ public class Event implements Comparable<Event> {
 				SoftServerSim softServerSim = (SoftServerSim) softServer;
 				for (QServerInstance qsi : ((QueueSim) softServerSim.resourceQueue).qServerInstances) {
 					if (qsi.isBusyStatus()) {
-						qsi.totalBusyTime.recordValue(SimulationParameters.currentTime - qsi.reqStartTime);
-						qsi.reqStartTime = SimulationParameters.currentTime;
-						qsi.reqArrivalTime = SimulationParameters.currentTime;
+						qsi.totalBusyTime.recordValue(SimulationParameters.currTime - qsi.reqStartTime);
+						qsi.reqStartTime = SimulationParameters.currTime;
+						qsi.reqArrivalTime = SimulationParameters.currTime;
 					}
 				}
 				// flush the values for next interval
@@ -243,7 +244,7 @@ public class Event implements Comparable<Event> {
 
 		SimulationParameters.incrementIntervalSlotCounter();
 		SimulationParameters.offerEvent(
-				new Event(SimulationParameters.currentTime + SimulationParameters.getCurrentSlotLength(), EventType.NO_OF_USERS_CHANGES));
+				new Event(SimulationParameters.currTime + SimulationParameters.getCurrentSlotLength(), EventType.NO_OF_USERS_CHANGES));
 		instantiateUsers();
 	}
 
@@ -262,17 +263,17 @@ public class Event implements Comparable<Event> {
 			for (int users = previousUserCount; users < currentUserCount; users++) {
 
 				ScenarioSim sceName = SimulationParameters.getRandomScenarioSimBasedOnProb();
-				double interArrivalTimeNext = SimulationParameters.currentTime + ModelParameters.getThinkTime().nextRandomVal(1);
+				double interArrivalTimeNext = SimulationParameters.currTime + ModelParameters.getThinkTime().nextRandomVal(1);
 				// double interArrivalTimeNext = SimParams.currentTime + users * 0.001;
-				if (SimulationParameters.requestIDGenerator < ModelParameters.getMaxUsers()) {
-					Request req = new Request(SimulationParameters.requestIDGenerator++, sceName, interArrivalTimeNext);
+				if (SimulationParameters.reqIdGenerator < ModelParameters.getMaxUsers()) {
+					Request req = new Request(SimulationParameters.reqIdGenerator++, sceName, interArrivalTimeNext);
 					req.scenarioArrivalTime = interArrivalTimeNext;
 					//All the scenarios are added into request list here
 					SimulationParameters.addRequest(req);
 					Event ev = new Event(interArrivalTimeNext, EventType.SCENARIO_ARRIVAL, req);
 					// change lastscenarioarrivalcurrTime only if scenario arrival event have greater value
-					if (SimulationParameters.lastScenarioArrivalTime < ev.time) {
-						SimulationParameters.lastScenarioArrivalTime = ev.time;
+					if (SimulationParameters.lastScenarioArrivalTime < ev.timestamp) {
+						SimulationParameters.lastScenarioArrivalTime = ev.timestamp;
 					}
 					SimulationParameters.offerEvent(ev);
 					logger.debug("scenario name: " + sceName + "\t scenario_ID: " + users + "\t\t  scenario arrival time: " + interArrivalTimeNext);
@@ -285,8 +286,8 @@ public class Event implements Comparable<Event> {
 						existingUser.timeoutFlagInBuffer = false;
 						existingUser.timeoutFlagAfterService = false;
 						Event ev = new Event(interArrivalTimeNext, EventType.SCENARIO_ARRIVAL, existingUser);
-						if (SimulationParameters.lastScenarioArrivalTime < ev.time) {
-							SimulationParameters.lastScenarioArrivalTime = ev.time;
+						if (SimulationParameters.lastScenarioArrivalTime < ev.timestamp) {
+							SimulationParameters.lastScenarioArrivalTime = ev.timestamp;
 						}
 						// this is where we create the corresponding arrival event
 						// and add it to eventList
@@ -319,7 +320,7 @@ public class Event implements Comparable<Event> {
 	 * @throws Exception
 	 */
 	public void arrivalRateChanged() {
-		SimulationParameters.currentTime = time;
+		SimulationParameters.currTime = timestamp;
 		SimulationParameters.recordIntervalSlotRunTime();
 
 		// Collect all the device metrics value within a interval
@@ -331,9 +332,9 @@ public class Event implements Comparable<Event> {
 				//Also set the request start time and arrival time of currrent request at this device instance to current time
 				for (QServerInstance qServerInstance : ((QueueSim) deviceSim.resourceQueue).qServerInstances) {
 					if (qServerInstance.isBusyStatus()) {
-						qServerInstance.totalBusyTime.recordValue(qServerInstance.reqStartTime - SimulationParameters.currentTime);
-						qServerInstance.reqStartTime = SimulationParameters.currentTime;
-						qServerInstance.reqArrivalTime = SimulationParameters.currentTime;
+						qServerInstance.totalBusyTime.recordValue(qServerInstance.reqStartTime - SimulationParameters.currTime);
+						qServerInstance.reqStartTime = SimulationParameters.currTime;
+						qServerInstance.reqArrivalTime = SimulationParameters.currTime;
 					}
 				}
 			}
@@ -341,9 +342,9 @@ public class Event implements Comparable<Event> {
 				SoftServerSim softServerSim = (SoftServerSim) softServer;
 				for (QServerInstance qsi : ((QueueSim) softServerSim.resourceQueue).qServerInstances) {
 					if (qsi.isBusyStatus()) {
-						qsi.totalBusyTime.recordValue(qsi.reqStartTime - SimulationParameters.currentTime);
-						qsi.reqStartTime = SimulationParameters.currentTime;
-						qsi.reqArrivalTime = SimulationParameters.currentTime;
+						qsi.totalBusyTime.recordValue(qsi.reqStartTime - SimulationParameters.currTime);
+						qsi.reqStartTime = SimulationParameters.currTime;
+						qsi.reqArrivalTime = SimulationParameters.currTime;
 					}
 				}
 				softServerSim.totalServerEnergy = 0.0;
@@ -353,19 +354,19 @@ public class Event implements Comparable<Event> {
 		SimulationParameters.incrementIntervalSlotCounter();
 		ModelParameters.arrivalRate = ModelParameters.getArrivalRate(SimulationParameters.getIntervalSlotCounter()); 
 		SimulationParameters.offerEvent(
-				new Event(SimulationParameters.currentTime + SimulationParameters.getCurrentSlotLength(), EventType.ARRIVAL_RATE_CHANGES));
+				new Event(SimulationParameters.currTime + SimulationParameters.getCurrentSlotLength(), EventType.ARRIVAL_RATE_CHANGES));
 	}
 
 	public void networkTaskStarts() throws Exception {
-		SimulationParameters.currentTime = time;
-		LanLinkSim ln = (LanLinkSim) SimulationParameters.distributedSystemSim.getLink(requestObject.linkName);
-		ln.processTaskStartEvent(requestObject, SimulationParameters.currentTime);
+		SimulationParameters.currTime = timestamp;
+		LanLinkSim ln = (LanLinkSim) SimulationParameters.distributedSystemSim.getLink(reqObj.linkName);
+		ln.processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
 	public void networkTaskEnds() throws Exception {
-		SimulationParameters.currentTime = time;
-		LanLinkSim ln = (LanLinkSim) SimulationParameters.distributedSystemSim.getLink(requestObject.linkName);
-		ln.processTaskEndEvent(requestObject, requestObject.nwInstance, SimulationParameters.currentTime);
+		SimulationParameters.currTime = timestamp;
+		LanLinkSim ln = (LanLinkSim) SimulationParameters.distributedSystemSim.getLink(reqObj.linkName);
+		ln.processTaskEndEvent(reqObj, reqObj.nwInstance, SimulationParameters.currTime);
 	}
 
 	/**
@@ -377,18 +378,18 @@ public class Event implements Comparable<Event> {
 	 */
 	public void requestCompleted() throws Exception {
 		// get the request object
-		SimulationParameters.currentTime = time;
+		SimulationParameters.currTime = timestamp;
 		// Update the scenario Measures
-		requestObject.scenario.updateMeasuresAtTheEndOfRequestCompletion(requestObject);
+		reqObj.scenario.updateMeasuresAtTheEndOfRequestCompletion(reqObj);
 
 		if (ModelParameters.getSimulationEndTimeEnabled()) {
 //			if (SimulationParameters.currentTime < ModelParameters.getSimulationEndTime()) {
-				requestObject.processRequest(time);
+				reqObj.processRequest(timestamp);
 //			}
 		} else {
 			//following if is commented out as violation of that condition will result in a request disappearing from the simulation, and hence breaking the request generation chain, resulting in a limbo with no events
 //			if ((SimulationParameters.getTotalRequestArrived() < ModelParameters.getTotalNumberOfRequests())) {
-				requestObject.processRequest(time);
+				reqObj.processRequest(timestamp);
 //			}
 		}
 
@@ -409,47 +410,47 @@ public class Event implements Comparable<Event> {
 		if(ModelParameters.getTotalNumberOfRequestEnabled()
 				&& SimulationParameters.warmupEnabled
 				&& ModelParameters.getStartUpSampleNumber() == SimulationParameters.getTotalRequestProcessed()) {
-			SimulationParameters.offerEvent(new Event(SimulationParameters.currentTime, EventType.WARMUP_ENDS));
+			SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.WARMUP_ENDS));
 //		} else if(ModelParameters.getTotalNumberOfRequestEnabled() &&
 //				ModelParameters.getTotalNumberOfRequests() - ModelParameters.getCoolDownSampleNumber() == SimulationParameters.getTotalRequestProcessed()) {
 //			SimulationParameters.offerEvent(new Event(SimulationParameters.currentTime, EventType.COOLDOWN_STARTS));
 		} else if (ModelParameters.getTotalNumberOfRequestEnabled() && 
 				SimulationParameters.getTotalRequestProcessed() >= ModelParameters.getTotalNumberOfRequests()) {
-			SimulationParameters.offerEvent(new Event(SimulationParameters.currentTime, EventType.SIMULATION_COMPLETE));
-		} else if (ModelParameters.getSimulationEndTimeEnabled() && SimulationParameters.currentTime >= ModelParameters.getSimulationEndTime()) {
-			SimulationParameters.offerEvent(new Event(SimulationParameters.currentTime, EventType.SIMULATION_COMPLETE));
+			SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.SIMULATION_COMPLETE));
+		} else if (ModelParameters.getSimulationEndTimeEnabled() && SimulationParameters.currTime >= ModelParameters.getSimulationEndTime()) {
+			SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.SIMULATION_COMPLETE));
 		}
 	}
 
 	public void virtualResourceTaskStarts() throws Exception {
-		SimulationParameters.currentTime = time;
-		requestObject.hostObject.getVirtualRes(requestObject.virtResName).processTaskStartEvent(requestObject, SimulationParameters.currentTime);
+		SimulationParameters.currTime = timestamp;
+		reqObj.hostObject.getVirtualRes(reqObj.virtResName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
 	public void virtualResourceTaskEnds() throws Exception {
-		SimulationParameters.currentTime = time;
-		requestObject.hostObject.getVirtualRes(requestObject.virtResName).processTaskEndEvent(requestObject, requestObject.virtualResInstance, SimulationParameters.currentTime);
+		SimulationParameters.currTime = timestamp;
+		reqObj.hostObject.getVirtualRes(reqObj.virtResName).processTaskEndEvent(reqObj, reqObj.virtualResInstance, SimulationParameters.currTime);
 	}
 
 	/** This function is called when request is timed out in buffer */
 	public void timeoutInBuffer() throws Exception {
-		requestObject.timeoutFlagInBuffer = true;
-		logger.debug("Timeout Occured for the Request : " + requestObject.id);
+		reqObj.timeoutFlagInBuffer = true;
+		logger.debug("Timeout Occured for the Request : " + reqObj.id);
 
 		// update the related book keeping structures.
-		requestObject.scenario.numOfRequestsTimedoutInBuffer.recordValue(1);
+		reqObj.scenario.noOfReqTimedoutInBuffer.recordValue(1);
 
 		// Reduce the number of busy instances of softserver queue.
-		QueueSim resourceQueue = (QueueSim) requestObject.hostObject.getServer(requestObject.softServerName).resourceQueue;
+		QueueSim resourceQueue = (QueueSim) reqObj.hostObject.getServer(reqObj.softServName).resourceQueue;
 		resourceQueue.numBusyInstances--;
 
 		// Reset the queue server instance parameters.
 		// This function skips the calculation of total busy time due to current request.
-		int instanceID = requestObject.qServerInstanceID;
-		resourceQueue.qServerInstances.get(instanceID).endServiceForInstanceInBuffTimeout(time);
+		int instanceID = reqObj.qServerInstanceID;
+		resourceQueue.qServerInstances.get(instanceID).endServiceForInstanceInBuffTimeout(timestamp);
 
 		// check if retry is done, and create a new request.
-		requestObject.processRequest(time);
+		reqObj.processRequest(timestamp);
 
 		// if simulation end condition is satisfied, stop the simulation
 		checkForSimulationCompletionCriteria();
@@ -457,35 +458,35 @@ public class Event implements Comparable<Event> {
 
 	/** For all power-managed devices this event is called in every probe interval */
 	public void deviceProbe() throws Exception {
-		SimulationParameters.currentTime = time;
-		deviceObject.deviceProbeHandler(SimulationParameters.currentTime, hostObject);
+		SimulationParameters.currTime = timestamp;
+		devObj.deviceProbeHandler(SimulationParameters.currTime, hostObj);
 	}
 
 	public String toString() {
-		return time + ":" + type.toString()+"\n";
+		return timestamp + ":" + type.toString()+"\n";
 	}
 
 	public HostSim getHostObject() {
-		return hostObject;
+		return hostObj;
 	}
 
 	public void setHostObject(HostSim hostObject) {
-		this.hostObject = hostObject;
+		this.hostObj = hostObject;
 	}
 
 	public DeviceSim getDeviceObject() {
-		return deviceObject;
+		return devObj;
 	}
 
 	public void setDeviceObject(DeviceSim deviceObject) {
-		this.deviceObject = deviceObject;
+		this.devObj = deviceObject;
 	}
 
 	public Request getRequestObject() {
-		return requestObject;
+		return reqObj;
 	}
 
 	public void setRequestObject(Request requestObject) {
-		this.requestObject = requestObject;
+		this.reqObj = requestObject;
 	}
 }

@@ -177,7 +177,7 @@ public class DiscreteSampleAverageMetric extends MetricSim {
 	 * This method is called just once.
 	 */
 	@Override
-	public final void calculateConfidenceIntervalsAtTheEndOfReplications() {
+	public final void computeConfIvalsAtEndOfRepl() {
 		for (int i = 0; i < metricSlots.length; i++) {
 			metricSlots[i].calculateConfidenceIntervalsAtTheEndOfReplications();
 		}

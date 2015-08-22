@@ -19,10 +19,10 @@ public class PerfParser implements PerfParserConstants {
         int i=0;
         String arg="none";
         SolutionMethod m=SolutionMethod.NONE;
-        SystemType t=SystemType.NONE;
+        SysType t=SysType.NONE;
         logger.setLevel((Level) Level.INFO);
         logger.addAppender(appender);
-        ModelParameters.inputDistributedSystem = new DistributedSystem();
+        ModelParameters.inputDistSys = new DistributedSystem();
         try {
                 while (i < args.length && args[i].startsWith("-")) {
             arg = args[i++];
@@ -35,10 +35,10 @@ public class PerfParser implements PerfParserConstants {
                 //System.out.println("Simulation ");
             }else
             if (arg.equals("-o")) {
-                t=SystemType.OPEN;
+                t=SysType.OPEN;
             }else
             if (arg.equals("-c")) {
-                t=SystemType.CLOSED;
+                t=SysType.CLOSED;
             }
             if (arg.equals("-d")) {
                 logger.setLevel((Level) Level.DEBUG);
@@ -147,22 +147,22 @@ public class PerfParser implements PerfParserConstants {
         break;
       case VIRTRES:
         res = VirtualResourceDef();
-                                                 ModelParameters.inputDistributedSystem.virRes.add(res);
+                                                 ModelParameters.inputDistSys.virRes.add(res);
         break;
       case HOST:
         HostDef();
         break;
       case TASK:
         task = TaskDef();
-                                     ModelParameters.inputDistributedSystem.tasks.add(task);
+                                     ModelParameters.inputDistSys.tasks.add(task);
         break;
       case SCENARIO:
         sce = ScenarioDef();
-                                         ModelParameters.inputDistributedSystem.scenarios.add(sce);
+                                         ModelParameters.inputDistSys.scenarios.add(sce);
         break;
       case SERVER:
         serv = ServerDef();
-                                         ModelParameters.inputDistributedSystem.softServers.add(serv);
+                                         ModelParameters.inputDistSys.softServers.add(serv);
         break;
       case DEPLOY:
         DeployDef();
@@ -238,7 +238,7 @@ public class PerfParser implements PerfParserConstants {
           break label_2;
         }
         name = DeviceName();
-                      ModelParameters.inputDistributedSystem.devices.add(name.image);
+                      ModelParameters.inputDistSys.devices.add(name.image);
       }
       jj_consume_token(END);
     } else {
@@ -246,7 +246,7 @@ public class PerfParser implements PerfParserConstants {
       case DEVICE:
         jj_consume_token(DEVICE);
         name = DeviceName();
-                              ModelParameters.inputDistributedSystem.devices.add(name.image);
+                              ModelParameters.inputDistSys.devices.add(name.image);
         break;
       default:
         jj_la1[3] = jj_gen;
@@ -271,7 +271,7 @@ public class PerfParser implements PerfParserConstants {
           break label_3;
         }
         var = VariableDetail();
-                        ModelParameters.inputDistributedSystem.variables.add(var);
+                        ModelParameters.inputDistSys.variables.add(var);
       }
       jj_consume_token(END);
     } else {
@@ -279,7 +279,7 @@ public class PerfParser implements PerfParserConstants {
       case VARIABLE:
         jj_consume_token(VARIABLE);
         var = VariableDetail();
-                                   ModelParameters.inputDistributedSystem.variables.add(var);
+                                   ModelParameters.inputDistSys.variables.add(var);
         break;
       default:
         jj_la1[5] = jj_gen;
@@ -312,7 +312,7 @@ public class PerfParser implements PerfParserConstants {
           break label_4;
         }
         name = LanName();
-                   ModelParameters.inputDistributedSystem.lans.add(new Lan(name.image));
+                   ModelParameters.inputDistSys.lans.add(new Lan(name.image));
       }
       jj_consume_token(END);
     } else {
@@ -320,7 +320,7 @@ public class PerfParser implements PerfParserConstants {
       case LAN:
         jj_consume_token(LAN);
         name = LanName();
-                        ModelParameters.inputDistributedSystem.lans.add(new Lan(name.image));
+                        ModelParameters.inputDistSys.lans.add(new Lan(name.image));
         break;
       default:
         jj_la1[7] = jj_gen;
@@ -336,7 +336,7 @@ public class PerfParser implements PerfParserConstants {
     n = LinkName();
     name1 = ValidLanName();
     name2 = ValidLanName();
-     if(ModelParameters.inputDistributedSystem.isLink(name2.image,name1.image) == true){
+     if(ModelParameters.inputDistSys.isLink(name2.image,name1.image) == true){
           {if (true) throw new Error("Line no:"+n.beginLine+" link with lan's "+name2.image+" and "+name1.image+" is already defined");}
       }
         l1 = new LanLink(n.image,name2.image,name1.image);
@@ -419,9 +419,9 @@ public class PerfParser implements PerfParserConstants {
       }
     }
     jj_consume_token(END);
-   ModelParameters.inputDistributedSystem.getLan(name1.image).addConnectedLan(name2.image);
-  ModelParameters.inputDistributedSystem.getLan(name2.image).addConnectedLan(name1.image);
-  ModelParameters.inputDistributedSystem.links.add(l1);
+   ModelParameters.inputDistSys.getLan(name1.image).addConnectedLan(name2.image);
+  ModelParameters.inputDistSys.getLan(name2.image).addConnectedLan(name1.image);
+  ModelParameters.inputDistSys.links.add(l1);
   }
 
   static final public void HostDef() throws ParseException, DeviceNotFoundException, Exception {
@@ -447,11 +447,11 @@ public class PerfParser implements PerfParserConstants {
       HostDetail(h);
     }
     jj_consume_token(END);
-                ModelParameters.inputDistributedSystem.hosts.add(h);
+                ModelParameters.inputDistSys.hosts.add(h);
                 int totHosts =  new Integer(n.image);
                 for(int i=2;i<=totHosts;i++){
                         Host cpy = h.getCopy(hostnme,i);
-                        ModelParameters.inputDistributedSystem.hosts.add(cpy);
+                        ModelParameters.inputDistSys.hosts.add(cpy);
                 }
   }
 
@@ -549,7 +549,7 @@ public class PerfParser implements PerfParserConstants {
                 // we have device name here; Set it's PowerManaged attributes here.
                 // All devices having same device-name will inherit these attributes
                 Device dev = new Device(name.image);
-                ModelParameters.inputDistributedSystem.powerManagedDevicePrototypes.add(dev);
+                ModelParameters.inputDistSys.powerManagedDevicePrototypes.add(dev);
     label_7:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -833,8 +833,8 @@ public class PerfParser implements PerfParserConstants {
       jj_consume_token(TASK);
       name = ValidTaskName();
         try{
-         serv.addTask(ModelParameters.inputDistributedSystem.getTask(name.image));
-         ModelParameters.inputDistributedSystem.getTask(name.image).addServer(serv.name);
+         serv.addTask(ModelParameters.inputDistSys.getTask(name.image));
+         ModelParameters.inputDistSys.getTask(name.image).addServer(serv.name);
         }catch(Error e)
         {
                 {if (true) throw new Error("Line no "+name.beginLine+e.getMessage());}
@@ -894,7 +894,7 @@ public class PerfParser implements PerfParserConstants {
       n2 = BranchDef(n);
                             t.addBranch(n,n2);
     }
-         sce.rootNodeOfScenario = t.getRootNode();
+         sce.rootNode = t.getRootNode();
          sce.initialize();
   }
 
@@ -904,8 +904,8 @@ public class PerfParser implements PerfParserConstants {
     dest = ValidTaskName();
     pktsize = Variable();
     s = IsSync();
-                String src_server = ModelParameters.inputDistributedSystem.getTask(src.image).getServerName();
-                String dest_server = ModelParameters.inputDistributedSystem.getTask(dest.image).getServerName();
+                String src_server = ModelParameters.inputDistSys.getTask(src.image).getServerName();
+                String dest_server = ModelParameters.inputDistSys.getTask(dest.image).getServerName();
                 {if (true) return t.addArc(n,src.image,src_server,dest.image,dest_server,pktsize,s);}
     throw new Error("Missing return statement in function");
   }
@@ -1014,7 +1014,7 @@ public class PerfParser implements PerfParserConstants {
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case IDENTIFIER:
       varname = ValidVariableName();
-                Variable v = ModelParameters.inputDistributedSystem.getVariable(varname.image);
+                Variable v = ModelParameters.inputDistSys.getVariable(varname.image);
                 v.updateUsedInfo();
                 {if (true) return v;}
       break;
@@ -1158,7 +1158,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ServerName() throws ParseException {
                         Token t;
     t = jj_consume_token(IDENTIFIER);
-                if(ModelParameters.inputDistributedSystem.isServer(t.image)==true)
+                if(ModelParameters.inputDistSys.isServer(t.image)==true)
                 {if (true) throw new Error("Server "+t.image+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
                 {if (true) return(t);}
@@ -1180,7 +1180,7 @@ public class PerfParser implements PerfParserConstants {
                         Token t,n;String hostnme="";
     t = jj_consume_token(IDENTIFIER);
                 hostnme = t.image;
-                if(ModelParameters.inputDistributedSystem.isHost(hostnme)==true)
+                if(ModelParameters.inputDistSys.isHost(hostnme)==true)
                 {if (true) throw new Error("Host "+hostnme+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
                 {if (true) return(t);}
@@ -1190,7 +1190,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token TaskName() throws ParseException {
                         Token t;
     t = jj_consume_token(IDENTIFIER);
-                if(ModelParameters.inputDistributedSystem.isTask(t.image)==true)
+                if(ModelParameters.inputDistSys.isTask(t.image)==true)
                 {if (true) throw new Error("Task \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
                 {if (true) return(t);}
@@ -1200,7 +1200,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ScenarioName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                if(ModelParameters.inputDistributedSystem.isScenario(t.image)==true)
+                if(ModelParameters.inputDistSys.isScenario(t.image)==true)
                 {if (true) throw new Error("Scenario \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
                 {if (true) return(t);}
@@ -1210,7 +1210,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token DeviceName() throws ParseException {
                         Token t;
     t = jj_consume_token(IDENTIFIER);
-                if(ModelParameters.inputDistributedSystem.isDevice(t.image)==true)
+                if(ModelParameters.inputDistSys.isDevice(t.image)==true)
                 {if (true) throw new Error("Device \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
                 {if (true) return(t);}
@@ -1220,7 +1220,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token VirtualResName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                if(ModelParameters.inputDistributedSystem.isVirtualRes(t.image)==true)
+                if(ModelParameters.inputDistSys.isVirtualRes(t.image)==true)
                         {if (true) throw new Error("Virtual Resource \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
                 {if (true) return(t);}
@@ -1230,7 +1230,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token VariableName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                if(ModelParameters.inputDistributedSystem.isVariable(t.image)==true)
+                if(ModelParameters.inputDistSys.isVariable(t.image)==true)
                 {if (true) throw new Error("Variable \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
              {if (true) return(t);}
@@ -1240,7 +1240,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token LanName() throws ParseException {
                         Token t;
     t = jj_consume_token(IDENTIFIER);
-                if(ModelParameters.inputDistributedSystem.isLan(t.image)==true)
+                if(ModelParameters.inputDistSys.isLan(t.image)==true)
                         {if (true) throw new Error("Lan \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
                 {if (true) return(t);}
@@ -1250,7 +1250,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token LinkName() throws ParseException {
                         Token t;
     t = jj_consume_token(IDENTIFIER);
-                if(ModelParameters.inputDistributedSystem.isLink(t.image)==true)
+                if(ModelParameters.inputDistSys.isLink(t.image)==true)
                         {if (true) throw new Error("Link \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");}
                 else
                 {if (true) return(t);}
@@ -1261,7 +1261,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ValidServerName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                try{ModelParameters.inputDistributedSystem.getServer(t.image); {if (true) return(t);}}
+                try{ModelParameters.inputDistSys.getServer(t.image); {if (true) return(t);}}
             catch (Error e)
                 {{if (true) throw new Error("Undefined server \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn );}}
     throw new Error("Missing return statement in function");
@@ -1275,7 +1275,7 @@ public class PerfParser implements PerfParserConstants {
     jj_consume_token(144);
                 try{
                     hostnme = t.image+"["+n.image+"]";
-                        ModelParameters.inputDistributedSystem.getHost(hostnme);
+                        ModelParameters.inputDistSys.getHost(hostnme);
                         t.image = hostnme;
                         {if (true) return(t);}
                 }catch (Error e)
@@ -1286,7 +1286,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ValidTaskName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                try{ModelParameters.inputDistributedSystem.getTask(t.image); {if (true) return(t);}}
+                try{ModelParameters.inputDistSys.getTask(t.image); {if (true) return(t);}}
             catch (Error e)
                 {{if (true) throw new Error("Undefined task \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn );}}
     throw new Error("Missing return statement in function");
@@ -1295,7 +1295,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ValidScenarioName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                try{ModelParameters.inputDistributedSystem.getScenario(t.image);{if (true) return(t);}}
+                try{ModelParameters.inputDistSys.getScenario(t.image);{if (true) return(t);}}
             catch (Error e)
                 {{if (true) throw new Error("Undefined scenario \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn );}}
     throw new Error("Missing return statement in function");
@@ -1304,7 +1304,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ValidDeviceName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                try{ModelParameters.inputDistributedSystem.getDevice(t.image);{if (true) return(t);}}
+                try{ModelParameters.inputDistSys.getDevice(t.image);{if (true) return(t);}}
             catch (Error e)
                 {{if (true) throw new Error("Undefined device \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn );}}
     throw new Error("Missing return statement in function");
@@ -1313,7 +1313,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ValidVirtualResName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                try{ModelParameters.inputDistributedSystem.getVirtualRes(t.image);{if (true) return(t);}}
+                try{ModelParameters.inputDistSys.getVirtualRes(t.image);{if (true) return(t);}}
             catch (Error e)
                 {{if (true) throw new Error("Undefined Virtual Resource \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn );}}
     throw new Error("Missing return statement in function");
@@ -1322,7 +1322,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ValidVariableName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                try{ModelParameters.inputDistributedSystem.getVariable(t.image);{if (true) return(t);}}
+                try{ModelParameters.inputDistSys.getVariable(t.image);{if (true) return(t);}}
                 catch (Error e)
                 {{if (true) throw new Error("Undefined variable \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn );}     }
     throw new Error("Missing return statement in function");
@@ -1331,7 +1331,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ValidLanName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                try{ModelParameters.inputDistributedSystem.getLan(t.image); {if (true) return(t);}}
+                try{ModelParameters.inputDistSys.getLan(t.image); {if (true) return(t);}}
                 catch (Error e)
                 {{if (true) throw new Error("Undefined Lan \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn );}  }
     throw new Error("Missing return statement in function");
@@ -1340,7 +1340,7 @@ public class PerfParser implements PerfParserConstants {
   static final public Token ValidLinkName() throws ParseException {
                                 Token t;
     t = jj_consume_token(IDENTIFIER);
-                try{ModelParameters.inputDistributedSystem.getLink(t.image); {if (true) return(t);}}
+                try{ModelParameters.inputDistSys.getLink(t.image); {if (true) return(t);}}
                 catch (Error e)
                 {{if (true) throw new Error("Undefined Lan \u005c""+t.image+"\u005c" Line:"+t.beginLine+" Column:"+t.beginColumn );}  }
     throw new Error("Missing return statement in function");
@@ -2313,7 +2313,7 @@ public class PerfParser implements PerfParserConstants {
          Expression aexp = new Expression();
     if (jj_2_15(2147483647)) {
       name = ValidVariableName();
-                                          Variable v=ModelParameters.inputDistributedSystem.getVariable(name.image);
+                                          Variable v=ModelParameters.inputDistSys.getVariable(name.image);
                                   aexp.addVariable(v);
       jj_consume_token(151);
       a = Expression();
@@ -2587,7 +2587,7 @@ public class PerfParser implements PerfParserConstants {
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case IDENTIFIER:
       name = ValidVariableName();
-                        Variable v= ModelParameters.inputDistributedSystem.getVariable(name.image);
+                        Variable v= ModelParameters.inputDistSys.getVariable(name.image);
                         pex.addVariable(v);
       break;
     case NUMBER:
@@ -2659,8 +2659,8 @@ public class PerfParser implements PerfParserConstants {
           throw new ParseException();
         }
          if(t.image.compareToIgnoreCase("open")==0)
-                {ModelParameters.setSystemType(SystemType.OPEN);}
-         else {ModelParameters.setSystemType(SystemType.CLOSED);}
+                {ModelParameters.setSystemType(SysType.OPEN);}
+         else {ModelParameters.setSystemType(SysType.CLOSED);}
         break;
       case METHOD:
         jj_consume_token(METHOD);

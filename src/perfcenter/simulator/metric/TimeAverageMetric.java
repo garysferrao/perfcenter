@@ -125,7 +125,7 @@ public class TimeAverageMetric extends MetricSim {
 		}
 	}
 
-	public final void calculateConfidenceIntervalsAtTheEndOfReplications() {
+	public final void computeConfIvalsAtEndOfRepl() {
 		for (int i = 0; i < metricSlots.length; i++) {
 			metricSlots[i].calculateConfidenceIntervalsAtTheEndOfReplications();
 		}
@@ -292,8 +292,8 @@ class _TimeAverageMetricLowestLevel extends _MetricSimLowestLevel {
 			return;
 		}
 		
-		recordValue(sampleValue, SimulationParameters.currentTime - timeOfLastSampleRecording);
-		timeOfLastSampleRecording = SimulationParameters.currentTime;
+		recordValue(sampleValue, SimulationParameters.currTime - timeOfLastSampleRecording);
+		timeOfLastSampleRecording = SimulationParameters.currTime;
 	}
 
 	public void recordValue(double sampleValue, double timeElapsedForCurrentSample) {

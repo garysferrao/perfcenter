@@ -128,7 +128,7 @@ public class PerfAnaClosed {
 			for (SoftServer s : h.softServers) {
 				for (Scenario sce : resultDistributedSystemAna.scenarios) {
 					SoftServerAna softServerAna = resultDistributedSystemAna.getSoftServerAna(s.getName(), h.getName());
-					softServerAna.createCompoundTaskObjectsForGivenSoftServer(sce.rootNodeOfScenario, sce.getName());
+					softServerAna.createCompoundTaskObjectsForGivenSoftServer(sce.rootNode, sce.getName());
 				}
 			}
 		}
@@ -305,10 +305,10 @@ public class PerfAnaClosed {
 		double otherScenarioResponseTime = 0;
 		Node currentNode;
 		for (Scenario scenario : resultDistributedSystemAna.scenarios) {
-			if (scenario.rootNodeOfScenario.name.compareToIgnoreCase("user") == 0)
-				currentNode = scenario.rootNodeOfScenario.children.get(0);
+			if (scenario.rootNode.name.compareToIgnoreCase("user") == 0)
+				currentNode = scenario.rootNode.children.get(0);
 			else
-				currentNode = scenario.rootNodeOfScenario;
+				currentNode = scenario.rootNode;
 
 			if (currentNode.servername.compareToIgnoreCase(server) == 0)
 				directCallProb += scenario.getProbability();
@@ -661,9 +661,9 @@ public class PerfAnaClosed {
 		DefaultWeightedEdge e1, e2;
 
 		for (Scenario sc : resultDistributedSystemAna.scenarios) {
-			Node node = sc.rootNodeOfScenario;
+			Node node = sc.rootNode;
 			if (node.name.equals("user")) {
-				node = sc.rootNodeOfScenario.children.get(0);
+				node = sc.rootNode.children.get(0);
 			}
 			SoftServer s = resultDistributedSystemAna.getServer(node.servername);
 			for (String host : s.hosts) {
@@ -766,7 +766,7 @@ public class PerfAnaClosed {
 				}
 			}
 
-			for (Node n : sc.rootNodeOfScenario.children) {
+			for (Node n : sc.rootNode.children) {
 				addRecursiveGraph(n, g, n2);
 			}
 		}
@@ -1661,9 +1661,9 @@ public class PerfAnaClosed {
 	 */
 	void calculateScenarioMetrics() {
 		for (Scenario scenario : resultDistributedSystemAna.scenarios) {
-			Node nonUserRootNode = scenario.rootNodeOfScenario;
-			if (scenario.rootNodeOfScenario.name.compareToIgnoreCase("user") == 0) {
-				nonUserRootNode = scenario.rootNodeOfScenario.children.get(0);
+			Node nonUserRootNode = scenario.rootNode;
+			if (scenario.rootNode.name.compareToIgnoreCase("user") == 0) {
+				nonUserRootNode = scenario.rootNode.children.get(0);
 			}
 			double responseTimeIntoProbabilitySum = 0;
 			double probabilitySum = 0;
@@ -1682,10 +1682,10 @@ public class PerfAnaClosed {
 				}
 			}
 			Node sensibleRootNode;
-			if (scenario.rootNodeOfScenario.servername.equals("user"))
-				sensibleRootNode = scenario.rootNodeOfScenario.children.get(0);
+			if (scenario.rootNode.servername.equals("user"))
+				sensibleRootNode = scenario.rootNode.children.get(0);
 			else
-				sensibleRootNode = scenario.rootNodeOfScenario;
+				sensibleRootNode = scenario.rootNode;
 
 			//eqn (18)
 			//scenario response time is average waiting time for server plus response time of the first compound task
@@ -1721,17 +1721,17 @@ public class PerfAnaClosed {
 				}
 			}
 			
-			scenario.averageThroughput.setValue(scenarioSoftServerAna.getThroughput() * scenarioCompoundTask.getProbability() / conditionalProbability);
+			scenario.avgThroughput.setValue(scenarioSoftServerAna.getThroughput() * scenarioCompoundTask.getProbability() / conditionalProbability);
 		}
 		double overallresp = 0;
 		for (Scenario sce : resultDistributedSystemAna.scenarios) {
 			overallresp += sce.getAverageResponseTime() * sce.getProbability();
 		}
-		resultDistributedSystemAna.overallResponseTime.setValue(overallresp);
+		resultDistributedSystemAna.overallRespTime.setValue(overallresp);
 		
 		double overallThroughput = 0;
 		for (Scenario sce : resultDistributedSystemAna.scenarios) {
-			overallThroughput += sce.averageThroughput.getValue();
+			overallThroughput += sce.avgThroughput.getValue();
 		}
 		resultDistributedSystemAna.overallThroughput.setValue(overallThroughput);
 	}
@@ -1747,7 +1747,7 @@ public class PerfAnaClosed {
 	double sizeOfMsg(String task1_name, String task2_name) {
 		double length_of_msg;
 		for (Scenario sc : resultDistributedSystemAna.scenarios) {
-			length_of_msg = sizeOfMsg(sc.rootNodeOfScenario, task1_name, task2_name);
+			length_of_msg = sizeOfMsg(sc.rootNode, task1_name, task2_name);
 			if (length_of_msg > 0) {
 				return length_of_msg;
 			}
@@ -1909,11 +1909,11 @@ public class PerfAnaClosed {
 											for (Object softserv2 : host2.softServers) {
 												for (Task task2 : ((SoftServerAna) softserv2).simpleTasks) {
 													if (!task1.name.equalsIgnoreCase(task2.name)) {
-														if (synTest(resultDistributedSystemAna.getScenario(ct.getScenarioName()).rootNodeOfScenario, task1.name, task2.name)) {
+														if (synTest(resultDistributedSystemAna.getScenario(ct.getScenarioName()).rootNode, task1.name, task2.name)) {
 															inv++;
 															noofpkts = getNumberOfPackets(lan1.getName(), lan2.getName(),
 																	sizeOfMsg(task1.getName(), task2.name));
-															totPktSize += this.sizeOfMsg(resultDistributedSystemAna.getScenario(ct.getScenarioName()).rootNodeOfScenario,
+															totPktSize += this.sizeOfMsg(resultDistributedSystemAna.getScenario(ct.getScenarioName()).rootNode,
 																	task1.getName(), task2.name) + (noofpkts * link.headerSize.getValue() * 8);
 
 														}

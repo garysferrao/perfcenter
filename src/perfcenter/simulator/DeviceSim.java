@@ -45,7 +45,7 @@ public class DeviceSim extends Device implements QueueServer {
 
 	Logger logger = Logger.getLogger("DeviceSim");
 
-	public DiscreteSampleAverageMetric averageFrequencySim = new DiscreteSampleAverageMetric(0.95);// FIXME remove hardcoding
+	public DiscreteSampleAverageMetric avgFreqSim = new DiscreteSampleAverageMetric(0.95);// FIXME remove hardcoding
 	
 	public DeviceSim(Device d) {
 		// make a copy of device from SimParams.ds
@@ -98,7 +98,7 @@ public class DeviceSim extends Device implements QueueServer {
 		// resourceQueue.request = req;
 		resourceQueue.serverName = req.fromServer;
 		resourceQueue.hostName = req.hostObject.getName();
-		resourceQueue.deviceName = this.name;
+		resourceQueue.devName = this.name;
 	}
 
 	@Override
@@ -119,7 +119,7 @@ public class DeviceSim extends Device implements QueueServer {
 	void recordCISampleAtTheEndOfSimulation() {
 		((QueueSim) resourceQueue).recordCISampleAtTheEndOfSimulation();
 		for (int slot = 0; slot < ModelParameters.intervalSlotCount; slot++) {
-			averageFrequencySim.recordCISample(slot);
+			avgFreqSim.recordCISample(slot);
 		}
 		/*
 		 * ArrayList<QServerInstance>qServerInstances = ((QueueSim) resourceQueue).qServerInstances; double serverBusyTime=0; for (QServerInstance qsi
@@ -156,16 +156,16 @@ public class DeviceSim extends Device implements QueueServer {
 	public void processTaskEndEvent(Request request, int instanceId, double currTime) throws Exception {
 		try {
 			QServerInstance qsi = ((QueueSim) resourceQueue).qServerInstances.get(instanceId);
-			qsi.deviceInstanceAssociatedEventList.remove(SimulationParameters.currentEventBeingHandled);
+			qsi.deviceInstanceAssociatedEventList.remove(SimulationParameters.currEventBeingHandled);
 
 			updateDeviceSpeedup(qsi, currTime);
-			endService(request, instanceId, SimulationParameters.currentTime);
+			endService(request, instanceId, SimulationParameters.currTime);
 
 			// advance the pointer to check whether there is next device for the task
 			request.setDeviceIndex(request.getDeviceIndex() + 1, "DeviceSim:processTaskEndEvent");
 			// Option 1
 			// if there is no more devices then nextDeviceFound will be -1
-			boolean nextDeviceFound = request.hostObject.offeredRequestToNextDevice(request, SimulationParameters.currentTime);
+			boolean nextDeviceFound = request.hostObject.offeredRequestToNextDevice(request, SimulationParameters.currTime);
 			if (nextDeviceFound == true) {
 				return;
 			}
@@ -174,7 +174,7 @@ public class DeviceSim extends Device implements QueueServer {
 			if (request.isRequestFromTask()) {
 				// Option 2
 				request.virtualResIndex = 0;
-				boolean nextSoftResFound = request.hostObject.offeredRequestToVirtualRes(request, SimulationParameters.currentTime);
+				boolean nextSoftResFound = request.hostObject.offeredRequestToVirtualRes(request, SimulationParameters.currTime);
 				logger.debug("virtual res: " + nextSoftResFound);
 				if (nextSoftResFound == true) {
 					return;
@@ -182,17 +182,17 @@ public class DeviceSim extends Device implements QueueServer {
 
 				// Option 3
 				// As there are no more soft resources
-				SimulationParameters.offerEvent(new Event(SimulationParameters.currentTime, EventType.SOFTWARE_TASK_ENDS, request));
+				SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.SOFTWARE_TASK_ENDS, request));
 			} else if (request.isRequestFromVirtRes()) {
 				// Option 4
-				boolean nextLayerSoftResFound = request.hostObject.offeredRequestToNextLayerVirtRes(request, SimulationParameters.currentTime);
+				boolean nextLayerSoftResFound = request.hostObject.offeredRequestToNextLayerVirtRes(request, SimulationParameters.currTime);
 				if (nextLayerSoftResFound == true) {
 					return;
 				}
 
 				// Option 5
 				// there is no next virtual res
-				SimulationParameters.offerEvent(new Event(SimulationParameters.currentTime, EventType.VIRTUALRES_TASK_ENDS, request));
+				SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.VIRTUALRES_TASK_ENDS, request));
 				logger.debug("NO virtual resource ");
 			}
 			// } catch (Exception e) {
@@ -210,7 +210,7 @@ public class DeviceSim extends Device implements QueueServer {
 
 		// get new service time for this PM device instance.
 		double serviceTime = request.serviceTimeRemaining * availabelSpeedLevels[0] / availabelSpeedLevels[qserverInstance.currentSpeedLevelIndex];
-		double endTime = SimulationParameters.currentTime + serviceTime;
+		double endTime = SimulationParameters.currTime + serviceTime;
 
 		// updating measurement variables.
 		qserverInstance.intermediate_busy_time = 0.0;
@@ -238,7 +238,7 @@ public class DeviceSim extends Device implements QueueServer {
 			logger.debug("request dropped at " + virtualResourceSim.name);
 		} else {
 			// stops the execution at the current thread
-			request.hostObject.getServer(request.softServerName).abortThread(request.threadNum, SimulationParameters.currentTime);
+			request.hostObject.getServer(request.softServName).abortThread(request.threadNum, SimulationParameters.currTime);
 			request.drop();
 			// logger.debug("request dropped at");
 		}
@@ -277,7 +277,7 @@ public class DeviceSim extends Device implements QueueServer {
 				qServerInstance.totalEnergyConsumption.recordValue(qServerInstance.currentRequest, busyEnergy);
 				// main accumulation of busyTimeInProbeInterval is done in QueueServerInstance
 				logger.debug("Energy: busy time in probe interval: " + qServerInstance.busyTimeInProbeInterval + " current time: "
-						+ SimulationParameters.currentTime);
+						+ SimulationParameters.currTime);
 			} else {
 				/** Created dummy request namely _idle and store the power used while server is idle **/
 				Request idleRequest = new Request(0, null, currentTime); // 2nd argument of Request isthe scenario name
@@ -327,7 +327,7 @@ public class DeviceSim extends Device implements QueueServer {
 		}
 
 		// calculate the average frequency
-		averageFrequencySim.recordValue(maximumDeviceSpeedLevel);
+		avgFreqSim.recordValue(maximumDeviceSpeedLevel);
 		// Step 4: schedule nexy cpu_prob
 
 		double nextProbTime = currentTime + this.deviceProbeInterval;
@@ -451,7 +451,7 @@ public class DeviceSim extends Device implements QueueServer {
 					SimulationParameters.eventQueue.remove(ev);
 
 					// Step 2: modify timings for events
-					ev.time = SimulationParameters.currentTime + (ev.time - SimulationParameters.currentTime) * newDeviceSpeedFactor;
+					ev.timestamp = SimulationParameters.currTime + (ev.timestamp - SimulationParameters.currTime) * newDeviceSpeedFactor;
 
 					// Step 3: Insert associated events into eventList
 					SimulationParameters.offerEvent(ev);
@@ -497,12 +497,12 @@ public class DeviceSim extends Device implements QueueServer {
 		}
 	}
 
-	public void clearValuesButKeepConfInts() {
+	public void clearValuesButKeepConfIvals() {
 		// Setting init_speed for all Queue server instances of the device: rakesh
 		// these are default settings for governors and variables associated with it.
-		averageFrequencySim.clearValuesButKeepConfInts();
+		avgFreqSim.clearValuesButKeepConfInts();
 
-		((QueueSim) resourceQueue).clearValuesButKeepConfInts();
+		((QueueSim) resourceQueue).clearValuesButKeepConfIvals();
 		for (QServerInstance qServerInstance : ((QueueSim) resourceQueue).qServerInstances) {
 			if (this.governor == PowerManagementGovernor.POWERSAVE || this.governor == PowerManagementGovernor.CONSERVATIVE
 					|| this.governor == PowerManagementGovernor.ONDEMAND) {

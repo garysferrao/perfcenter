@@ -31,9 +31,9 @@ public class Task {
 	public String name;
 
 	/** Name of server to which this task belongs */
-	public String server;
+	public String softServerName;
 
-	/** list of devices and service times required by his task */
+	/** list of devices and service times required by this task */
 	public ArrayList<DeviceServiceTime> deviceServiceTimes = new ArrayList<DeviceServiceTime>();
 
 	/** List of virtual resources required by this task */
@@ -61,7 +61,7 @@ public class Task {
 	}
 
 	public String getServerName() {
-		return server;
+		return softServerName;
 	}
 
 	public Task getCopy() {
@@ -88,7 +88,7 @@ public class Task {
 	}
 
 	public void validate() {
-		if (server == null) {
+		if (softServerName == null) {
 			logger.warn("Lineno" + lineno + ".Warning:Task \"" + name + "\" does not belong to any server ");
 		}
 		if (deviceServiceTimes.isEmpty()) {
@@ -137,10 +137,10 @@ public class Task {
 
 	/** Add a server name to which the task belongs */
 	public void addServer(String serv) {
-		if (server == null) {
-			this.server = serv;
+		if (softServerName == null) {
+			this.softServerName = serv;
 		} else {
-			throw new Error("Attempt to reassign Task " + name + "(" + server + ")" + " to " + serv + " server");
+			throw new Error("Attempt to reassign Task " + name + "(" + softServerName + ")" + " to " + serv + " server");
 		}
 	}
 

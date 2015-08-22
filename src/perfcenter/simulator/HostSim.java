@@ -38,6 +38,24 @@ public class HostSim extends Host {
 	HashMap<String, DeviceSim> deviceMap = new HashMap<String, DeviceSim>();
 	HashMap<String, VirtualResSim> virtualResourceMap = new HashMap<String, VirtualResSim>();
 	
+	//Below data structures are used for Xen's Credit Scheduling Policy
+	public int cap = 16000; //FIXME: No hard coding please
+	public int deduction = 100; //FIXME: No hard coding please
+	//Device name and their credits
+	public HashMap<String, Integer> deviceCreditMap = new HashMap<String, Integer>(); 
+	//Soft Server name and their status. 1 for "under" and 0 for "over"
+	public HashMap<String, Integer> softServerCreditMap = new HashMap<String, Integer>(); 
+	//Virtual Resource name and their credits
+	public HashMap<String, Integer> virtResCreditMap = new HashMap<String, Integer>(); 
+	
+	//Device name and their status:1 for "under" and 0 for "over"
+	public HashMap<String, Integer> deviceStatusMap = new HashMap<String, Integer>(); 
+	//Softservername and their status. 1 for "under" and 0 for "over"
+	public HashMap<String, Integer> softServerStatusMap = new HashMap<String, Integer>(); 
+	//Virtual Resource name and their status:1 for "under" and 0 for "over"
+	public HashMap<String, Integer> virtResStatusMap = new HashMap<String, Integer>();
+	
+
 	// constructor
 	public HostSim(Host h, HashMap<String, SoftServerSim> softServerMap) {
 		name = h.name;
@@ -47,18 +65,27 @@ public class HostSim extends Host {
 			SoftServerSim softServerSim2 = softServerMap.get(s.name);
 			softServers.add(softServerSim2);
 			this.softServerMap.put(s.getName(), softServerSim2);
+			
+			softServerCreditMap.put(s.getName(), cap);
+			softServerStatusMap.put(s.getName(), cap);
 		}
 
 		for (Device dev : h.devices) {
 			DeviceSim devs = new DeviceSim(dev);
 			devices.add(devs);
 			deviceMap.put(devs.getDeviceName(), devs);
+			
+			deviceCreditMap.put(dev.getDeviceName(), cap);
+			deviceStatusMap.put(dev.getDeviceName(), cap);
 		}
 
 		for (VirtualResource sr : h.virResources) {
 			VirtualResSim srcpy = sr.getCopySim();
 			virResources.add(srcpy);
 			virtualResourceMap.put(srcpy.name, srcpy);
+			
+			virtResCreditMap.put(sr.name, cap);
+			virtResStatusMap.put(sr.name, cap);
 		}
 		arrivalRate = 0;
 	}
@@ -196,7 +223,7 @@ public class HostSim extends Host {
 
 			// get the service time for the device
 			if (req.isRequestFromTask()) {
-				Task t = ((SoftServerSim) getServer(req.softServerName)).getSimpleTask(req.taskName);
+				Task t = ((SoftServerSim) getServer(req.softServName)).getSimpleTask(req.taskName);
 
 				// set the value for total service demand on hw resource
 				req.serviceTimeRemaining = t.getServiceTime(req.devName).nextRandomVal(dev.speedUpFactor.getValue());

@@ -27,7 +27,7 @@ import perfcenter.baseclass.Node;
 import perfcenter.baseclass.Scenario;
 import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.Task;
-import perfcenter.baseclass.enums.SystemType;
+import perfcenter.baseclass.enums.SysType;
 
 /**
  * SoftServer Analytical is inherited from softserver. SoftServerAna has compound tasks.
@@ -310,8 +310,8 @@ public class SoftServerAna extends SoftServer {
 	 * @return created compoundtask
 	 */
 	CompoundTask makeCompoundTask(Node endNode, Node startNode, String scename, String serverName) {
-		if (ModelParameters.getSystemType() == SystemType.CLOSED) {
-			Scenario sce = ModelParameters.inputDistributedSystem.getScenario(scename);
+		if (ModelParameters.getSystemType() == SysType.CLOSED) {
+			Scenario sce = ModelParameters.inputDistSys.getScenario(scename);
 			CompoundTask ct = new CompoundTask();
 			// compound task is created.
 			makeCompoundTaskRec(endNode, startNode, ct, serverName);
@@ -354,7 +354,7 @@ public class SoftServerAna extends SoftServer {
 			return ct;
 
 		} else {
-			Scenario sce = ModelParameters.inputDistributedSystem.getScenario(scename);
+			Scenario sce = ModelParameters.inputDistSys.getScenario(scename);
 			CompoundTask ct = new CompoundTask();
 			// compound task is created.
 			makeCompoundTaskRec(endNode, startNode, ct, serverName);

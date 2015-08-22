@@ -92,7 +92,7 @@ public class ManuallyComputedMetric extends MetricSim {
 		return metricSlots[slot].getServerList();
 	}
 
-	public void clearValuesButKeepConfInts() {
+	public void clearValuesButKeepConfIvals() {
 		for (int i = 0; i < metricSlots.length; i++) {
 			metricSlots[i].clearValuesButKeepConfInts();
 
@@ -110,7 +110,7 @@ public class ManuallyComputedMetric extends MetricSim {
 		}
 	}
 
-	public final void calculateConfidenceIntervalsAtTheEndOfReplications() {
+	public final void computeConfIvalsAtEndOfRepl() {
 		for (int i = 0; i < metricSlots.length; i++) {
 			metricSlots[i].calculateConfidenceIntervalsAtTheEndOfReplications();
 
@@ -151,7 +151,7 @@ class _ManuallyComputedMetricSingleSlot extends _MetricSimSlotLevel {
 			perServerMetric.put(serverName, manualMetrSlot);
 		}
 		// store the total value by getting old and add it with that
-		perServerMetric.get("_total").recordCISample(perServerMetric.get("_total").getValue(SimulationParameters.replicationNumber) + sampleValue);
+		perServerMetric.get("_total").recordCISample(perServerMetric.get("_total").getValue(SimulationParameters.replicationNo) + sampleValue);
 	}
 
 	public double getMean(String serverName) {

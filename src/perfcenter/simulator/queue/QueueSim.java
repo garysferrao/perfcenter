@@ -17,7 +17,7 @@
  */
 package perfcenter.simulator.queue;
 
-import static perfcenter.simulator.DistributedSystemSim.calculateConfidenceIntervalForMetric;
+import static perfcenter.simulator.DistributedSystemSim.computeConfIvalForMetric;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -138,12 +138,12 @@ public class QueueSim extends Queue {
 	 *            : current host for which utilization is to be calculated Assumption : Busy and idle threads consumes the same amount of memory
 	 */
 	//FIXME: method contains more than it should
-	public void calculateConfidenceIntervalsForRAM(Host currentHost) {
+	public void computeConfIvalsForRAM(Host currentHost) {
 
-		/* variables to calcualte a softServer's RAM utilization */
-		// average queue lenght of a softServer
+		/* variables to calculate a softServer's RAM utilization */
+		// average queue length of a softServer
 		double qLength = 0;
-		// average queue lenght CI at a softServer
+		// average queue length CI at a softServer
 		double qLengthCI = 0;
 		// qlen + qlenCI = maxQlen.
 		double maximumQLength = 0;
@@ -198,13 +198,13 @@ public class QueueSim extends Queue {
 			
 			//FIXME: replace this with averageQueueLengthSim,
 			//but make sure that calculateConfidenceIntervals() is getting called on it before this line
-			qLength = softServer.resourceQueue.averageQueueLength.getValue();  
+			qLength = softServer.resourceQueue.avgQueueLen.getValue();  
 			memoryRequirementOfCurrentServer = (server.getStaticSize() + (server.getThreadSize() * server.thrdCount.value) + (server.getRequestSize() * qLength));
 			softServerUtilization = (memoryRequirementOfCurrentServer / ramSize);
-			this.averageUtilization.setValue((memoryOfAllSoftServers / ramSize));
-			this.averageUtilization.setConfidenceInterval(((memoryOfAllSoftServersCI - memoryOfAllSoftServers) / ramSize));
-			if (averageUtilization.getValue() > 1) {
-				this.averageUtilization.setValue(1.0);
+			this.avgUtil.setValue((memoryOfAllSoftServers / ramSize));
+			this.avgUtil.setConfidenceInterval(((memoryOfAllSoftServersCI - memoryOfAllSoftServers) / ramSize));
+			if (avgUtil.getValue() > 1) {
+				this.avgUtil.setValue(1.0);
 			}
 
 			if (softServerUtilization > 1.0) {
@@ -213,7 +213,7 @@ public class QueueSim extends Queue {
 
 			/* calcualte utilization CI for current softServer */
 			//FIXME: refer previous block
-			qLengthCI = softServer.resourceQueue.averageQueueLength.getConfidenceInterval();
+			qLengthCI = softServer.resourceQueue.avgQueueLen.getConfidenceInterval();
 			maximumQLength = qLengthCI + qLength;
 			memoryRequirementOfCurrentServerCI = ((server.getStaticSize() + (server.getThreadSize() * server.thrdCount.value) + (server
 					.getRequestSize() * maximumQLength)));
@@ -224,10 +224,10 @@ public class QueueSim extends Queue {
 		}
 
 		// calculate util and utilCI for host
-		this.averageUtilization.setValue((memoryOfAllSoftServers / ramSize));
-		this.averageUtilization.setConfidenceInterval(((memoryOfAllSoftServersCI - memoryOfAllSoftServers) / ramSize));
-		if (averageUtilization.getValue() > 1) {
-			this.averageUtilization.setValue(1.0);
+		this.avgUtil.setValue((memoryOfAllSoftServers / ramSize));
+		this.avgUtil.setConfidenceInterval(((memoryOfAllSoftServersCI - memoryOfAllSoftServers) / ramSize));
+		if (avgUtil.getValue() > 1) {
+			this.avgUtil.setValue(1.0);
 		}
 	}
 
@@ -288,21 +288,21 @@ public class QueueSim extends Queue {
 	}
 
 	/** Method is invoked at the end of simulation. */
-	public void calculateConfidenceIntervalsAtTheEndOfReplications() {
-		calculateConfidenceIntervalForMetric(averageQueueLength, averageQueueLengthSim);
-		calculateConfidenceIntervalForMetric(averageThroughput, averageThroughputSim);
-		calculateConfidenceIntervalForMetric(averageResponseTime, averageResponseTimeSim);
-		calculateConfidenceIntervalForMetric(averageUtilization, averageUtilizationSim);
+	public void computeConfIvalsAtEndOfRepl() {
+		computeConfIvalForMetric(avgQueueLen, averageQueueLengthSim);
+		computeConfIvalForMetric(avgThroughput, averageThroughputSim);
+		computeConfIvalForMetric(avgRespTime, averageResponseTimeSim);
+		computeConfIvalForMetric(avgUtil, averageUtilizationSim);
 		
-		calculateConfidenceIntervalForMetric(averageServiceTime, averageServiceTimeSim);
-		calculateConfidenceIntervalForMetric(averageWaitingTime, averageWaitingTimeSim);
-		calculateConfidenceIntervalForMetric(averageArrivalRate, averageArrivalRateSim);
-		calculateConfidenceIntervalForMetric(blockingProbability, blockingProbabilitySim);
+		computeConfIvalForMetric(avgServiceTime, averageServiceTimeSim);
+		computeConfIvalForMetric(avgWaitingTime, averageWaitingTimeSim);
+		computeConfIvalForMetric(avgArrivalRate, averageArrivalRateSim);
+		computeConfIvalForMetric(blockProb, blockingProbabilitySim);
 		
-		calculateConfidenceIntervalForMetric(powerDelayProduct, powerDelayProductSim);
-		calculateConfidenceIntervalForMetric(powerEfficiency, powerEfficiencySim);
-		calculateConfidenceIntervalForMetric(averagePowerConsumed, averagePowerConsumedSim);
-		calculateConfidenceIntervalForMetric(averageEnergyConsumptionPerRequest, averageEnergyConsumptionPerRequestSim);
+		computeConfIvalForMetric(powerDelayProduct, powerDelayProductSim);
+		computeConfIvalForMetric(powerEfficiency, powerEfficiencySim);
+		computeConfIvalForMetric(avgPowerConsumed, averagePowerConsumedSim);
+		computeConfIvalForMetric(avgEnergyConsumptionPerReq, averageEnergyConsumptionPerRequestSim);
 		
 		// End Calculation: Calculate the utilization and utilCI for all s/w servers on host individually.
 		// Added by  Nikhil
@@ -342,7 +342,7 @@ public class QueueSim extends Queue {
 	public void endServiceTimeout(int instanceID, double time) throws Exception {
 //		totalNumberOfRequestsBlocked.recordValue(1);
 		if (!(queueBuffer.isEmpty())) {
-			dequeueAndProcess(SimulationParameters.currentTime);
+			dequeueAndProcess(SimulationParameters.currTime);
 		}
 	}
 
@@ -364,7 +364,7 @@ public class QueueSim extends Queue {
 		// instance is again available. now check whether the queue buffer is empty or not.
 		// if !empty then use current resource instance to process next request in buffer
 		if (!(queueBuffer.isEmpty())) {
-			dequeueAndProcess(SimulationParameters.currentTime);
+			dequeueAndProcess(SimulationParameters.currTime);
 		}
 		
 	}
@@ -451,7 +451,7 @@ public class QueueSim extends Queue {
 	public void recordCISampleAtTheEndOfSimulation() {
 		assert numberOfInstances == qServerInstances.size() : "Number of instances and qServerInstance dont agree" + debugPrint();
 		averageQueueLengthSim.recordValue(queueBuffer.size());
-		assert SimulationParameters.totalRequestsArrived >= ModelParameters.getTotalNumberOfRequests() : "sim: " + SimulationParameters.totalRequestsArrived + " model: "
+		assert SimulationParameters.totalReqArrived >= ModelParameters.getTotalNumberOfRequests() : "sim: " + SimulationParameters.totalReqArrived + " model: "
 				+ ModelParameters.getTotalNumberOfRequests();
 		for (int slot = 0; slot < ModelParameters.intervalSlotCount; slot++) {
 			// averageArrivalRateSim.recordCISample(slot,
@@ -466,7 +466,7 @@ public class QueueSim extends Queue {
 				// nadeesh if deviceName and hostName != null then store metric
 				// value perServer level
 				// else pass null as server name
-				if (deviceName != null && hostName != null) {
+				if (devName != null && hostName != null) {
 					for (SoftServer softServ : SimulationParameters.distributedSystemSim.getHost(hostName).getSoftServersList()) {
 						recordCISampleofManuallyComputedMetricAtTheEndOfSimulation(slot, softServ.name);
 					}
@@ -476,7 +476,7 @@ public class QueueSim extends Queue {
 						totalEnergyConsumedInThisRun += qsi.totalEnergyConsumption.getTotalValue(slot,"_idle");
 					}
 					try {
-						averagePowerConsumedSim.recordCISample(slot, "_idle", totalEnergyConsumedInThisRun / SimulationParameters.getIntervalSlotRunTime(slot) / SimulationParameters.distributedSystemSim.getHost(this.hostName).getDevice(this.deviceName).count.getValue());
+						averagePowerConsumedSim.recordCISample(slot, "_idle", totalEnergyConsumedInThisRun / SimulationParameters.getIntervalSlotRunTime(slot) / SimulationParameters.distributedSystemSim.getHost(this.hostName).getDevice(this.devName).count.getValue());
 					} catch (DeviceNotFoundException e) {
 						//will never come here, as device name passed is always valid
 						e.printStackTrace();
@@ -506,9 +506,9 @@ public class QueueSim extends Queue {
 		averageArrivalRateSim.recordCISample(slot, softServerName, totalNumberOfRequestArrivals.getTotalValue(slot,softServerName) / SimulationParameters.getIntervalSlotRunTime(slot));
 		averageEnergyConsumptionPerRequestSim.recordCISample(slot, softServerName, totalEnergyConsumedInThisRun / totalNumberOfRequestsServed.getTotalValue(slot,softServerName));
 		int count = 1; //count of cpu cores
-		if(this.hostName != null && this.deviceName != null) {
+		if(this.hostName != null && this.devName != null) {
 			try {
-				count = (int) SimulationParameters.distributedSystemSim.getHost(this.hostName).getDevice(this.deviceName).count.getValue();
+				count = (int) SimulationParameters.distributedSystemSim.getHost(this.hostName).getDevice(this.devName).count.getValue();
 			} catch (DeviceNotFoundException e) {
 				// will never come here as the device name is always valid
 				e.printStackTrace();
@@ -544,7 +544,7 @@ public class QueueSim extends Queue {
 		return "";
 	}
 	
-	public void clearValuesButKeepConfInts() {
+	public void clearValuesButKeepConfIvals() {
 		numBusyInstances=0;
 		queueBuffer.clear();
 		
@@ -555,17 +555,17 @@ public class QueueSim extends Queue {
 		//totalWaitingTime.clearValuesButKeepConfInts();
 		averageWaitingTimeSim.clearValuesButKeepConfInts();
 		averageServiceTimeSim.clearValuesButKeepConfInts();
-		averageArrivalRateSim.clearValuesButKeepConfInts();
-		blockingProbabilitySim.clearValuesButKeepConfInts();
+		averageArrivalRateSim.clearValuesButKeepConfIvals();
+		blockingProbabilitySim.clearValuesButKeepConfIvals();
 
 		averageResponseTimeSim.clearValuesButKeepConfInts();
 		averageQueueLengthSim.clearValuesButKeepConfInts();
-		averageThroughputSim.clearValuesButKeepConfInts();
-		averageUtilizationSim.clearValuesButKeepConfInts();
-		averagePowerConsumedSim.clearValuesButKeepConfInts();
-		powerDelayProductSim.clearValuesButKeepConfInts();
-		powerEfficiencySim.clearValuesButKeepConfInts();
-		averageEnergyConsumptionPerRequestSim.clearValuesButKeepConfInts();
+		averageThroughputSim.clearValuesButKeepConfIvals();
+		averageUtilizationSim.clearValuesButKeepConfIvals();
+		averagePowerConsumedSim.clearValuesButKeepConfIvals();
+		powerDelayProductSim.clearValuesButKeepConfIvals();
+		powerEfficiencySim.clearValuesButKeepConfIvals();
+		averageEnergyConsumptionPerRequestSim.clearValuesButKeepConfIvals();
 		
 		freeQServerInstances.clear();
 
