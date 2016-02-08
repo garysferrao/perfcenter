@@ -3,6 +3,7 @@ package perfcenter.parser;
 import perfcenter.baseclass.Distribution;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.SoftServer;
+import perfcenter.baseclass.Task;
 import perfcenter.baseclass.Variable;
 import perfcenter.baseclass.enums.SchedulingPolicy;
 import perfcenter.baseclass.exception.DeviceNotFoundException;
@@ -14,7 +15,7 @@ import perfcenter.baseclass.exception.DeviceNotFoundException;
  */
 public class SetStmt {
 
-	String host, device, server, lan1, lan2, task, scenario, var, mtuUnit, propUnit, transUnit;
+	String host, device, server, lan1, lan2, taskName, scenario, var, mtuUnit, propUnit, transUnit;
 
 	Distribution dist;
 
@@ -86,7 +87,7 @@ public class SetStmt {
 		transUnit = unit;
 	}
 
-	public void addHost(String name) {
+	public void addMachine(String name) {
 		host = name;
 	}
 
@@ -117,7 +118,7 @@ public class SetStmt {
 	}
 
 	public void addTask(String name) {
-		task = name;
+		taskName = name;
 	}
 
 	public void addSchedulingPolicy(SchedulingPolicy p) {
@@ -134,35 +135,35 @@ public class SetStmt {
 			if (host != null) {
 				if (server != null) {
 					if (count >= 0) {
-						((SoftServer) ModelParameters.inputDistSys.getHost(host).getServer(server)).modifyThreadCount(count);
+						((SoftServer) ModelParameters.inputDistSys.getMachine(host).getServer(server)).modifyThreadCount(count);
 						return;
 					} else if (buffer >= 0) {
-						((SoftServer) ModelParameters.inputDistSys.getHost(host).getServer(server)).modifyThreadBuffer(buffer);
+						((SoftServer) ModelParameters.inputDistSys.getMachine(host).getServer(server)).modifyThreadBuffer(buffer);
 						return;
 					} else if (pol != null) {
-						((SoftServer) ModelParameters.inputDistSys.getHost(host).getServer(server)).setSchedPolicy(pol);
+						((SoftServer) ModelParameters.inputDistSys.getMachine(host).getServer(server)).setSchedPolicy(pol);
 						return;
 					}
 
 				} else if (device != null) {
 					if (count >= 0) {
-						ModelParameters.inputDistSys.getHost(host).modifyDeviceCount(device, count);
+						ModelParameters.inputDistSys.getMachine(host).modifyDeviceCount(device, count);
 						return;
 					} else if (buffer >= 0) {
-						ModelParameters.inputDistSys.getHost(host).modifyDeviceBuffer(device, buffer);
+						ModelParameters.inputDistSys.getMachine(host).modifyDeviceBuffer(device, buffer);
 						return;
 					} else if (pol != null) {
-						ModelParameters.inputDistSys.getHost(host).modifyDeviceSchedPol(device, pol);
+						ModelParameters.inputDistSys.getMachine(host).modifyDeviceSchedPol(device, pol);
 						return;
 					} else if (probe_interval > 0) { // modify probe interval of device, added by rakesh
-						ModelParameters.inputDistSys.getHost(host).modifyProbeInterval(device, probe_interval);
+						ModelParameters.inputDistSys.getMachine(host).modifyProbeInterval(device, probe_interval);
 						return;
 					} else if (gov_up_threshold.getValue() > 0) { // modify governor up threshold of device, added by rakesh //BHAVIN
-						ModelParameters.inputDistSys.getHost(host).modifyGovUpThreshold(device, gov_up_threshold.getValue()); //BHAVIN
+						ModelParameters.inputDistSys.getMachine(host).modifyGovUpThreshold(device, gov_up_threshold.getValue()); //BHAVIN
 						return;
 					} else if (gov_down_threshold.getValue() > 0) {// modify governor down threshold of device, added by rakesh //BHAVIN
 //						ModelParameters.inputDistributedSystem.getHost(host).modifyGovDownThreshold(device, gov_down_threshold);
-						ModelParameters.inputDistSys.getHost(host).modifyGovDownThreshold(device, gov_down_threshold.getValue()); //BHAVIN
+						ModelParameters.inputDistSys.getMachine(host).modifyGovDownThreshold(device, gov_down_threshold.getValue()); //BHAVIN
 						return;
 					}
 				}
@@ -177,8 +178,8 @@ public class SetStmt {
 					ModelParameters.inputDistSys.getLink(lan1, lan2).modifyTransRate(trans, transUnit);
 					return;
 				}
-			} else if (task != null) {
-				ModelParameters.inputDistSys.getTask(task).modifyServiceTime(device, dist);
+			} else if (taskName != null) {
+				ModelParameters.inputDistSys.getTask(taskName).modifyServiceTime(device, dist);
 			} else if (var != null) {
 				ModelParameters.inputDistSys.getVariable(var).setValue(varval);
 			} else if (scenario != null) {

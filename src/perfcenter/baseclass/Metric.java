@@ -3,7 +3,7 @@ package perfcenter.baseclass;
 import java.util.HashMap;
 
 import perfcenter.baseclass.enums.SolutionMethod;
-import perfcenter.baseclass.enums.SysType;
+import perfcenter.baseclass.enums.SystemType;
 import perfcenter.simulator.SimulationParameters;
 
 /** Holds value, confidence interval and confidence level of any performance or power metric.
@@ -193,7 +193,7 @@ public class Metric {
 		} else {
 			double print_time = 0;
 			Variable[] loadDetails = null;
-			loadDetails = SysType.CLOSED == ModelParameters.getSystemType() ? ModelParameters.noOfUsersCyclic : ModelParameters.arrivalRatesCyclic;
+			loadDetails = SystemType.CLOSED == ModelParameters.getSystemType() ? ModelParameters.noOfUsersCyclic : ModelParameters.arrivalRatesCyclic;
 			StringBuilder returnString = new StringBuilder(1000);
 			for (int slot = 0; slot < value.length; slot++) {
 				print_time += ModelParameters.ivalSlotDurCyclic[slot].value;
@@ -236,7 +236,7 @@ public class Metric {
 		} else {
 			double print_time = 0;
 			Variable[] loadDetails = null;
-			loadDetails = SysType.CLOSED == ModelParameters.getSystemType() ? ModelParameters.noOfUsersCyclic : ModelParameters.arrivalRatesCyclic;
+			loadDetails = SystemType.CLOSED == ModelParameters.getSystemType() ? ModelParameters.noOfUsersCyclic : ModelParameters.arrivalRatesCyclic;
 			StringBuilder returnString = new StringBuilder(1000);
 			for (int slot = 0; slot < value.length; slot++) {
 				print_time += ModelParameters.ivalSlotDurCyclic[slot].value;

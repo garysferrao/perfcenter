@@ -15,7 +15,7 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
  */package perfcenter.baseclass;
-
+ import perfcenter.baseclass.enums.DeviceType;
 /**
  * Defines service times. This is used by task and virtual resource, and by analytical perfcenter.
  * 
@@ -23,12 +23,12 @@
  * 
  * @author akhila
  */
-public class DeviceServiceTime {
-	// device name
-	public String devName;
-
+public class ServiceTime {
+	// Device category
+	public DeviceCategory devCategory;
 	// device distribution
 	public Distribution dist;
+	public double basespeed;
 
 	// used by analytical part
 	private double responseTime;
@@ -38,13 +38,19 @@ public class DeviceServiceTime {
 	public double probabilty = 0;
 	public double noOfUsers = 0;
 
-	public DeviceServiceTime(String name) {
-		devName = name;
+	public ServiceTime(DeviceCategory _devCategory) {
+		devCategory = _devCategory;
 	}
 
-	public DeviceServiceTime(String name, Distribution dis) {
-		devName = name;
-		dist = dis;
+	public ServiceTime(DeviceCategory _devCategory, Distribution _dist) {
+		devCategory = _devCategory;
+		dist = _dist;
+	}
+	
+	public ServiceTime(DeviceCategory _devCategory, Distribution _dist, double _basespeed) {
+		devCategory = _devCategory;
+		dist = _dist;
+		basespeed = _basespeed;
 	}
 
 	// getter and setter methods
@@ -73,8 +79,8 @@ public class DeviceServiceTime {
 		return thinkTime;
 	}
 
-	public String getDeviceName() {
-		return devName;
+	public DeviceCategory getDeviceCategory() {
+		return devCategory;
 	}
 
 	public Distribution getDistribution() {
@@ -82,16 +88,17 @@ public class DeviceServiceTime {
 	}
 
 	public void print() {
-		System.out.println(" Device " + devName + " ");
+		System.out.println(" Device Category" + devCategory.name + " ");
 		System.out.println(" Distribution " + dist.name_ + "(" + dist.value1_.getName() + ":" + dist.value1_.getValue() + ")");
 	}
 
 	// makes a copy of self
-	public DeviceServiceTime getCopy() {// made public by niranjan
-		DeviceServiceTime dstcpy = new DeviceServiceTime(devName);
-		dstcpy.dist = dist.getCopy();
-		dstcpy.responseTime = this.responseTime;
-		return dstcpy;
+	public ServiceTime getCopy() {// made public by niranjan
+		ServiceTime stcpy = new ServiceTime(devCategory, dist, basespeed);
+		stcpy.devCategory = devCategory.getCopy();
+		stcpy.dist = dist.getCopy();
+		stcpy.responseTime = this.responseTime;
+		return stcpy;
 	}
 
 	// used by analytical part

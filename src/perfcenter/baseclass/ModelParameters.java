@@ -18,7 +18,7 @@
 package perfcenter.baseclass;
 
 import perfcenter.baseclass.enums.SolutionMethod;
-import perfcenter.baseclass.enums.SysType;
+import perfcenter.baseclass.enums.SystemType;
 import perfcenter.baseclass.enums.Warnings;
 import perfcenter.simulator.SimulationParameters;
 
@@ -32,21 +32,18 @@ import perfcenter.simulator.SimulationParameters;
 public class ModelParameters {
 
 	/** Method of solving the distributed system's layered queueing network.
-	 * 
 	 *  This can be simulation or analytical.
 	 */
 	static SolutionMethod solutionMethod = SolutionMethod.NONE;
 	
 	/** System type is the nature of the workload in the system. This can be open or closed.
-	 * 
 	 *  The current workload details does not allow mixing both of these modes, but in simulation
 	 *  mode this can be implemented in future.
 	 */
-	private static SysType sysType = SysType.NONE;
+	private static SystemType sysType = SystemType.NONE;
 	
 	/**
-	 * Decides whether to validate the system for undeployed hosts / servers before solving it.
-	 * 
+	 * Decides whether to validate the system for undeployed machines / servers before solving it.
 	 * A value of DISABLE would switch off this checking.
 	 */
 	private static Warnings warnings = Warnings.NONE;
@@ -62,15 +59,13 @@ public class ModelParameters {
 	public static Variable arrivalRate;
 	
 	/**
-	 * Time for which the requests think. This is essentially outside the system.
-	 * 
+	 * Time for which the requests think. This is essentially outside the system. 
 	 * This is used to determine when to generate the next request when one request exists the system.
 	 */
 	private static Distribution thinkTime; // this variable is used when type is closed
 	
 	/**
 	 * Timeout value indicates the time after which end-user would stop waiting for the reply.
-	 * 
 	 * Since the user would stop waiting, any processing done beyond this time is considered bad.
 	 * This is essential in computing the badput, goodput etc of the system.
 	 */
@@ -78,7 +73,6 @@ public class ModelParameters {
 	
 	/**
 	 * Probability with which the user would send the same request back to the system, as a retry attempt after timing out.
-	 * 
 	 * When a request times out, the user can choose to just leave, and not issue the request again, or the request
 	 * can be reissued for re-processing. This variable is the probability of retrying and sending the request again.
 	 */
@@ -129,13 +123,12 @@ public class ModelParameters {
 	
 	/**
 	 * Total number of requests to be considered in warm-up phase.
-	 * 
 	 * This is considered only if the total number of requests is specified in the input file. 
 	 */
 	private static double startUpSampleNo = 1000;
+	
 	/**
-	 * Total number of requests to be considered in the warm-down phase.
-	 * 
+	 * Total number of requests to be considered in the cool-down phase.
 	 * This is considered only if the total number of requests is specified in the input file.
 	 */
 //	private static double coolDownSampleNumber = 1000; //FIXME fix startup and cooldown
@@ -211,14 +204,14 @@ public class ModelParameters {
 		if (solutionMethod == SolutionMethod.NONE) {
 			solutionMethod = SolutionMethod.ANALYTICAL;
 		}
-		if (sysType == SysType.NONE) {
-			sysType = SysType.OPEN;
+		if (sysType == SystemType.NONE) {
+			sysType = SystemType.OPEN;
 		}
 		if (timeout == null) {
 			timeout = new Distribution("exp", 0.04);
 		}
 
-		if (sysType == SysType.CLOSED) {
+		if (sysType == SystemType.CLOSED) {
 			if (noOfUsers == null) {
 				noOfUsers = new Variable("local", 10);
 			}
@@ -226,7 +219,7 @@ public class ModelParameters {
 				thinkTime = new Distribution("exp", 0.02);
 			}
 		}
-		if (sysType == SysType.OPEN) {
+		if (sysType == SystemType.OPEN) {
 			if (arrivalRate == null) {
 				arrivalRate = new Variable("local", 10);
 
@@ -254,8 +247,10 @@ public class ModelParameters {
 	public static void setWarnings(Warnings w) {
 		warnings = w;
 	}
+	
 
-	public static void setSystemType(SysType t) {
+	
+	public static void setSystemType(SystemType t) {
 		sysType = t;
 	}
 	//CHECK
@@ -364,7 +359,7 @@ public class ModelParameters {
 		return warnings;
 	}
 
-	public static SysType getSystemType() {
+	public static SystemType getSystemType() {
 		return sysType;
 	}
 

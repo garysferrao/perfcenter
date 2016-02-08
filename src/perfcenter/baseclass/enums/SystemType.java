@@ -22,6 +22,6 @@ package perfcenter.baseclass.enums;
  * 
  * @author akhila
  */
-public enum SysType {
+public enum SystemType {
 	OPEN, CLOSED, NONE;
 }

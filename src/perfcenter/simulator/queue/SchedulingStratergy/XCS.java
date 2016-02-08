@@ -4,8 +4,8 @@ import java.util.HashMap;
 
 import perfcenter.simulator.DeviceSim;
 import perfcenter.simulator.SoftServerSim;
-import perfcenter.simulator.VirtualResSim;
-import perfcenter.simulator.HostSim;
+import perfcenter.simulator.SoftResSim;
+import perfcenter.simulator.MachineSim;
 import perfcenter.simulator.ScenarioSim;
 import perfcenter.simulator.queue.QueueServer;
 import perfcenter.simulator.queue.QueueSim;
@@ -23,7 +23,7 @@ public class XCS extends QueueSim{
 		int idleDeviceId = getIdleInstanceId();
 
 		//Mark time when request enters the system
-		processRequestArrival(req, idleDeviceId, currTime);
+		bookkeepRequestArrival(req, idleDeviceId, currTime);
 		
 		//Check if any instance of device is free
 		if (idleDeviceId == -1) {
@@ -40,24 +40,24 @@ public class XCS extends QueueSim{
 			//Some instance of device is free, so schedule the request
 			//ADDHERE xcs specific things here
 			/********/
-			int cap = req.hostObject.cap;
-			int deduction = req.hostObject.deduction;
+			int cap = req.machineObject.cap;
+			int deduction = req.machineObject.deduction;
 			HashMap<String, Integer> creditMap;
 			HashMap<String, Integer> statusMap;
 			String name;
 			if(qServer instanceof DeviceSim){
-				creditMap = req.hostObject.deviceCreditMap;
-				statusMap = req.hostObject.deviceStatusMap;
+				creditMap = req.machineObject.deviceCreditMap;
+				statusMap = req.machineObject.deviceStatusMap;
 				name = req.devName;
 			}else if(qServer instanceof SoftServerSim){
-				creditMap = req.hostObject.softServerCreditMap;
-				statusMap = req.hostObject.softServerStatusMap;
+				creditMap = req.machineObject.softServerCreditMap;
+				statusMap = req.machineObject.softServerStatusMap;
 				name = req.softServName;
 			}else{
-				assert qServer instanceof VirtualResSim == true;
-				creditMap = req.hostObject.virtResCreditMap;
-				statusMap = req.hostObject.virtResStatusMap;
-				name = req.virtResName;
+				assert qServer instanceof SoftResSim == true;
+				creditMap = req.machineObject.virtResCreditMap;
+				statusMap = req.machineObject.virtResStatusMap;
+				name = req.softResName;
 			}
 			int tempCredit = creditMap.get(name);
 			int tempStatus = statusMap.get(name);
@@ -95,24 +95,24 @@ public class XCS extends QueueSim{
 		Request req = getRequestFromBuffer(0, currTime);
 		int idleDeviceId = getIdleInstanceId();
 		/*************/
-		int cap = req.hostObject.cap;
-		int deduction = req.hostObject.deduction;
+		int cap = req.machineObject.cap;
+		int deduction = req.machineObject.deduction;
 		HashMap<String, Integer> creditMap;
 		HashMap<String, Integer> statusMap;
 		String name;
 		if(qServer instanceof DeviceSim){
-			creditMap = req.hostObject.deviceCreditMap;
-			statusMap = req.hostObject.deviceStatusMap;
+			creditMap = req.machineObject.deviceCreditMap;
+			statusMap = req.machineObject.deviceStatusMap;
 			name = req.devName;
 		}else if(qServer instanceof SoftServerSim){
-			creditMap = req.hostObject.softServerCreditMap;
-			statusMap = req.hostObject.softServerStatusMap;
+			creditMap = req.machineObject.softServerCreditMap;
+			statusMap = req.machineObject.softServerStatusMap;
 			name = req.softServName;
 		}else{
-			assert qServer instanceof VirtualResSim == true;
-			creditMap = req.hostObject.virtResCreditMap;
-			statusMap = req.hostObject.virtResStatusMap;
-			name = req.virtResName;
+			assert qServer instanceof SoftResSim == true;
+			creditMap = req.machineObject.virtResCreditMap;
+			statusMap = req.machineObject.virtResStatusMap;
+			name = req.softResName;
 		}
 		int tempCredit = creditMap.get(name);
 		int tempStatus = statusMap.get(name);

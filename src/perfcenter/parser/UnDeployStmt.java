@@ -1,6 +1,6 @@
 package perfcenter.parser;
 
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.Lan;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.SoftServer;
@@ -20,16 +20,16 @@ public class UnDeployStmt {
 
 	public void undef() throws Exception {
 		SoftServer srv;
-		Host host;
+		Machine host;
 		ModelParameters.isModified = true;
 		try {
 			// undeploy smtp hp1
-			if (ModelParameters.inputDistSys.isHost(name2)) {
+			if (ModelParameters.inputDistSys.isMachine(name2)) {
 				if (ModelParameters.inputDistSys.isServer(name1) == false) {
 					throw new Error(" \"" + name1 + "\" is not server");
 				}
 				srv = ModelParameters.inputDistSys.getServer(name1);
-				host = ModelParameters.inputDistSys.getHost(name2);
+				host = ModelParameters.inputDistSys.getMachine(name2);
 				srv.removeHost(name2);
 				host.removeServer(name1);
 				srv.unDeployVirtualResOnHost(host);
@@ -37,10 +37,10 @@ public class UnDeployStmt {
 			}
 			// undeploy hp1 lan1
 			else if (ModelParameters.inputDistSys.isLan(name2)) {
-				if (ModelParameters.inputDistSys.isHost(name1) == false) {
+				if (ModelParameters.inputDistSys.isMachine(name1) == false) {
 					throw new Error(" \"" + name1 + "\" is not host");
 				}
-				host = ModelParameters.inputDistSys.getHost(name1);
+				host = ModelParameters.inputDistSys.getMachine(name1);
 				Lan ln = ModelParameters.inputDistSys.getLan(name2);
 				host.removeLan(name2);
 				ln.removeHost(name1);

@@ -24,7 +24,7 @@ import java.util.ArrayList;
  * 
  * @author akhila
  */
-public class Node {
+public class TaskNode {
 	public String name;
 
 	/** probability of the node */
@@ -36,16 +36,16 @@ public class Node {
 	/** set to true if an arc is defined as SYNC in input file  */
 	public boolean issync;
 
-	/** arrival rate to the node  */
+	/** arrival rate to the node  */  //QUES: Why arrate here?
 	public double arrate;
 
 	/** pointer to parent node */
-	public Node parent;
+	public TaskNode parent;
 
 	/** server name the node/task belongs to */
 	public String servername = "none";
 
-	/** used when finding compound task */
+	/** used when finding compound task */ //QUES: What is the difference between normal task and compound task
 	public boolean isCT = false;
 
 	/** set to true of node is of type root or branch(start of branch) */
@@ -55,9 +55,9 @@ public class Node {
 	public String belongsToCT;
 	
 	/** a node can have list of children nodes */
-	public ArrayList<Node> children = new ArrayList<Node>();
+	public ArrayList<TaskNode> children = new ArrayList<TaskNode>();
 
-	public Node(String name1) {
+	public TaskNode(String name1) {
 		name = name1;
 	}
 
@@ -68,7 +68,7 @@ public class Node {
 	 * @param size packetsize
 	 * @param sync is this a synchronous task
 	 */
-	public Node(String src, String server, Variable size, boolean sync) {
+	public TaskNode(String src, String server, Variable size, boolean sync) {
 		name = src;
 		pktsize = size;
 		issync = sync;
@@ -92,16 +92,16 @@ public class Node {
 		}
 	}
 
-	public Node getCopy() // added by niranjan
+	public TaskNode getCopy() // added by niranjan
 	{
-		Node n = new Node(name, servername, pktsize, issync);
+		TaskNode n = new TaskNode(name, servername, pktsize, issync);
 		n.arrate = this.arrate;
 		n.belongsToCT = this.belongsToCT;
 		n.isCT = this.isCT;
 		n.isRoot = this.isRoot;
 		n.parent = this.parent;
 		n.prob = this.prob;
-		for (Node child : this.children) {
+		for (TaskNode child : this.children) {
 			n.children.add(child);
 		}
 		return n;

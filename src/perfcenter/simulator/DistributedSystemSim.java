@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-12  by Varsha Apte - <varsha@cse.iitb.ac.in>, et al.
+ver * Copyright (C) 2011-12  by Varsha Apte - <varsha@cse.iitb.ac.in>, et al.
  * This file is distributed as part of PerfCenter
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -26,11 +26,11 @@ import org.apache.log4j.Logger;
 
 import perfcenter.baseclass.Device;
 import perfcenter.baseclass.DistributedSystem;
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.LanLink;
 import perfcenter.baseclass.Metric;
 import perfcenter.baseclass.ModelParameters;
-import perfcenter.baseclass.Node;
+import perfcenter.baseclass.TaskNode;
 import perfcenter.baseclass.Scenario;
 import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.Task;
@@ -50,7 +50,7 @@ public class DistributedSystemSim extends DistributedSystem {
 
 	//bhavin: added for scalability
 	public HashMap<String, ScenarioSim> scenarioMap = new HashMap<String, ScenarioSim>();
-	public HashMap<String, HostSim> hostMap = new HashMap<String, HostSim>();
+	public HashMap<String, MachineSim> hostMap = new HashMap<String, MachineSim>();
 	public HashMap<String, SoftServerSim> softServerMap = new HashMap<String, SoftServerSim>();
 	
 	public ManuallyComputedMetric overallGoodputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
@@ -66,8 +66,11 @@ public class DistributedSystemSim extends DistributedSystem {
 	}
 	
 	public DistributedSystemSim(DistributedSystem ds) {
-		virRes = ds.virRes;
+		softRes = ds.softRes;
+		
+		devCategories = ds.devCategories;
 		devices = ds.devices;
+		
 		variables = ds.variables;
 		tasks = ds.tasks;
 		// softServers = ds.softServers;
@@ -94,9 +97,9 @@ public class DistributedSystemSim extends DistributedSystem {
 			links.add(new LanLinkSim(lk));
 		}
 
-		for (Host h : ds.hosts) {
-			HostSim hs = new HostSim(h, softServerMap);
-			hosts.add(hs);
+		for (Machine h : ds.machines) {
+			MachineSim hs = new MachineSim(h, softServerMap);
+			machines.add(hs);
 			hostMap.put(hs.getName(), hs);
 		}
 		// this need not be done if its use in perfanalytic is fixed
@@ -115,7 +118,7 @@ public class DistributedSystemSim extends DistributedSystem {
 
 	// clear all the variables but keep the confidence interval calculations
 	public void clearValuesButKeepConfIvals() {
-		for (Host h : hosts) {
+		for (Machine h : machines) {
 			for (SoftServer softServer : h.softServers) {
 				((SoftServerSim) softServer).clearValuesButKeepConfIvals();
 //				softServerSim.resourceQueue = QueueSim.loadSchedulingPolicyClass(softServerSim.schedp.toString(), buffSizeTemp, (int) softServerSim.thrdCount.getValue(), softServerSim);
@@ -155,7 +158,7 @@ public class DistributedSystemSim extends DistributedSystem {
 	// calculates confidence interval for each queue and
 	// addes the results to the queue variables
 	public void computeConfIvalsAtEndOfRepl() {
-		for (Host host : hosts) {
+		for (Machine host : machines) {
 			for (SoftServer softServer : host.softServers) {
 				((QueueSim) ((SoftServerSim) softServer).resourceQueue).computeConfIvalsAtEndOfRepl();
 				// so.setThroughput(((QueueSim) so.softQ).giveMeThroughtput());
@@ -164,7 +167,7 @@ public class DistributedSystemSim extends DistributedSystem {
 				// calculate RAM utilization for current host if device is RAM.
 				if (device.name.equals("ram")) {
 					//XXX argument passing redundant in next line
-					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsForRAM(ModelParameters.inputDistSys.getHost(host.name));
+					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsForRAM(ModelParameters.inputDistSys.getMachine(host.name));
 				} else {
 					((DeviceSim) device).avgFreqSim.computeConfIvalsAtEndOfRepl();
 					DistributedSystemSim.computeConfIvalForMetric(device.averageFrequency, ((DeviceSim) device).avgFreqSim);
@@ -248,7 +251,7 @@ public class DistributedSystemSim extends DistributedSystem {
 	 * nothing if the device is RAM. Procedure modified by nikhil, for the device RAM.
 	 */
 	public void recordCISampleAtTheEndOfSimulation() {
-		for (Host host : hosts) {
+		for (Machine host : machines) {
 			for (SoftServer softServer : host.softServers) {
 				((SoftServerSim) softServer).recordCISampleAtTheEndOfSimulation();
 			}
@@ -272,7 +275,7 @@ public class DistributedSystemSim extends DistributedSystem {
 		recordScenarioEndToEndCISamplesAtTheEndOfSimulation();
 	}
 	
-	public Node findNextNode(Node cf) {
+	public TaskNode findNextTaskNode(TaskNode cf) {
 		if (cf.children.isEmpty()) {
 			return null;
 		}
@@ -285,7 +288,7 @@ public class DistributedSystemSim extends DistributedSystem {
 		Random r = new Random();
 		double d = r.nextDouble();
 		double dbl = 0.0;
-		for (Node c : cf.children) {
+		for (TaskNode c : cf.children) {
 			dbl += c.prob.getValue();
 			if (dbl >= d) {
 				return c;
@@ -325,15 +328,15 @@ public class DistributedSystemSim extends DistributedSystem {
 		return scenarioMap.containsKey(name);
 	}
 	
-	public HostSim getHost(String name) {
-		HostSim host = hostMap.get(name);
+	public MachineSim getMachine(String name) {
+		MachineSim host = hostMap.get(name);
 		if(host != null) {
 			return host;
 		}
 		throw new Error(name + " is not Host");
 	}
 
-	public boolean isHost(String name) {
+	public boolean isMachine(String name) {
 		return hostMap.containsKey(name);
 	}
 	

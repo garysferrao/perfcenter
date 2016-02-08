@@ -17,6 +17,7 @@
  */
 package perfcenter.simulator.queue.SchedulingStratergy;
 
+import perfcenter.simulator.SimulationParameters;
 import perfcenter.simulator.queue.QueueServer;
 import perfcenter.simulator.queue.QueueSim;
 import perfcenter.simulator.request.Request;
@@ -69,11 +70,11 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 	public void enqueue(Request req, double currTime) throws Exception {
 		// chk if any instance of resource free
 		int idleDeviceId = getIdleInstanceId();
-
 		// mark time when request enters the system
-		processRequestArrival(req, idleDeviceId, currTime);
+		bookkeepRequestArrival(req, idleDeviceId, currTime);
 
 		if (idleDeviceId == -1) {
+			
 			// no instance of device free
 			// chk if buffer is not full
 			if (!isBufferFull()) {
@@ -101,7 +102,7 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 		Request req = getRequestFromBuffer(0, currTime);
 		
 		int idleDeviceId = getIdleInstanceId();
-		processRequestArrival(req, idleDeviceId, currTime);
+		bookkeepRequestArrival(req, idleDeviceId, currTime);
 		
 		req.qServerInstanceID = idleDeviceId;
 

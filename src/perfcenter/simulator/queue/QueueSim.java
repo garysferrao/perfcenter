@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 import perfcenter.baseclass.Device;
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.Queue;
 import perfcenter.baseclass.SoftServer;
@@ -42,7 +42,7 @@ public class QueueSim extends Queue {
 
 	/**
 	 * pointer to qserver that services the requests for this queue.
-	 * qserver can be softserver, device, networklink or virtualresource
+	 * qserver can be softserver, device, networklink or softresource
 	 */
 	public QueueServer qServer;
 
@@ -92,6 +92,9 @@ public class QueueSim extends Queue {
 		queueBuffer = new ArrayList<QueueBufferSlot>(bufferSize);
 
 		qServerInstances = new ArrayList<QServerInstance>();
+		//System.out.println("In QueueSim constructor:number of qinstances " + numberOfInstances + " name of device:" + devName + " name of server:" + serverName + " name of host:" + hostName);
+
+
 		for (int i = 0; i < numberOfInstances; i++) {
 			qServerInstances.add(new QServerInstance(i, this));
 		}
@@ -122,6 +125,7 @@ public class QueueSim extends Queue {
 			// params[2] = resType;
 			params[2] = qs;
 
+			//System.out.println("Scheduling policy is getting initialized. qlength=" + qLength + " noOfInst=" + noOfInst + " QueueServer=" + qs.toString());
 			Constructor cons = c.getConstructor(proto);
 			queueS = (QueueSim) cons.newInstance(params);
 		} catch (Exception e) {
@@ -133,12 +137,10 @@ public class QueueSim extends Queue {
 	/**
 	 * This procedure calculates the utilization measures of the device RAM. RAM utilization is calculated for all the host and all the softServres
 	 * deployed on that host.
-	 * 
-	 * @param currentHost
-	 *            : current host for which utilization is to be calculated Assumption : Busy and idle threads consumes the same amount of memory
+	 * @param currentHost : current host for which utilization is to be calculated Assumption : Busy and idle threads consumes the same amount of memory
 	 */
 	//FIXME: method contains more than it should
-	public void computeConfIvalsForRAM(Host currentHost) {
+	public void computeConfIvalsForRAM(Machine currentHost) {
 
 		/* variables to calculate a softServer's RAM utilization */
 		// average queue length of a softServer
@@ -192,7 +194,7 @@ public class QueueSim extends Queue {
 			memoryRequirementOfCurrentServerCI = 0;
 
 			// get the handle of the server which contains the output data of current server.
-			SoftServer softServer = ((SoftServer) SimulationParameters.distributedSystemSim.getHost(currentHost.name).getServer(server.name));
+			SoftServer softServer = ((SoftServer) SimulationParameters.distributedSystemSim.getMachine(currentHost.name).getServer(server.name));
 
 			/* calcualte utilization for current softServer */
 			
@@ -237,6 +239,7 @@ public class QueueSim extends Queue {
 	 * @return
 	 */
 	public int getIdleInstanceId() {
+		//System.out.println("Number of QServerinstances:"+ numberOfInstances + " qServerInstances.size():" + qServerInstances.size() + " freeQServerInstances.size():" + freeQServerInstances.size());
 		if(freeQServerInstances.empty()) {
 			return -1;
 		} else {
@@ -331,7 +334,7 @@ public class QueueSim extends Queue {
 	// when the service starts update the bookkeeping structures
 	// and transfer control to qserver. akhila
 	public void createStartTaskEvent(Request req, int instanceID, double time) {
-
+		//System.out.println("In create start task event of queuesim.java");
 		// marks the startime, and sets busy status to true
 		qServerInstances.get(instanceID).startServiceForInstance(req,time);  //added req also as a param nadeesh
 		numBusyInstances++;
@@ -408,7 +411,7 @@ public class QueueSim extends Queue {
 */
 	
 	
-	public void processRequestArrival(Request request, int instanceID, double time) {
+	public void bookkeepRequestArrival(Request request, int instanceID, double time) {
 		if (instanceID > -1) {
 			// mark req arrival time
 			qServerInstances.get(instanceID).reqArrivalTime = time;
@@ -467,7 +470,7 @@ public class QueueSim extends Queue {
 				// value perServer level
 				// else pass null as server name
 				if (devName != null && hostName != null) {
-					for (SoftServer softServ : SimulationParameters.distributedSystemSim.getHost(hostName).getSoftServersList()) {
+					for (SoftServer softServ : SimulationParameters.distributedSystemSim.getMachine(hostName).getSoftServersList()) {
 						recordCISampleofManuallyComputedMetricAtTheEndOfSimulation(slot, softServ.name);
 					}
 					
@@ -476,7 +479,7 @@ public class QueueSim extends Queue {
 						totalEnergyConsumedInThisRun += qsi.totalEnergyConsumption.getTotalValue(slot,"_idle");
 					}
 					try {
-						averagePowerConsumedSim.recordCISample(slot, "_idle", totalEnergyConsumedInThisRun / SimulationParameters.getIntervalSlotRunTime(slot) / SimulationParameters.distributedSystemSim.getHost(this.hostName).getDevice(this.devName).count.getValue());
+						averagePowerConsumedSim.recordCISample(slot, "_idle", totalEnergyConsumedInThisRun / SimulationParameters.getIntervalSlotRunTime(slot) / SimulationParameters.distributedSystemSim.getMachine(this.hostName).getDevice(this.devName).count.getValue());
 					} catch (DeviceNotFoundException e) {
 						//will never come here, as device name passed is always valid
 						e.printStackTrace();
@@ -508,7 +511,7 @@ public class QueueSim extends Queue {
 		int count = 1; //count of cpu cores
 		if(this.hostName != null && this.devName != null) {
 			try {
-				count = (int) SimulationParameters.distributedSystemSim.getHost(this.hostName).getDevice(this.devName).count.getValue();
+				count = (int) SimulationParameters.distributedSystemSim.getMachine(this.hostName).getDevice(this.devName).count.getValue();
 			} catch (DeviceNotFoundException e) {
 				// will never come here as the device name is always valid
 				e.printStackTrace();

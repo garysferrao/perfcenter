@@ -18,22 +18,25 @@
 package perfcenter.simulator.request;
 
 import java.util.ArrayList;
+import perfcenter.baseclass.enums.DeviceType;
+import perfcenter.baseclass.DeviceCategory;
 import java.util.Stack;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
 import perfcenter.baseclass.ModelParameters;
-import perfcenter.baseclass.Node;
+import perfcenter.baseclass.TaskNode;
 import perfcenter.baseclass.Task;
-import perfcenter.baseclass.enums.SysType;
+import perfcenter.baseclass.enums.SystemType;
 import perfcenter.simulator.DeviceSim;
 import perfcenter.simulator.Event;
 import perfcenter.simulator.EventType;
-import perfcenter.simulator.HostSim;
+import perfcenter.baseclass.Machine;
+import perfcenter.simulator.MachineSim;
 import perfcenter.simulator.ScenarioSim;
 import perfcenter.simulator.SimulationParameters;
-import perfcenter.simulator.VirtualResSim;
+import perfcenter.simulator.SoftResSim;
 
 /**
  * Request is an instance of scenario. Contains all the information about the request and its current position in the system.
@@ -46,10 +49,10 @@ public class Request {
 	public ScenarioSim scenario;
 
 	/** pointer to current node */
-	public Node currentNode;
+	public TaskNode currentTaskNode;
 
 	/** pointer to next node */
-	public Node nextNode;
+	public TaskNode nextTaskNode;
 
 	/** time when the request arrives in the system */
 	public double scenarioArrivalTime;
@@ -67,13 +70,13 @@ public class Request {
 	public String fromServer;
 
 	/** Name of current host to which request belongs, added by nikhil */
-	public HostSim hostObject;
+	public MachineSim machineObject;
 	public String devName; //this is always from the current host // comes from Task and VirtualResSim class
 	public DeviceSim deviceObject;
 	public String taskName; // comes from Node
 
 	/** to track the number of softResources required by a single task */
-	public String virtResName;
+	public String softResName;
 	public String linkName = "";
 	public String srcLanName = "";
 	public String destLanName = "";
@@ -88,7 +91,7 @@ public class Request {
 	public int nwInstance = -1;
 
 	/** instance id of virtual res that is free. right now there is be only one instance of virtual resource */
-	public int virtualResInstance = -1;
+	public int softResInstance = -1;
 
 	/** for RR scheduling.... the service time remaining */
 	public double serviceTimeRemaining;
@@ -98,17 +101,17 @@ public class Request {
 	public Vector<SyncRequest> synReqVector;
 
 	/** to track the number of devices required by a single task or virtual res */
-	private int deviceIndex = 0; // Bhavin
+	private int subTaskIdx = 0; // Bhavin
 
 	/** to track the number of softResources required by a single task */
-	public int virtualResIndex = 0;
+	public int softResIdx = 0;
 
 	/** public Vector<VirResVector> resourceLayerStateVector; */
-	public Stack<VirResVector> virtResStack;
+	public Stack<SoftResVector> virtResStack;
 	public int nwDataSize = 0;
 	
 	private boolean requestFromTask = false;
-	private boolean requestFromVirtRes = false;
+	private boolean requestFromSoftRes = false;
 	
 	Logger logger = Logger.getLogger("Request");
 	public double scenarioTimeout;
@@ -131,18 +134,18 @@ public class Request {
 		// ARCHITECTURE: change all the copy constructors to use Object.clone() method
 		id = another.id;
 		numberOfRetries = another.numberOfRetries;
-		currentNode = another.currentNode;
+		currentTaskNode = another.currentTaskNode;
 		destLanName = another.destLanName;
 		devInstance = another.devInstance;
-		deviceIndex = another.deviceIndex;
+		subTaskIdx = another.subTaskIdx;
 		fromServer = another.fromServer;
 		this.requestFromTask = another.requestFromTask;
-		this.requestFromVirtRes = another.requestFromVirtRes;
+		this.requestFromSoftRes = another.requestFromSoftRes;
 		this.devName = another.devName;
-		hostObject = another.hostObject;
+		machineObject = another.machineObject;
 		linkName = another.linkName;
 		scenario = another.scenario;
-		nextNode = another.nextNode;
+		nextTaskNode = another.nextTaskNode;
 		nwDataSize = another.nwDataSize;
 		nwInstance = another.nwInstance;
 		threadNum = another.threadNum;
@@ -154,21 +157,45 @@ public class Request {
 		timeoutFlagAfterService = another.timeoutFlagAfterService;
 		timeoutFlagInBuffer = another.timeoutFlagInBuffer;
 		this.softServName = another.softServName;
-		nextNode = another.nextNode;
+		nextTaskNode = another.nextTaskNode;
 		softServArrivalTime = another.softServArrivalTime;
 		softServStartTime = another.softServStartTime;
 		fromServer = another.fromServer;
 		srcLanName = another.srcLanName;
 		destLanName = another.destLanName;
-		virtResName = another.virtResName;
-		virtualResIndex = another.virtualResIndex;
-		virtualResInstance = another.virtualResInstance;
+		softResName = another.softResName;
+		softResIdx = another.softResIdx;
+		softResInstance = another.softResInstance;
 		retryRequest = another.retryRequest;
 		energyConsumed = another.energyConsumed;
 		userStatus = another.userStatus;
 		inService = another.inService;
 	}
 
+	public void printRequest() {
+		System.out.println("=============================================");
+		System.out.println("Printing Request with id:" + id);
+		System.out.println("Number Of Retries:" +  numberOfRetries);
+		System.out.println("Current Node:" + currentTaskNode.name );
+        System.out.println("Next Node: " + nextTaskNode.name);
+		System.out.println("Device Instance: " + devInstance + " Device Index:" + subTaskIdx );
+		System.out.println("From server: " + fromServer );
+		System.out.println("Is request from task: " + requestFromTask );
+		System.out.println("Is request from virtual resource: " + requestFromSoftRes) ;
+		System.out.println("Device Name: " + devName );
+		System.out.println("Host Object: " + machineObject.name);
+		System.out.println("Scenario Name: " + scenario.getName() );
+		System.out.println("Thread Number: " + threadNum );
+		System.out.println("Scenario Arrival Time: " + scenarioArrivalTime + " Scenario Timeout: " + scenarioTimeout);
+		System.out.println("Sync req vector size: " + synReqVector.size());
+		System.out.println("Service Started Time: " + serviceStarted );
+		System.out.println("Task Name: " + taskName );
+		System.out.println("Timeout Flag after service: " + timeoutFlagAfterService );
+		System.out.println("Timeout Flag in Buffer: " + timeoutFlagInBuffer );
+		System.out.println("Software server name: " + softServName + " Software server arrival time: " + softServArrivalTime + " Software Server Start Time: " + softServStartTime );
+		System.out.println("Software Resource Name: " + softResName + "index: " + softResIdx + " instance : " + softResInstance );
+		System.out.println("=============================================");
+	}
 	public Request(int rid, ScenarioSim sce_name, double arrivalTime) {
 		synReqVector = new Vector<SyncRequest>();
 		scenario = sce_name;
@@ -179,7 +206,7 @@ public class Request {
 		timeoutFlagInBuffer = false;
 		timeoutFlagAfterService = false;
 		serviceTimeRemaining = -2;
-		virtResStack = new Stack<VirResVector>();
+		virtResStack = new Stack<SoftResVector>();
 		userStatus = true;
 		inService = true;
 	}
@@ -279,7 +306,7 @@ public class Request {
 			SyncRequest sr = synReqVector.get(i);
 			if ((sr.softServerName.compareToIgnoreCase(ss_name) == 0) && sr.reqID == rqID) {
 				flag = 1;
-				return sr.getHostObject().getName();
+				return sr.getMachineObject().getName();
 
 			}
 			i--;
@@ -330,7 +357,7 @@ public class Request {
 		try {
 			while (synReqVector.size() > 0) {
 				SyncRequest sr = synReqVector.get(synReqVector.size() - 1);
-				sr.getHostObject().getServer(sr.softServerName).abortThread(sr.threadNum, SimulationParameters.currTime);
+				sr.getMachineObject().getServer(sr.softServerName).abortThread(sr.threadNum, SimulationParameters.currTime);
 				synReqVector.remove(synReqVector.size() - 1);
 			}
 		} catch (Exception e) {
@@ -344,28 +371,28 @@ public class Request {
 	 */
 	public void clear() {
 		scenario = null;
-		currentNode = null;
-		nextNode = null;
+		currentTaskNode = null;
+		nextTaskNode = null;
 		scenarioArrivalTime = 0;
 		scenarioTimeout = 0;
 		softServArrivalTime = 0;
 		softServStartTime = 0;
 		this.softServName = "";
-		hostObject = null;
+		machineObject = null;
 		this.devName = null;
 		this.taskName = "";
-		virtResName = null;
+		softResName = null;
 		linkName = "";
 		srcLanName = "";
 		destLanName = "";
 		devInstance = -1;
 		threadNum = -1;
 		nwInstance = -1;
-		virtualResInstance = -1;
+		softResInstance = -1;
 		serviceTimeRemaining = 0;
 		synReqVector.clear();
-		deviceIndex = 0;
-		virtualResIndex = 0;
+		subTaskIdx = 0;
+		softResIdx = 0;
 		this.clearRequestFromFlags();
 		nwDataSize = 0;
 		energyConsumed = 0.0;
@@ -381,8 +408,8 @@ public class Request {
 	public void drop() throws Exception {
 		logger.debug("Request dropped " + id);
 		while (virtResStack.size() > 1) {
-			VirResVector vv = virtResStack.pop();
-			VirtualResSim vrs = vv.getHostObject().getVirtualRes(vv.virtResName_);
+			SoftResVector vv = virtResStack.pop();
+			SoftResSim vrs = vv.getHostObject().getSoftRes(vv.softResName_);
 			vrs.abort(vv.instanceNo_, SimulationParameters.currTime);
 		}
 
@@ -401,7 +428,7 @@ public class Request {
 	public String getVirtualResourceNameFromVirRes() throws Exception {
 		String vres = null;
 		try {
-			vres = ((VirtualResSim) hostObject.getVirtualRes(virtResName)).getNextVirtualResName(virtualResIndex);
+			vres = ((SoftResSim) machineObject.getSoftRes(softResName)).getNextSoftResName(softResIdx);
 			// } catch (Exception e) {
 			// throw new Exception("getvrname from virres error"); //Bhavin
 		} finally {
@@ -411,40 +438,54 @@ public class Request {
 
 	/** get next virtual resource name from task */
 	public String getVirtualResourceNameFromTask() {
-		return hostObject.getServer(softServName).getSimpleTask(taskName).getNextVirtualResName(virtualResIndex);
+		return machineObject.getServer(softServName).getTaskObject(taskName).getNextSoftResName(softResIdx);
 	}
 
 	/**
-	 * Devices are part of tasks and virtual resources. Next device is got from either task or virtual resource based on a variable getDeviceFrom
+	 * One Task or Software Resource is served by sequence of one or more devices having different service times. 
+	 * Next device is retrieved from either task or software resource based on a requestFromTask, requestFromSoftRes flags.
 	 */
-	public String getNextDeviceName() throws Exception { 
-		String dev = null;
+	public String getNextDeviceName() throws Exception {  //MAKECHANGE 
+		DeviceCategory nextDevCat = null;
+		String nextDev = null;
 		if (this.requestFromTask) {
-			Task t = hostObject.getServer(softServName).getSimpleTask(taskName);
-			dev = t.getNextDeviceName(deviceIndex);
-		} else if (this.requestFromVirtRes) {
-			VirtualResSim sr = (VirtualResSim) hostObject.getVirtualRes(virtResName);
-			dev = sr.getNextDeviceName(deviceIndex);
+			Task t = machineObject.getServer(softServName).getTaskObject(currentTaskNode.name);
+			nextDevCat = t.getNextDeviceCategory(subTaskIdx);
+		} else if (this.requestFromSoftRes) {
+			SoftResSim sr = (SoftResSim) machineObject.getSoftRes(softResName);
+		//TODO: DOCHECK	//Assume there is only one soft server in softRes's softServers ArrayList element
+			if(sr.softServers.size() != 1){
+				logger.debug("SoftResource " + sr.name + " has multiple softServers");
+				return null;
+			}
+			nextDevCat = sr.getNextDeviceCategory(softResIdx);			
 		}
-		return dev;
+		if(nextDevCat == null)
+			return nextDev;
+
+		nextDev = machineObject.getDeviceName(nextDevCat);
+		//System.out.println(nextDevCat.name +" Next Device Category Name: " + nextDev);
+		return nextDev;
 	}
 
 	/** get virtual res name from next layer */
 	public String getNextLayerVRName() throws Exception {
 		String dev = null;
-		if (this.isRequestFromVirtRes()) {
-			dev = hostObject.getVirtualRes(virtResName).getNextVirtualResName(0);
+		if (this.isRequestFromSoftRes()) {
+			dev = machineObject.getSoftRes(softResName).getNextSoftResName(0);
 		}
 		return dev;
 
 	}
 
-	public int getDeviceIndex() {
-		return deviceIndex;
+	public int getSubTaskIdx() {
+		return subTaskIdx;
 	}
 
-	public void setDeviceIndex(int deviceIndex, String methodAndClassName) {
-		this.deviceIndex = deviceIndex;
+	public void setSubTaskIdx(int deviceIndex, String methodAndClassName) {
+		int temp = this.subTaskIdx;
+		this.subTaskIdx = deviceIndex;
+		//System.out.println(methodAndClassName + " set deviceIndex from " + temp + " to " + deviceIndex);
 		changeLog.add(methodAndClassName);
 	}
 
@@ -470,7 +511,7 @@ public class Request {
 			numberOfRetries++;
 			retryFlag = true;
 		}
-		if (ModelParameters.getSystemType() == SysType.CLOSED) {
+		if (ModelParameters.getSystemType() == SystemType.CLOSED) {
 			// If request is not subject to retry, develop new data.
 			if (retryFlag == false) {
 				newScenarioName = SimulationParameters.getRandomScenarioSimBasedOnProb();
@@ -497,14 +538,14 @@ public class Request {
 					SimulationParameters.currTime = time;
 					Request temprq = new Request(previous);
 
-					temprq.hostObject.getServer(temprq.softServName).processTaskEndEventTimeout(
+					temprq.machineObject.getServer(temprq.softServName).processTaskEndEventTimeout(
 							temprq, temprq.threadNum, SimulationParameters.currTime);
 				}
 			}
 		}
 
 		// if open loop remove the request from the list.
-		if (ModelParameters.getSystemType() == SysType.OPEN) {
+		if (ModelParameters.getSystemType() == SystemType.OPEN) {
 
 			// check if the request should retry, and create new arrival accordingly.
 			if (retryFlag == true && (numberOfRetries <= ModelParameters.getMaxRetry())) {
@@ -530,14 +571,14 @@ public class Request {
 					Request temprq = new Request(previousRequest);
 
 					// get the host and server object
-					temprq.hostObject.getServer(temprq.softServName).processTaskEndEventTimeout(
+					temprq.machineObject.getServer(temprq.softServName).processTaskEndEventTimeout(
 							temprq, temprq.threadNum, SimulationParameters.currTime);
 				}
 			} else if (timeoutFlagInBuffer) {
 				// when the request gets timeout at buffer we have to deque next requests by generating START_SOFTWARE_TASK event for that request
 				SimulationParameters.currTime = time;
 
-				hostObject.getServer(softServName).processTaskEndEventTimeout(this, threadNum, SimulationParameters.currTime);
+				machineObject.getServer(softServName).processTaskEndEventTimeout(this, threadNum, SimulationParameters.currTime);
 				SimulationParameters.removeRequest(id);
 			} else {
 				// Depending upon the request if not timeout at all or timeout after receiving service then just remove that request
@@ -546,8 +587,8 @@ public class Request {
 		}
 	}
 
-	public void setHostName(String hostName) {
-		this.hostObject = SimulationParameters.distributedSystemSim.getHost(hostName);
+	public void setHost(String hostName) {
+		this.machineObject = SimulationParameters.distributedSystemSim.getMachine(hostName);
 	}
 
 	public boolean isRequestFromTask() {
@@ -556,20 +597,20 @@ public class Request {
 
 	public void setRequestFromTask() {
 		this.requestFromTask = true;
-		this.requestFromVirtRes = false;
+		this.requestFromSoftRes = false;
 	}
 
-	public boolean isRequestFromVirtRes() {
-		return requestFromVirtRes;
+	public boolean isRequestFromSoftRes() {
+		return requestFromSoftRes;
 	}
 
 	public void setRequestFromVirtRes() {
-		this.requestFromVirtRes = true;
+		this.requestFromSoftRes = true;
 		this.requestFromTask = false;
 	}
 	
 	public void clearRequestFromFlags() {
 		this.requestFromTask = false;
-		this.requestFromVirtRes = false;
+		this.requestFromSoftRes = false;
 	}
 }

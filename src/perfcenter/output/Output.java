@@ -25,15 +25,15 @@ import java.util.Collections;
 
 import org.apache.log4j.Logger;
 
-import perfcenter.analytical.PerfAnalytic;
+//import perfcenter.analytical.PerfAnalytic; //ANALYTICAL
 import perfcenter.baseclass.Device;
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.LanLink;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.SoftServer;
-import perfcenter.baseclass.VirtualResource;
+import perfcenter.baseclass.SoftResource;
 import perfcenter.baseclass.enums.SolutionMethod;
-import perfcenter.baseclass.enums.SysType;
+import perfcenter.baseclass.enums.SystemType;
 import perfcenter.baseclass.enums.Warnings;
 import perfcenter.baseclass.exception.DeviceNotFoundException;
 import perfcenter.simulator.PerfSim;
@@ -62,7 +62,7 @@ public class Output {
 			ModelParameters.inputDistSys.checkParameters();
 
 			// if its open. set the scenario arrival rate
-			if (ModelParameters.getSystemType() == SysType.OPEN) {
+			if (ModelParameters.getSystemType() == SystemType.OPEN) {
 				ModelParameters.inputDistSys.setScenarioArrivalRate();
 			}
 
@@ -79,8 +79,10 @@ public class Output {
 				resultantDistSys = ps.performSimulation();
 			} else {
 				// analysis for analytical
+				/*ANALYTICAL
 				PerfAnalytic pa = new PerfAnalytic(ModelParameters.inputDistSys);
 				resultantDistSys = pa.performAnalysis();
+				*/
 			}
 			ModelParameters.isModified = false;
 		}
@@ -154,8 +156,8 @@ public class Output {
 	public String findResponseTime(int slot, String name1, String name2, String name3) throws DeviceNotFoundException, Exception {
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgRespTime.toString(slot);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") {
 				if (host.isDeviceDeployed(name2)) {
 					if (host.isDeviceDeployed(name2) == false) {
@@ -164,11 +166,11 @@ public class Output {
 					return (host.getDevice(name2)).getResourceQueue().avgRespTime.toString(slot);
 				} else if (host.isServerDeployed(name2)) {
 					return (host.getServer(name2)).getResourceQueue().avgRespTime.toString(slot);
-				} else if (host.isVirtualResourceDeployed(name2)) {
-					if (host.isVirtualResourceDeployed(name2) == false) {
+				} else if (host.isSoftResourceDeployed(name2)) {
+					if (host.isSoftResourceDeployed(name2) == false) {
 						throw new Error("second parameter to respt \"" + name2 + "\" is not deployed on host");
 					}
-					return host.getVirtualRes(name2).getResourceQueue().avgRespTime.toString(slot);
+					return host.getSoftRes(name2).getResourceQueue().avgRespTime.toString(slot);
 				} else {
 					throw new Error("second parameter to respt \"" + name2 + "\" is not deployed on server");
 				}
@@ -197,15 +199,15 @@ public class Output {
 		// "   name2 : " + name2);
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgThroughput.toString(slot);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") {
 				if (host.isDeviceDeployed(name2)) {
 					return host.getDevice(name2).resourceQueue.avgThroughput.toString(slot);
 				} else if (host.isServerDeployed(name2)) {
 					return host.getServer(name2).resourceQueue.avgThroughput.toString(slot);
-				} else if (host.isVirtualResourceDeployed(name2)) {
-					return host.getVirtualRes(name2).resourceQueue.avgThroughput.toString(slot);
+				} else if (host.isSoftResourceDeployed(name2)) {
+					return host.getSoftRes(name2).resourceQueue.avgThroughput.toString(slot);
 				} else {
 					throw new Error("second parameter to tput \"" + name2 + "\" is not deployed on server");
 				}
@@ -231,8 +233,8 @@ public class Output {
 	public String findArrivalRate(int slot, String name1, String name2, String name3) throws DeviceNotFoundException, Exception {
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgArrivalRate.toString(slot);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") {
 				if (host.isDeviceDeployed(name2)) {
 					if (host.isDeviceDeployed(name2) == false) {
@@ -244,11 +246,11 @@ public class Output {
 						throw new Error("second parameter to arate \"" + name2 + "\" is not deployed on host");
 					}
 					return host.getServer(name2).resourceQueue.avgArrivalRate.toString(slot);
-				} else if (host.isVirtualResourceDeployed(name2)) {
-					if (host.isVirtualResourceDeployed(name2) == false) {
+				} else if (host.isSoftResourceDeployed(name2)) {
+					if (host.isSoftResourceDeployed(name2) == false) {
 						throw new Error("second parameter to arate \"" + name2 + "\" is not deployed on host");
 					}
-					return host.getVirtualRes(name2).resourceQueue.avgArrivalRate.toString(slot);
+					return host.getSoftRes(name2).resourceQueue.avgArrivalRate.toString(slot);
 				} else {
 					throw new Error("second parameter to arate \"" + name2 + "\" is not deployed on server");
 				}
@@ -275,8 +277,8 @@ public class Output {
 	public String findBlockProb(int slot, String name1, String name2, String name3) throws DeviceNotFoundException, Exception {
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).blockProb.toString(slot);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") {
 				if (host.isDeviceDeployed(name2)) {
 					if (host.isDeviceDeployed(name2) == false) {
@@ -288,11 +290,11 @@ public class Output {
 						throw new Error("second parameter to blockprob \"" + name2 + "\" is not deployed on host");
 					}
 					return host.getServer(name2).getResourceQueue().blockProb.toString(slot);
-				} else if (host.isVirtualResourceDeployed(name2)) {
-					if (host.isVirtualResourceDeployed(name2) == false) {
+				} else if (host.isSoftResourceDeployed(name2)) {
+					if (host.isSoftResourceDeployed(name2) == false) {
 						throw new Error("second parameter to blockprob \"" + name2 + "\" is not deployed on host");
 					}
-					return host.getVirtualRes(name2).getResourceQueue().blockProb.toString(slot);
+					return host.getSoftRes(name2).getResourceQueue().blockProb.toString(slot);
 				} else {
 					throw new Error("second parameter to blockprob \"" + name2 + "\" is not deployed on server");
 				}
@@ -320,8 +322,8 @@ public class Output {
 	public String findAvgServiceTime(int slot, String name1, String name2, String name3) throws DeviceNotFoundException, Exception {
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgServiceTime.toString(slot);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") {
 				if (host.isDeviceDeployed(name2)) {
 					if (host.isDeviceDeployed(name2) == false) {
@@ -333,11 +335,11 @@ public class Output {
 						throw new Error("second parameter to avgservt \"" + name2 + "\" is not deployed on host");
 					}
 					return host.getServer(name2).resourceQueue.avgServiceTime.toString(slot);
-				} else if (host.isVirtualResourceDeployed(name2)) {
-					if (host.isVirtualResourceDeployed(name2) == false) {
+				} else if (host.isSoftResourceDeployed(name2)) {
+					if (host.isSoftResourceDeployed(name2) == false) {
 						throw new Error("second parameter to avgservt \"" + name2 + "\" is not deployed on host");
 					}
-					return host.getVirtualRes(name2).resourceQueue.avgServiceTime.toString(slot);
+					return host.getSoftRes(name2).resourceQueue.avgServiceTime.toString(slot);
 				} else {
 					throw new Error("second parameter to avgservt \"" + name2 + "\" is not deployed on server");
 				}
@@ -364,8 +366,8 @@ public class Output {
 	public String findWaitingTime(int slot, String name1, String name2, String name3) throws DeviceNotFoundException, Exception {
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgWaitingTime.toString(slot);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") {
 				if (host.isDeviceDeployed(name2)) {
 					return host.getDevice(name2).resourceQueue.avgWaitingTime.toString(slot);
@@ -374,11 +376,11 @@ public class Output {
 						throw new Error("second parameter to waitt \"" + name2 + "\" is not deployed on host");
 					}
 					return host.getServer(name2).resourceQueue.avgWaitingTime.toString(slot);
-				} else if (host.isVirtualResourceDeployed(name2)) {
-					if (host.isVirtualResourceDeployed(name2) == false) {
+				} else if (host.isSoftResourceDeployed(name2)) {
+					if (host.isSoftResourceDeployed(name2) == false) {
 						throw new Error("second parameter to waitt \"" + name2 + "\" is not deployed on host");
 					}
-					return host.getVirtualRes(name2).resourceQueue.avgWaitingTime.toString(slot);
+					return host.getSoftRes(name2).resourceQueue.avgWaitingTime.toString(slot);
 				} else {
 					throw new Error("second parameter to waitt \"" + name2 + "\" is not deployed on server");
 				}
@@ -405,15 +407,15 @@ public class Output {
 	public String findUtilization(int slot, String name1, String name2, String name3) throws DeviceNotFoundException, Exception {
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgUtil.toString(slot);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") {// third parameter is not specified in utilization function
 				if (host.isServerDeployed(name2)) {
 					return host.getServer(name2).resourceQueue.avgUtil.toString(slot);
 				} else if (host.isDeviceDeployed(name2)) {
 					return host.getDevice(name2).resourceQueue.avgUtil.toString(slot);
-				} else if (host.isVirtualResourceDeployed(name2)) {
-					return host.getVirtualRes(name2).resourceQueue.avgUtil.toString(slot);
+				} else if (host.isSoftResourceDeployed(name2)) {
+					return host.getSoftRes(name2).resourceQueue.avgUtil.toString(slot);
 				} else {
 					throw new Error("second parameter to util \"" + name2 + "\" is not deployed on server");
 				}
@@ -442,13 +444,13 @@ public class Output {
 	public String findQueParameters(String name1, String name2) throws DeviceNotFoundException, Exception {
 		if (resultantDistSys.isLan(name1) == true) {
 			return findLinkQueParameters(name1, name2);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (host.isDeviceDeployed(name2)) {
 				return findDeviceQueParameters(name1, name2);
 			} else if (host.isServerDeployed(name2)) {
 				return findServerQueParameters(name1, name2);
-			} else if (host.isVirtualResourceDeployed(name2)) {
+			} else if (host.isSoftResourceDeployed(name2)) {
 				return findVirtualResQueParameters(name1, name2);
 			} else {
 				throw new Error("second parameter to qparms \"" + name2 + "\" is not deployed on server");
@@ -461,8 +463,8 @@ public class Output {
 	public String findQueueLength(int slot, String name1, String name2,String name3) throws Exception, DeviceNotFoundException {
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgQueueLen.toString(slot);
-		} else if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		} else if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") // third parameter is not specified in utilization
 			// function
 			{
@@ -470,8 +472,8 @@ public class Output {
 					return host.getDevice(name2).resourceQueue.avgQueueLen.toString(slot);
 				} else if (host.isServerDeployed(name2)) {
 					return host.getServer(name2).resourceQueue.avgQueueLen.toString(slot);
-				} else if (host.isVirtualResourceDeployed(name2)) {
-					return host.getVirtualRes(name2).resourceQueue.avgQueueLen.toString(slot);
+				} else if (host.isSoftResourceDeployed(name2)) {
+					return host.getSoftRes(name2).resourceQueue.avgQueueLen.toString(slot);
 				} else {
 					throw new Error("second parameter to qlen \"" + name2 + "\" is not deployed on server");
 				}
@@ -496,8 +498,8 @@ public class Output {
 	/** finds *power* consumption of the device */
 	public String findPowerConsumption(int slot, String name1, String name2,String name3)  throws DeviceNotFoundException {
 			
-		if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") // third parameter is not specified in utilization
 			// function
 			{
@@ -537,7 +539,7 @@ public class Output {
 
 	/** finds the *power* delay product */
 	public String findPowerDelayProduct(int slot, String hostname, String devicename) throws DeviceNotFoundException {
-		Host host = resultantDistSys.getHost(hostname);
+		Machine host = resultantDistSys.getMachine(hostname);
 		if (host.isDeviceDeployed(devicename) == false) {
 			throw new Error("second parameter to PDP \" " + devicename + "\" is not deployed on host");
 		}
@@ -546,7 +548,7 @@ public class Output {
 
 	/** finds the *power* efficiency */
 	public String findPowerEfficiency(int slot, String hostname, String devicename) throws DeviceNotFoundException {
-		Host host = resultantDistSys.getHost(hostname);
+		Machine host = resultantDistSys.getMachine(hostname);
 		if (host.isDeviceDeployed(devicename) == false) {
 			throw new Error("second parameter to peff \" " + devicename + "\" is not deployed on host");
 		}
@@ -555,8 +557,8 @@ public class Output {
 
 	/** find the energy consumption per request for specific device */
 	public String findTotalEnergyConsumptionperRequest(int slot, String name1, String name2,String name3) throws DeviceNotFoundException {
-		if (resultantDistSys.isHost(name1) == true) {
-			Host host = resultantDistSys.getHost(name1);
+		if (resultantDistSys.isMachine(name1) == true) {
+			Machine host = resultantDistSys.getMachine(name1);
 			if (name3 == ")") // third parameter is not specified in utilization
 			// function
 			{
@@ -585,15 +587,15 @@ public class Output {
 	
 	/** finds average frequency of the device. Makes sense only if device is power managed. */
 	public String findAvgFrequency(int slot, String tempname1, String tempname2) throws DeviceNotFoundException {
-		if (ModelParameters.resultantDistSys.getHost(tempname1).isDeviceDeployed(tempname2) == false) {
+		if (ModelParameters.resultantDistSys.getMachine(tempname1).isDeviceDeployed(tempname2) == false) {
 			throw new Error("second parameter to freq \"" + tempname2 + "\" is not deployed on host");
 		}
-		return ModelParameters.resultantDistSys.getHost(tempname1).getDevice(tempname2).averageFrequency.toString(slot);
+		return ModelParameters.resultantDistSys.getMachine(tempname1).getDevice(tempname2).averageFrequency.toString(slot);
 	}
 
 	/** Find Queue parameters of device */
 	String findDeviceQueParameters(String hostname, String devicename) throws DeviceNotFoundException {
-		Object dev = resultantDistSys.getHost(hostname).getDevice(devicename);
+		Object dev = resultantDistSys.getMachine(hostname).getDevice(devicename);
 		logger.error(" \nQueue Parameters " + hostname + "/" + devicename + ": ");
 		logger.error("ArrivalRate " + ((Device) dev).getAverageArrivalRate());
 		logger.error("Throughput " + ((Device) dev).getThroughput());
@@ -608,7 +610,7 @@ public class Output {
 
 	/** find qparms of server */
 	String findServerQueParameters(String hostname, String servername) {
-		SoftServer serv = resultantDistSys.getHost(hostname).getServer(servername);
+		SoftServer serv = resultantDistSys.getMachine(hostname).getServer(servername);
 		logger.error("\nQueue Parameters " + hostname + "/" + servername + ": ");
 		logger.error("ArrivalRate " + serv.getAverageArrivalRate());
 		logger.error("Throughput " + serv.getThroughput());
@@ -623,7 +625,7 @@ public class Output {
 
 	/** find qparms of virtual res */
 	String findVirtualResQueParameters(String hostname, String vsname) throws Exception {
-		VirtualResource vsres = resultantDistSys.getHost(hostname).getVirtualRes(vsname);
+		SoftResource vsres = resultantDistSys.getMachine(hostname).getSoftRes(vsname);
 		logger.error("\nQueue Parameters " + hostname + "/" + vsname + ": ");
 		logger.error("ArrivalRate " + vsres.getAverageArrivalRate());
 		logger.error("Throughput " + vsres.getThroughput());
@@ -655,7 +657,7 @@ public class Output {
 	 * 
 	 * This method needs reverification, and possible fixing. */
 	public String findBottleNeck(Double n) {
-		for (Host host : resultantDistSys.hosts) {
+		for (Machine host : resultantDistSys.machines) {
 			for (Object d : host.devices) {
 				// BottleNeck bn = new BottleNeck( ((Device) d).getUtilization(), host.name + ":" + ((Device) d).getDeviceName() );
 				BottleNeck bn = new BottleNeck(((Device) d).getUtilization(), host, ((Device) d));
@@ -665,8 +667,8 @@ public class Output {
 				BottleNeck bn = new BottleNeck(((SoftServer) s).getUtilization(), host.name + ":" + ((SoftServer) s).name);
 				bottleneck.add(bn);
 			}
-			for (Object vr : host.virResources) {
-				BottleNeck bn = new BottleNeck(((VirtualResource) vr).getUtilization(), host.name + ":" + ((VirtualResource) vr).name);
+			for (Object vr : host.softResources) {
+				BottleNeck bn = new BottleNeck(((SoftResource) vr).getUtilization(), host.name + ":" + ((SoftResource) vr).name);
 				bottleneck.add(bn);
 			}
 		}
@@ -680,7 +682,7 @@ public class Output {
 		int count = 0;
 
 		// run for all the DevQ in a host
-		for (Host h : resultantDistSys.hosts) {
+		for (Machine h : resultantDistSys.machines) {
 			for (Device d : h.devices) {
 				d.calculateAndPrintAverageDeviceSpeedup(h);
 			}
@@ -696,7 +698,7 @@ public class Output {
 				for (QServerInstance qsi : ((QueueSim) bn.device.resourceQueue).qServerInstances) {
 					wt_util += qsi.totalBusyTime.getTotalValue() * qsi.avgSpeedup / SimulationParameters.currTime;
 				}
-				wt_util = (wt_util / bn.device.availabelSpeedLevels[bn.device.totalFrequencyLevels])
+				wt_util = (wt_util / bn.device.availableSpeedLevels[bn.device.totalFrequencyLevels])
 						/ ((QueueSim) bn.device.resourceQueue).qServerInstances.size();
 				System.out.println("\t weighted_util: " + wt_util);
 
@@ -724,7 +726,7 @@ public class Output {
 		if (refUtil > 1) {
 			refUtil = 1;
 		}
-		for (Host host : resultantDistSys.hosts) {
+		for (Machine host : resultantDistSys.machines) {
 			for (Device d : host.devices) {
 				if (d.getUtilization() > refUtil) {
 					logger.error("Analyse:Overload at " + host.name + "/" + d.getDeviceName() + " util:" + d.getUtilization());
@@ -737,7 +739,7 @@ public class Output {
 					error = true;
 				}
 			}
-			for (VirtualResource s : host.virResources) {
+			for (SoftResource s : host.softResources) {
 				if (s.getUtilization() > refUtil) {
 					logger.error("A	// find response timenalyse:Overload at " + host.name + "/" + s.name + " util:"
 							+ s.getUtilization());
@@ -777,8 +779,8 @@ public class Output {
 
 			double P_static, P_dynamic, P_total;
 			double volt1 = 1, volt2 = 2, freq1, freq2;
-			freq1 = bn.device.availabelSpeedLevels[0];
-			freq2 = bn.device.availabelSpeedLevels[bn.device.totalFrequencyLevels];
+			freq1 = bn.device.availableSpeedLevels[0];
+			freq2 = bn.device.availableSpeedLevels[bn.device.totalFrequencyLevels];
 
 			double voltage = 0.0, capacitance = 0.0, energy = 0.0, energy_per_req = 0.0;
 			// linear relationship b/w frequency and voltage

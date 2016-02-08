@@ -17,30 +17,30 @@
  */
 package perfcenter.simulator.request;
 
-import perfcenter.simulator.HostSim;
+import perfcenter.simulator.MachineSim;
 
 //this is not being used now.
-public class VirResVector {
+public class SoftResVector {
 	public int instanceNo_;
 
 	public int virtResIndex_;
 
-	public String virtResName_;
+	public String softResName_;
 
-	private HostSim hostObject;
+	private MachineSim hostObject;
 
-	public VirResVector(int instanceNo, int virtResIndex, String virtResName, HostSim ho) {
+	public SoftResVector(int instanceNo, int virtResIndex, String virtResName, MachineSim ho) {
 		instanceNo_ = instanceNo;
 		virtResIndex_ = virtResIndex;
-		virtResName_ = virtResName;
+		softResName_ = virtResName;
 		hostObject = ho;
 	}
 
-	public HostSim getHostObject() {
+	public MachineSim getHostObject() {
 		return hostObject;
 	}
 
-	public void setHostObject(HostSim hostObject) {
+	public void setHostObject(MachineSim hostObject) {
 		this.hostObject = hostObject;
 	}
 }

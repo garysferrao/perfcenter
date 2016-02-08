@@ -23,15 +23,15 @@ package perfcenter.simulator;
  * @author  akhila
  */
 import perfcenter.baseclass.Variable;
-import perfcenter.baseclass.VirtualResource;
+import perfcenter.baseclass.SoftResource;
 import perfcenter.baseclass.enums.SchedulingPolicy;
 import perfcenter.simulator.queue.QueueServer;
 import perfcenter.simulator.queue.QueueSim;
 import perfcenter.simulator.request.Request;
-import perfcenter.simulator.request.VirResVector;
+import perfcenter.simulator.request.SoftResVector;
 
-public class VirtualResSim extends VirtualResource implements QueueServer {
-	public VirtualResSim(String srname, Variable srcount, Variable srbuffer, SchedulingPolicy srpol) {
+public class SoftResSim extends SoftResource implements QueueServer {
+	public SoftResSim(String srname, Variable srcount, Variable srbuffer, SchedulingPolicy srpol) {
 		this.name = srname;
 		count = srcount;
 		buffer = srbuffer;
@@ -45,8 +45,8 @@ public class VirtualResSim extends VirtualResource implements QueueServer {
 	// generates virtual res task starts event. This method is called by queue
 	public void createStartTaskEvent(Request req, int idleInstanceId, double currTime) {
 		// set the request device Instance
-		req.virtualResInstance = idleInstanceId;
-		Event ev = new Event(currTime, EventType.VIRTUALRES_TASK_STARTS, req);
+		req.softResInstance = idleInstanceId;
+		Event ev = new Event(currTime, EventType.SOFTRES_TASK_STARTS, req);
 
 		SimulationParameters.offerEvent(ev);
 	}
@@ -67,8 +67,8 @@ public class VirtualResSim extends VirtualResource implements QueueServer {
 
 	// process virtual resource task end
 	public void processTaskEndEvent(Request rq, int instanceId, double currTime) throws Exception {
-		VirResVector vr1 = rq.virtResStack.pop();
-		if (vr1.virtResName_.compareToIgnoreCase(rq.virtResName) == 0) {
+		SoftResVector vr1 = rq.virtResStack.pop();
+		if (vr1.softResName_.compareToIgnoreCase(rq.softResName) == 0) {
 			// queue book keeping structures are updated
 			endService(rq,instanceId, currTime);
 		} else {// ARCHITECTURE: handle this well
@@ -77,17 +77,17 @@ public class VirtualResSim extends VirtualResource implements QueueServer {
 
 		// the stack was not empty. pop the virtual resource and process it
 		boolean nextSoftResFound2 = false;
-		VirResVector vr = rq.virtResStack.pop();
-		rq.virtResName = vr.virtResName_;
-		rq.virtualResInstance = vr.instanceNo_;
-		rq.virtualResIndex = vr.virtResIndex_;
+		SoftResVector vr = rq.virtResStack.pop();
+		rq.softResName = vr.softResName_;
+		rq.softResInstance = vr.instanceNo_;
+		rq.softResIdx = vr.virtResIndex_;
 		vr.virtResIndex_++;
 		rq.virtResStack.push(vr);
 
-		rq.virtualResIndex = rq.virtualResIndex + 1;
+		rq.softResIdx = rq.softResIdx + 1;
 
 		// Offer request to next virtual resource
-		nextSoftResFound2 = rq.hostObject.offeredRequestToVirtualRes(rq, SimulationParameters.currTime);
+		nextSoftResFound2 = rq.machineObject.offerRequestToSoftRes(rq, SimulationParameters.currTime);
 		if (nextSoftResFound2 == true) {
 			return;
 		}
@@ -98,7 +98,7 @@ public class VirtualResSim extends VirtualResource implements QueueServer {
 			SimulationParameters.offerEvent(ev2);
 			return;
 		} else {
-			Event ev = new Event(SimulationParameters.currTime, EventType.VIRTUALRES_TASK_ENDS, rq);
+			Event ev = new Event(SimulationParameters.currTime, EventType.SOFTRES_TASK_ENDS, rq);
 			SimulationParameters.offerEvent(ev);
 			return;
 		}
@@ -109,18 +109,18 @@ public class VirtualResSim extends VirtualResource implements QueueServer {
 	public void processTaskStartEvent(Request r, double currTime) throws Exception {
 		// offer the request to virtual resource device. before offering
 		// put the virtual res into the stack
-		HostSim hs = r.hostObject;
+		MachineSim hs = r.machineObject;
 		r.setRequestFromVirtRes();
-		r.setDeviceIndex(0, "VirtualResSim:processTaskStartEvent");
-		VirResVector vr = new VirResVector(r.virtualResInstance, r.virtualResIndex, r.virtResName, hs);
+		r.setSubTaskIdx(0, "VirtualResSim:processTaskStartEvent");
+		SoftResVector vr = new SoftResVector(r.softResInstance, r.softResIdx, r.softResName, hs);
 		r.virtResStack.push(vr);
-		hs.offeredRequestToNextDevice(r, currTime);
+		hs.offerReqToNextDevice(r, currTime);
 
 	}
 
 	// this is called by the queue and also from deviceSim
 	public void dropRequest(Request r, double currTime) throws Exception {
-		r.hostObject.getServer(r.softServName).abortThread(r.threadNum, SimulationParameters.currTime);
+		r.machineObject.getServer(r.softServName).abortThread(r.threadNum, SimulationParameters.currTime);
 		r.drop();
 	}
 

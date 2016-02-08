@@ -20,7 +20,7 @@ package perfcenter.output;
 import org.apache.log4j.Logger;
 
 import perfcenter.baseclass.Device;
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Machine;
 
 /**
  * This is implemented to sort resources based on utilization. Used in output.java to find bottleneck resource.
@@ -32,7 +32,7 @@ public class BottleNeck implements Comparable<BottleNeck> {
 	String resname;
 	Double util;
 	Logger logger = Logger.getLogger("BottleNeck");
-	Host host = null;
+	Machine host = null;
 	Device device = null;
 
 	public BottleNeck(Double u, String name) {
@@ -40,7 +40,7 @@ public class BottleNeck implements Comparable<BottleNeck> {
 		resname = name;
 	}
 
-	BottleNeck(double u, Host h, Device d) {
+	BottleNeck(double u, Machine h, Device d) {
 		util = u;
 		resname = h.name + ":" + ((Device) d).getDeviceName();
 		this.host = h;

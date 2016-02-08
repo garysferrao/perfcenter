@@ -150,6 +150,7 @@ public class QServerInstance {
 	public void setBusyStatus(boolean busyStatus) {
 		this.busyStatus = busyStatus;
 		if (busyStatus == false) { // not busy
+	
 			if (!onFreeStack) {
 				this.parentQueue.freeQServerInstances.push(this);
 				onFreeStack = true;

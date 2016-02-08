@@ -51,15 +51,17 @@ public class DeviceSim extends Device implements QueueServer {
 		// make a copy of device from SimParams.ds
 		// this copy will be in SimParams.res
 		name = d.name;
+		category = d.category;
 		count = d.count;
 		buffer = d.buffer;
 		schedulingPolicy = d.schedulingPolicy;
 		speedUpFactor = d.speedUpFactor;
+		basespeed = d.basespeed;
 
 		// Copy these attributes also for new device copy form SimParamms.ds to SimParams.res: rakesh
 		governor = d.governor;
 		deviceProbeInterval = d.deviceProbeInterval;
-		availabelSpeedLevels = d.availabelSpeedLevels;
+		availableSpeedLevels = d.availableSpeedLevels;
 		powerConsumptionsLevels = d.powerConsumptionsLevels;
 		upThreshold = d.upThreshold;
 		downThreshold = d.downThreshold;
@@ -69,7 +71,7 @@ public class DeviceSim extends Device implements QueueServer {
 		totalFrequencyLevels = d.totalFrequencyLevels;
 		totalPowerLevels = d.totalPowerLevels;
 		int i = 0;
-		while (this.availabelSpeedLevels[i + 1] > this.availabelSpeedLevels[i]) {
+		while (this.availableSpeedLevels[i + 1] > this.availableSpeedLevels[i]) {
 			i++;
 		}
 		totalFrequencyLevels = i;
@@ -97,7 +99,7 @@ public class DeviceSim extends Device implements QueueServer {
 
 		// resourceQueue.request = req;
 		resourceQueue.serverName = req.fromServer;
-		resourceQueue.hostName = req.hostObject.getName();
+		resourceQueue.hostName = req.machineObject.getName();
 		resourceQueue.devName = this.name;
 	}
 
@@ -138,10 +140,10 @@ public class DeviceSim extends Device implements QueueServer {
 	 * 		return
 	 * else (there is no next device)
 	 * 		if device was part of task
-	 * 			if there is next virt res
-	 * 				2. offer request to next virt res
+	 * 			if there is next soft resource
+	 * 				2. offer request to next soft resource
 	 * 				return
-	 * 			else (there is no next virt res)
+	 * 			else (there is no next soft resource)
 	 * 				3. new event software task end is generated
 	 * 				return
 	 * 		else if device was part of soft res
@@ -149,7 +151,7 @@ public class DeviceSim extends Device implements QueueServer {
 	 * 				4. offer request to it
 	 * 				return
 	 * 			else
-	 * 				5. new event virtual res task ends is generated
+	 * 				5. new event soft resource task ends is generated
 	 * 				return
 	 * </pre>
 	 */
@@ -162,20 +164,21 @@ public class DeviceSim extends Device implements QueueServer {
 			endService(request, instanceId, SimulationParameters.currTime);
 
 			// advance the pointer to check whether there is next device for the task
-			request.setDeviceIndex(request.getDeviceIndex() + 1, "DeviceSim:processTaskEndEvent");
+			request.setSubTaskIdx(request.getSubTaskIdx() + 1, "DeviceSim:processTaskEndEvent");
 			// Option 1
 			// if there is no more devices then nextDeviceFound will be -1
-			boolean nextDeviceFound = request.hostObject.offeredRequestToNextDevice(request, SimulationParameters.currTime);
+			boolean nextDeviceFound = request.machineObject.offerReqToNextDevice(request, SimulationParameters.currTime);
+			//System.out.println("DeviceSim.processTaskEndEvent():"  + nextDeviceFound);
 			if (nextDeviceFound == true) {
 				return;
 			}
 
-			// as there are no more devices request could be offered to virtual res
+			// As there are no more devices, request could be offered to soft resource now.
 			if (request.isRequestFromTask()) {
 				// Option 2
-				request.virtualResIndex = 0;
-				boolean nextSoftResFound = request.hostObject.offeredRequestToVirtualRes(request, SimulationParameters.currTime);
-				logger.debug("virtual res: " + nextSoftResFound);
+				request.softResIdx = 0;
+				boolean nextSoftResFound = request.machineObject.offerRequestToSoftRes(request, SimulationParameters.currTime);
+				logger.debug("Soft res: " + nextSoftResFound);
 				if (nextSoftResFound == true) {
 					return;
 				}
@@ -183,17 +186,18 @@ public class DeviceSim extends Device implements QueueServer {
 				// Option 3
 				// As there are no more soft resources
 				SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.SOFTWARE_TASK_ENDS, request));
-			} else if (request.isRequestFromVirtRes()) {
+				//System.out.println("Software Task Ends offered");
+			} else if (request.isRequestFromSoftRes()) {
 				// Option 4
-				boolean nextLayerSoftResFound = request.hostObject.offeredRequestToNextLayerVirtRes(request, SimulationParameters.currTime);
+				boolean nextLayerSoftResFound = request.machineObject.offerRequestToNextLayerSoftRes(request, SimulationParameters.currTime);
 				if (nextLayerSoftResFound == true) {
 					return;
 				}
 
 				// Option 5
-				// there is no next virtual res
-				SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.VIRTUALRES_TASK_ENDS, request));
-				logger.debug("NO virtual resource ");
+				// there is no next soft res
+				SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.SOFTRES_TASK_ENDS, request));
+				logger.debug("NO soft resource ");
 			}
 			// } catch (Exception e) {
 			// throw new Exception("HExec error"); //Bhavin
@@ -205,11 +209,25 @@ public class DeviceSim extends Device implements QueueServer {
 	 * This generates hardware task end event
 	 */
 	public void processTaskStartEvent(Request request, double currentTime) throws Exception {
+
 		// change servt based on device instance speed
 		QServerInstance qserverInstance = ((QueueSim) resourceQueue).qServerInstances.get(request.devInstance);
-
+		//System.out.println(name + "'s processTaskStartEvent(): devInstance:"+request.devInstance + " qServerInstanceId:" + qserverInstance.id );
 		// get new service time for this PM device instance.
-		double serviceTime = request.serviceTimeRemaining * availabelSpeedLevels[0] / availabelSpeedLevels[qserverInstance.currentSpeedLevelIndex];
+		double serviceTime = request.serviceTimeRemaining * availableSpeedLevels[0] / availableSpeedLevels[qserverInstance.currentSpeedLevelIndex];
+		
+		double taskBaseSpeed = ModelParameters.inputDistSys.getTask(request.currentTaskNode.name).getSubTaskServt(request.getSubTaskIdx()).basespeed;
+		
+		if(isDevicePowerManaged){
+			//System.out.println("Current task basespeed:" + taskBaseSpeed + " device speed:" + availableSpeedLevels[qserverInstance.currentSpeedLevelIndex]);
+			serviceTime *= ((taskBaseSpeed)/availableSpeedLevels[qserverInstance.currentSpeedLevelIndex]);
+		}else{
+			//If device is not power managed, then availableSpeedLevels will be 1 so no point in using them. Instead use device's basespeed
+			if(basespeed.value != -1){
+				//System.out.println("Current task basespeed:" + taskBaseSpeed + " device speed:" + basespeed.value);
+				serviceTime *= ((taskBaseSpeed)/basespeed.value);
+			}
+		}
 		double endTime = SimulationParameters.currTime + serviceTime;
 
 		// updating measurement variables.
@@ -219,7 +237,9 @@ public class DeviceSim extends Device implements QueueServer {
 		logger.debug("[In h/w_task_starts]service time: " + serviceTime + "   end_time: " + endTime);
 
 		Event event = new Event(endTime, EventType.HARDWARE_TASK_ENDS, request);
+		//System.out.println("HW TASK ENDS event being added. Before EventQueue Size:" + SimulationParameters.eventQueue.size());
 		SimulationParameters.offerEvent(event);
+		//System.out.println("After EventQueue Size:" + SimulationParameters.eventQueue.size());
 		qserverInstance.deviceInstanceAssociatedEventList.add(event);
 	}
 
@@ -228,17 +248,17 @@ public class DeviceSim extends Device implements QueueServer {
 	 * request 2. takes care of contributions made to performance measures of current software server
 	 */
 	public void dropRequest(Request request, double currentTime) throws Exception {
-		if (request.isRequestFromVirtRes()) {
-			VirtualResSim virtualResourceSim = request.hostObject.getVirtualRes(request.virtResName);
-			// stops the execution at the virtual resource
-			virtualResourceSim.abort(request.virtualResInstance, currentTime);
+		if (request.isRequestFromSoftRes()) {
+			SoftResSim softResourceSim = request.machineObject.getSoftRes(request.softResName);
+			// stops the execution at the soft resource
+			softResourceSim.abort(request.softResInstance, currentTime);
 
 			// aborts any resources held at upper layers
-			virtualResourceSim.dropRequest(request, currentTime);
-			logger.debug("request dropped at " + virtualResourceSim.name);
+			softResourceSim.dropRequest(request, currentTime);
+			logger.debug("request dropped at " + softResourceSim.name);
 		} else {
 			// stops the execution at the current thread
-			request.hostObject.getServer(request.softServName).abortThread(request.threadNum, SimulationParameters.currTime);
+			request.machineObject.getServer(request.softServName).abortThread(request.threadNum, SimulationParameters.currTime);
 			request.drop();
 			// logger.debug("request dropped at");
 		}
@@ -254,7 +274,7 @@ public class DeviceSim extends Device implements QueueServer {
 	 * @param currentTime
 	 * @param host
 	 */
-	void deviceProbeHandler(double currentTime, HostSim host) throws Exception {
+	void deviceProbeHandler(double currentTime, MachineSim host) throws Exception {
 		// for all device instances
 		// keep the values of maximum device speed
 		double maximumDeviceSpeedLevel = 0.0;
@@ -371,10 +391,10 @@ public class DeviceSim extends Device implements QueueServer {
 				if (qServerInstance.busyTimeInProbeInterval * 100.0 > this.upThreshold * deviceProbeInterval) {
 
 					// logger.debug("available speed level: " + availabelSpeedLevels.length);
-					if (qServerInstance.currentSpeedLevelIndex < availabelSpeedLevels.length - 1
-							&& availabelSpeedLevels[qServerInstance.currentSpeedLevelIndex + 1] > availabelSpeedLevels[qServerInstance.currentSpeedLevelIndex]) {
+					if (qServerInstance.currentSpeedLevelIndex < availableSpeedLevels.length - 1
+							&& availableSpeedLevels[qServerInstance.currentSpeedLevelIndex + 1] > availableSpeedLevels[qServerInstance.currentSpeedLevelIndex]) {
 						qServerInstance.currentSpeedLevelIndex++;
-						qServerInstance.currentSpeed = availabelSpeedLevels[qServerInstance.currentSpeedLevelIndex];
+						qServerInstance.currentSpeed = availableSpeedLevels[qServerInstance.currentSpeedLevelIndex];
 
 						logger.debug(" ----Frequency up----");
 						logger.debug(" current speed: " + qServerInstance.currentSpeed);
@@ -385,7 +405,7 @@ public class DeviceSim extends Device implements QueueServer {
 				else if (qServerInstance.utilizationInProbeInterval * 100 < this.downThreshold) {
 					if (qServerInstance.currentSpeedLevelIndex > 0) {
 						qServerInstance.currentSpeedLevelIndex--;
-						qServerInstance.currentSpeed = availabelSpeedLevels[qServerInstance.currentSpeedLevelIndex];
+						qServerInstance.currentSpeed = availableSpeedLevels[qServerInstance.currentSpeedLevelIndex];
 						logger.debug(" -----Frequency down------");
 						logger.debug(" current speed: " + qServerInstance.currentSpeed);
 					} else {
@@ -399,11 +419,11 @@ public class DeviceSim extends Device implements QueueServer {
 				if (qServerInstance.utilizationInProbeInterval * 100 > this.upThreshold) // get MAX speed
 				{
 					int i;
-					for (i = 0; qServerInstance.currentSpeedLevelIndex < availabelSpeedLevels.length - 1
-							&& availabelSpeedLevels[i + 1] > availabelSpeedLevels[i]; i++)
+					for (i = 0; qServerInstance.currentSpeedLevelIndex < availableSpeedLevels.length - 1
+							&& availableSpeedLevels[i + 1] > availableSpeedLevels[i]; i++)
 						; // no-op
 					qServerInstance.currentSpeedLevelIndex = i;
-					qServerInstance.currentSpeed = availabelSpeedLevels[i];
+					qServerInstance.currentSpeed = availableSpeedLevels[i];
 
 					logger.debug(" ----Frequency up----");
 					logger.debug(" current speed: " + qServerInstance.currentSpeed);
@@ -413,10 +433,10 @@ public class DeviceSim extends Device implements QueueServer {
 					if (qServerInstance.currentSpeedLevelIndex != 0) {
 						logger.debug(" ----Frequency down----");
 						qServerInstance.currentSpeedLevelIndex = qServerInstance.currentSpeedLevelIndex - 1;
-						qServerInstance.currentSpeed = availabelSpeedLevels[qServerInstance.currentSpeedLevelIndex];
+						qServerInstance.currentSpeed = availableSpeedLevels[qServerInstance.currentSpeedLevelIndex];
 					} else {
 						qServerInstance.currentSpeedLevelIndex = 0;
-						qServerInstance.currentSpeed = availabelSpeedLevels[0];
+						qServerInstance.currentSpeed = availableSpeedLevels[0];
 					}
 					logger.debug(" current speed: " + qServerInstance.currentSpeed);
 				}
@@ -469,7 +489,7 @@ public class DeviceSim extends Device implements QueueServer {
 
 	private void updateIntermediateBusyTime(QServerInstance qsi, double currTime) {
 		qsi.intermediate_busy_time += currTime - qsi.last_time_stamp;
-		qsi.intermediate_weighted_busy_time += (currTime - qsi.last_time_stamp) * availabelSpeedLevels[qsi.currentSpeedLevelIndex];
+		qsi.intermediate_weighted_busy_time += (currTime - qsi.last_time_stamp) * availableSpeedLevels[qsi.currentSpeedLevelIndex];
 		qsi.last_time_stamp = currTime;
 	}
 
@@ -479,7 +499,7 @@ public class DeviceSim extends Device implements QueueServer {
 	 */
 	private void updateDeviceSpeedup(QServerInstance qsi, double currTime) throws Exception {
 		try {
-			logger.debug("==total_bust_time: " + qsi.totalBusyTime.getTotalValue() + "  req.ST: " + qsi.reqStartTime + "  this_time: " + currTime
+			logger.debug("==total_busy_time: " + qsi.totalBusyTime.getTotalValue() + "  req.ST: " + qsi.reqStartTime + "  this_time: " + currTime
 					+ "  inter_BT: " + qsi.intermediate_busy_time + "  currTime-req.ST: " + (currTime - qsi.reqStartTime) + "  currTime-lastTS: "
 					+ (currTime - qsi.last_time_stamp) + "  prev_TBT: " + qsi.totalBusyTime.getTotalValue() + "   prev. TWBT: "
 					+ qsi.totalBusyTime.getTotalValue() * qsi.avgSpeedup + "  time-TWBT: "
@@ -487,7 +507,7 @@ public class DeviceSim extends Device implements QueueServer {
 
 			//SCALABILITY: continuous computation of average speed up is bad. Use one of the metric classes here.
 			qsi.avgSpeedup = (qsi.totalBusyTime.getTotalValue() * qsi.avgSpeedup + qsi.intermediate_weighted_busy_time + (currTime - qsi.last_time_stamp)
-					* availabelSpeedLevels[qsi.currentSpeedLevelIndex])
+					* availableSpeedLevels[qsi.currentSpeedLevelIndex])
 					/ ((qsi.totalBusyTime.getTotalValue() + qsi.intermediate_busy_time) + (currTime - qsi.last_time_stamp));
 
 			logger.debug("qsi: " + qsi + "  av. speedup: " + qsi.avgSpeedup);
@@ -507,20 +527,20 @@ public class DeviceSim extends Device implements QueueServer {
 			if (this.governor == PowerManagementGovernor.POWERSAVE || this.governor == PowerManagementGovernor.CONSERVATIVE
 					|| this.governor == PowerManagementGovernor.ONDEMAND) {
 				qServerInstance.currentSpeedLevelIndex = 0;
-				qServerInstance.currentSpeed = this.availabelSpeedLevels[0];
+				qServerInstance.currentSpeed = this.availableSpeedLevels[0];
 				qServerInstance.avgSpeedup = qServerInstance.currentSpeed;
 			} else if (this.governor == PowerManagementGovernor.USERSPACE) {
 				qServerInstance.currentSpeedLevelIndex = (int) this.userspaceSpeedIndex;
-				qServerInstance.currentSpeed = this.availabelSpeedLevels[(int) this.userspaceSpeedIndex];
+				qServerInstance.currentSpeed = this.availableSpeedLevels[(int) this.userspaceSpeedIndex];
 				qServerInstance.avgSpeedup = qServerInstance.currentSpeed;
 
 			} else if (this.governor == PowerManagementGovernor.PERFORMANCE) {
 				int i = 0;
-				while (this.availabelSpeedLevels[i + 1] > this.availabelSpeedLevels[i]) {
+				while (this.availableSpeedLevels[i + 1] > this.availableSpeedLevels[i]) {
 					i++;
 				}
 				qServerInstance.currentSpeedLevelIndex = i;
-				qServerInstance.currentSpeed = this.availabelSpeedLevels[i];
+				qServerInstance.currentSpeed = this.availableSpeedLevels[i];
 				qServerInstance.avgSpeedup = qServerInstance.currentSpeed;
 			}
 		}

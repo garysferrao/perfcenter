@@ -24,6 +24,8 @@ package perfcenter.baseclass;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import perfcenter.baseclass.enums.DeviceType;
+import perfcenter.baseclass.DeviceCategory;
 
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
@@ -37,15 +39,18 @@ import org.apache.log4j.PatternLayout;
 public class DistributedSystem {
 
 	// List of soft resources. used for reference only. they are deployed on
-	// hosts
-	public ArrayList<VirtualResource> virRes; // list of virtual resources
-	public List<String> devices;
+	// machines
+	public ArrayList<SoftResource> softRes; // list of soft resources
+	public ArrayList<DeviceCategory> devCategories;
+	public ArrayList<Device> devices;
+	public ArrayList<VDevice> vdevices;
 	public ArrayList<Variable> variables;
 	public ArrayList<Task> tasks;
-	/** List of softServers. used for reference only. They are deployed on Hosts */
+	/** List of softServers. used for reference only. They are deployed on Machines */
 	public ArrayList<SoftServer> softServers;
-	/** All the Hosts. For simulation, this would contain objects of HostSim. */
-	public ArrayList<Host> hosts;
+	/** All the Machines. For simulation, this would contain objects of MachineSim. */
+	public ArrayList<Machine> machines;
+	public ArrayList<VMachine> vmachines;
 	/** All the Scenarios. For simulation, this would contain objects of ScenarioSim. */
 	public ArrayList<Scenario> scenarios;
 	public ArrayList<Lan> lans;
@@ -67,11 +72,15 @@ public class DistributedSystem {
 	public List<Device> powerManagedDevicePrototypes;
 	// list of power managed devices
 	public List<Device> powerManagedDevices;
+	public List<VDevice> powerManagedVDevices;
 
 	public DistributedSystem() {
-		hosts = new ArrayList<Host>();
-		virRes = new ArrayList<VirtualResource>();
-		devices = new ArrayList<String>();
+		machines = new ArrayList<Machine>();
+		vmachines = new ArrayList<VMachine>();
+		softRes = new ArrayList<SoftResource>();
+		devCategories = new ArrayList<DeviceCategory>();
+		devices = new ArrayList<Device>();
+		vdevices = new ArrayList<VDevice>();
 
 		/***************************************************************************/
 		powerManagedDevicePrototypes = new ArrayList<Device>(); // added by Rakesh
@@ -103,9 +112,9 @@ public class DistributedSystem {
 
 	public void printConfiguration() {
 		System.out.println("---printcfg start----");
-		for (Host host : hosts) {
-			System.out.println("---HostDef----");
-			host.print();
+		for (Machine machine : machines) {
+			System.out.println("---MachineDef----");
+			machine.print();
 		}
 		System.out.println("---printcfg end----");
 	}
@@ -196,53 +205,125 @@ public class DistributedSystem {
 		return false;
 	}
 
-	public Host getHost(String name) {
-		for (Object host : hosts) {
-			if (((Host) host).name.compareToIgnoreCase(name) == 0) {
-				return (Host) host;
+	public Machine getMachine(String mname) {
+		for (Object machine : machines) {
+			if (((Machine) machine).name.compareToIgnoreCase(mname) == 0) {
+				return (Machine) machine;
 			}
 		}
-		throw new Error(name + " is not Host");
+		throw new Error(mname + " is not Machine");
+	}
+	
+	public VMachine getVMachine(String vmname) {
+		for (Object vmachine : vmachines) {
+			if (((VMachine) vmachine).name.compareToIgnoreCase(vmname) == 0) {
+				return (VMachine) vmachine;
+			}
+		}
+		throw new Error(vmname + " is not Virtual Machine");
 	}
 
-	public boolean isHost(String name) {
-		for (Object host : hosts) {
-			if (((Host) host).name.compareToIgnoreCase(name) == 0) {
+	public boolean isMachine(String name) {
+		for (Object machine : machines) {
+			if (((Machine) machine).name.compareToIgnoreCase(name) == 0) {
 				return true;
 			}
 		}
 		return false;
 	}
-
-	public String getDevice(String name) {
-		for (String dev : devices) {
-			if (dev.compareToIgnoreCase(name) == 0) {
+	
+	public boolean isVMachine(String vmname) {
+		for (Object vmachine : vmachines) {
+			if (((VMachine) vmachine).name.compareToIgnoreCase(vmname) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public DeviceCategory getDeviceCategory(String devcatname){
+		for (DeviceCategory devcat : devCategories){
+			if(devcat.name.compareToIgnoreCase(devcatname) == 0){
+				return devcat;
+			}
+		}
+		throw new Error(devcatname + " is not Device Category");
+	}
+	
+	public Device getDevice(String devname) {
+		for (Device dev : devices) {
+			if (dev.name.compareToIgnoreCase(devname) == 0) {
 				return dev;
 			}
 		}
-		throw new Error(name + " is not Device");
+		throw new Error(devname + " is not Device");
+	}
+	
+	public VDevice getVDevice(String vdevname) {
+		for (VDevice vdev : vdevices) {
+			if (vdev.name.compareToIgnoreCase(vdevname) == 0) {
+				return vdev;
+			}
+		}
+		throw new Error(vdevname + " is not Device");
+	}
+	
+	public DeviceType getDeviceType(String devcatname){
+		for(DeviceCategory devcat: devCategories){
+			if(devcat.name.compareToIgnoreCase(devcatname) == 0){
+				return devcat.type;
+			}
+		}
+		throw new Error(devcatname + " is not Device");
+	}
+	
+	public DeviceCategory getVDeviceCategory(String vdevname){
+		for(VDevice vdev: vdevices){
+			if(vdev.name.compareToIgnoreCase(vdevname) == 0){
+				return vdev.category;
+			}
+		}
+		throw new Error(vdevname + " is not Device");
 	}
 
-	public boolean isDevice(String name) {
-		for (String dev : devices) {
-			if (dev.compareToIgnoreCase(name) == 0) {
+	public boolean isDeviceCategory(String devcatname) {
+		for (DeviceCategory devcat : devCategories) {
+			if (devcat.name.compareToIgnoreCase(devcatname) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isDevice(String devname) {
+		for (Device dev : devices) {
+			if (dev.name.compareToIgnoreCase(devname) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean isVDevice(String vdevname) {
+		for (VDevice vdev : vdevices) {
+			if (vdev.name.compareToIgnoreCase(vdevname) == 0) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	public VirtualResource getVirtualRes(String name) {
-		for (VirtualResource sr : virRes) {
+	public SoftResource getSoftRes(String name) {
+		for (SoftResource sr : softRes) {
 			if (sr.name.compareToIgnoreCase(name) == 0) {
 				return sr;
 			}
 		}
-		throw new Error(name + " is not Virtual res");
+		throw new Error(name + " is not soft resource");
 	}
 
-	public boolean isVirtualRes(String name) {
-		for (VirtualResource sr : virRes) {
+	public boolean isSoftRes(String name) {
+		for (SoftResource sr : softRes) {
 			if (sr.name.compareToIgnoreCase(name) == 0) {
 				return true;
 			}
@@ -305,23 +386,23 @@ public class DistributedSystem {
 	}
 	
 	//CHECK : This method is not used anywhere
-	// deploying server on host or host on lan
+	// deploying server on machine or machine on lan
 	public void deploy(String name1, String name2) {
 		SoftServer srv;
-		Host host;
-		// deploying server on host
+		Machine machine;
+		// deploying server on machine
 		if (isServer(name1)) {
 			srv = getServer(name1);
-			host = getHost(name2);
-			srv.addHost(name2);
-			host.addServer(srv);
+			machine = getMachine(name2);
+			srv.addMachine(name2);
+			machine.addServer(srv);
 			return;
 		} else {
-			// deploying host on lan
-			host = getHost(name1);
+			// deploying machine on lan
+			machine = getMachine(name1);
 			Lan ln = getLan(name2);
-			host.addLan(name2);
-			ln.addHost(name1);
+			machine.addLan(name2);
+			ln.addMachine(name1);
 		}
 	}
 
@@ -332,8 +413,8 @@ public class DistributedSystem {
 		for (SoftServer serv : softServers) {
 			serv.validate();
 		}
-		for (Host host : hosts) {
-			host.validate();
+		for (Machine machine : machines) {
+			machine.validate();
 		}
 		for (Lan lan : lans) {
 			lan.validate();
@@ -369,8 +450,12 @@ public class DistributedSystem {
 		}
 	}
 
-	public ArrayList<Host> getHostList() {
-		return (hosts);
+	public ArrayList<Machine> getMachineList() {
+		return (machines);
+	}
+	
+	public ArrayList<VMachine> getVMachineList() {
+		return (vmachines);
 	}
 
 	public ArrayList<SoftServer> getSoftserverList() {
@@ -381,6 +466,10 @@ public class DistributedSystem {
 	// Add power-managed device into the list
 	public void addPowerManagedDevices(Device device) {
 		powerManagedDevices.add(device);
+	}
+
+	public void addPowerManagedVDevices(VDevice vdevice) {
+		powerManagedVDevices.add(vdevice);
 	}
 
 	/********************************************************************/

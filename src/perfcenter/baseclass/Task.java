@@ -18,8 +18,9 @@
 package perfcenter.baseclass;
 
 import java.util.ArrayList;
-
+import perfcenter.baseclass.enums.DeviceType;
 import org.apache.log4j.Logger;
+
 
 /**
  * Defines the Task and operations done on task
@@ -29,15 +30,17 @@ import org.apache.log4j.Logger;
 public class Task {
 	/** Task name */
 	public String name;
-
+	
 	/** Name of server to which this task belongs */
 	public String softServerName;
 
-	/** list of devices and service times required by this task */
-	public ArrayList<DeviceServiceTime> deviceServiceTimes = new ArrayList<DeviceServiceTime>();
+	/** List of devices and service times required by this task. 
+	 *  It is required that these devices are on the same host to which this task's software server belongs. 
+	 **/
+	public ArrayList<ServiceTime> subtaskServiceTimes = new ArrayList<ServiceTime>();
 
-	/** List of virtual resources required by this task */
-	public ArrayList<String> virRes = new ArrayList<String>();
+	/** List of soft resources required by this task */
+	public ArrayList<String> softRes = new ArrayList<String>();
 
 	/** Arrival rate to the task. used by analytical part for open analysis */
 	double arrivalRate = 0;
@@ -66,24 +69,23 @@ public class Task {
 
 	public Task getCopy() {
 		Task tcpy = new Task(name, 0);
-		for (DeviceServiceTime dst : deviceServiceTimes) {
-			DeviceServiceTime dstcpy = dst.getCopy();
-			tcpy.addDeviceServiceTime(dstcpy);
+		for (ServiceTime st : subtaskServiceTimes) {
+			ServiceTime stcpy = st.getCopy();
+			tcpy.addSubTaskServiceTime(stcpy);
 		}
-		for (String sr : virRes) {
+		for (String sr : softRes) {
 			String srcpy = new String(sr);
-			tcpy.addVirtualRes(srcpy);
+			tcpy.addSoftRes(srcpy);
 		}
 		return tcpy;
 	}
 
 	public void print() {
-		System.out.println("Task : " + name);
-		for (DeviceServiceTime servt : deviceServiceTimes) {
+		for (ServiceTime servt : subtaskServiceTimes) {
 			servt.print();
 		}
-		for (String sres : virRes) {
-			System.out.println(" Virtual Resource name :" + sres);
+		for (String sres : softRes) {
+			System.out.println(" Soft Resource name :" + sres);
 		}
 	}
 
@@ -91,47 +93,68 @@ public class Task {
 		if (softServerName == null) {
 			logger.warn("Lineno" + lineno + ".Warning:Task \"" + name + "\" does not belong to any server ");
 		}
-		if (deviceServiceTimes.isEmpty()) {
+		if (subtaskServiceTimes.isEmpty()) {
 			if (name != "user")
 				logger.warn("Lineno" + lineno + ". Warning:Task \"" + name + "\" does not have any  device");
 		}
 
 	}
 
-	public void addDeviceServiceTime(DeviceServiceTime dst) {// made public by niranjan
-		deviceServiceTimes.add(dst);
+	public void addSubTaskServiceTime(ServiceTime st) {// made public by niranjan
+		subtaskServiceTimes.add(st);
+		//System.out.println( "Task " + this.toString() + " " + this.name + " addSubTaskServiceTime 1 " + "Device Category:" + st.devCategory.name  + " basespeed:" + st.basespeed + " subtaskServiceTimes.size():" + this.subtaskServiceTimes.size());
 	}
 
-	public void addDeviceAndServiceTime(String devicename, Distribution dist) {
-		for (DeviceServiceTime st : deviceServiceTimes) {
+	
+	public void createAndAddSubTaskServiceTime(String devcatname, Distribution dist) {
+		 /*	for (DeviceServiceTime st : deviceServiceTimes) {
+				if (st.devName.compareToIgnoreCase(devicename) == 0) {
+					st.dist = dist;
+					st.basespeed = basespeed.value;
+					return;
+				}
+			} */
+			DeviceCategory devcat = ModelParameters.inputDistSys.getDeviceCategory(devcatname);
+			ServiceTime subtaskservt = new ServiceTime(devcat, dist);
+			subtaskServiceTimes.add(subtaskservt);
+			//System.out.println( "Task " + this.toString() + " " + this.name + " createAndAddSubTaskServiceTime 1 " + "Device Category:" + devcat.name  + " subtaskServiceTimes.size():" + this.subtaskServiceTimes.size());
+	}
+	
+	public void createAndAddSubTaskServiceTime(String devcatname, Distribution dist, Variable basespeed) {
+	 /*	for (DeviceServiceTime st : deviceServiceTimes) {
 			if (st.devName.compareToIgnoreCase(devicename) == 0) {
 				st.dist = dist;
+				st.basespeed = basespeed.value;
 				return;
 			}
-		}
-		DeviceServiceTime servt = new DeviceServiceTime(devicename, dist);
-		deviceServiceTimes.add(servt);
+		} */
+		DeviceCategory devcat = ModelParameters.inputDistSys.getDeviceCategory(devcatname);
+		ServiceTime subtaskservt = new ServiceTime(devcat, dist, basespeed.value);
+		subtaskServiceTimes.add(subtaskservt);
+		//System.out.println( this.toString() + ":Task " + name  + " "+ this.name + " createAndAddSubTaskServiceTime 2 " + "Device Category:" + devcat.name + " basespeed:" + basespeed.value + " subtaskServiceTimes.size():" + this.subtaskServiceTimes.size());
 	}
-
-	public void modifyServiceTime(String devicename, Distribution dist) {
-		for (DeviceServiceTime st : deviceServiceTimes) {
-			if (st.devName.compareToIgnoreCase(devicename) == 0) {
+	//TODO: Make sure that this method is called with argument device category instead of device name.
+	//TODO: URGENT: Change this method to modify service time based on sub task id.
+	public void modifyServiceTime(String devName, Distribution _dist) {
+		DeviceCategory devcat = ModelParameters.inputDistSys.getDeviceCategory(devName);
+		for (ServiceTime st : subtaskServiceTimes) {
+			if (st.devCategory == devcat) {
 				if ((st.dist.value1_.name.compareToIgnoreCase("local") != 0) || (st.dist.value2_.name.compareToIgnoreCase("local") != 0)) {
 					throw new Error("Lineno" + lineno + ". Attempt to modify the service time of task " + name
 							+ ", instead variable should be modified");
 				} else
-					st.dist = dist;
+					st.dist = _dist;
 				return;
 			}
 		}
-		throw new Error("Lineno" + lineno + ".Attempt to modify service time of non existing device " + devicename);
+		throw new Error("Lineno" + lineno + ".Attempt to modify service time of non existing device category " + devcat + " of task " + name);
 	}
 
-	public void addVirtualRes(String name) {
-		virRes.add(name);
+	public void addSoftRes(String name) {
+		softRes.add(name);
 	}
 
-	public void addVirtualRes(VirtualResource virres) {
+	public void addSoftRes(SoftResource virres) {
 		// softResDef.add(softres);
 	}
 
@@ -145,47 +168,62 @@ public class Task {
 	}
 
 	/** get the next device name from the device list */
-	public String getNextDeviceName(int id) {
-		if (id < deviceServiceTimes.size()) {
-			// System.out.println("returning next device : "+deviceSTimes.get(id).devName);
-			return deviceServiceTimes.get(id).devName;
+	public DeviceCategory getNextDeviceCategory(int id) { //MAKECHANGE 
+		if (id < subtaskServiceTimes.size()) {
+			//System.out.println("returning next device category : "+ subtaskServiceTimes.get(id).devCategory.name);
+			return subtaskServiceTimes.get(id).devCategory;
 		}
 
 		return null;
 
 	}
 
-	/** get next virtual resource from the virtual res list */
-	public String getNextVirtualResName(int id) {
-		if (id < virRes.size())
-			return virRes.get(id);
+	/** get next soft resource from the soft resource list */
+	public String getNextSoftResName(int id) {
+		if (id < softRes.size())
+			return softRes.get(id);
 
 		return null;
 	}
 
-	/** given the device name get its service time */
-	public Distribution getServiceTime(String devicename) {
-		for (DeviceServiceTime st : deviceServiceTimes) {
-			if (st.devName.compareToIgnoreCase(devicename) == 0) {
+	/** given the subtask id get its service time distribution */
+	public Distribution getServiceTimeDist(int _stid) {
+		//System.out.print("Task.getServiceTimeDist():" + this.toString() + "Task.subtaskServiceTimes.size():" + this.subtaskServiceTimes.size() );
+		if(_stid < subtaskServiceTimes.size()){
+			return subtaskServiceTimes.get(_stid).dist;
+		}
+		return null;
+		//throw new Error("Sub task id is greater than total sub tasks. This should not happen. BUG !!");
+		/*
+		for (ServiceTime st : subtaskServiceTimes) {
+			System.out.println("Subtask id:" + st.stid + "devCategory:" + st.devCategory);
+			if (st.stid == _stid) {
+				System.out.println("Subtask id:" + _stid + " Distribution:"+ st.dist.name_);
 				return st.dist;
 			}
 		}
-		return null;
+		*/
 	}
 
-	public DeviceServiceTime getDevice(String devicename) {
-		for (DeviceServiceTime st : deviceServiceTimes) {
-			if (st.devName.compareToIgnoreCase(devicename) == 0) {
+	public ServiceTime getSubTaskServt(int _stid) {
+		if(_stid < subtaskServiceTimes.size()){
+			return subtaskServiceTimes.get(_stid);
+		}
+		return null;
+		//throw new Error("Sub task id is greater than total sub tasks. This should not happen. BUG !!");
+		/*
+		for (ServiceTime st : subtaskServiceTimes) {
+			if (st.stid == _stid) {
 				return st;
 			}
 		}
-		return null;
+		return null; */
 	}
 
 	/** initialize (used by analytical part) */
 	public void initialize() {
 		arrivalRate = 0;
-		for (DeviceServiceTime st : deviceServiceTimes) {
+		for (ServiceTime st : subtaskServiceTimes) {
 			st.initialize();
 		}
 	}

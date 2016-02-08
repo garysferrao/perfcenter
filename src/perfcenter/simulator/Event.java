@@ -19,10 +19,12 @@ package perfcenter.simulator;
 
 import org.apache.log4j.Logger;
 
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Device;
+import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.ModelParameters;
-import perfcenter.baseclass.Node;
-import perfcenter.baseclass.enums.SysType;
+import perfcenter.baseclass.TaskNode;
+import perfcenter.baseclass.enums.SystemType;
+import perfcenter.baseclass.exception.*;
 import perfcenter.simulator.queue.QServerInstance;
 import perfcenter.simulator.queue.QueueSim;
 import perfcenter.simulator.request.Request;
@@ -44,7 +46,7 @@ public class Event implements Comparable<Event> {
 	private Request reqObj;
 
 	/** keep track of event name and device name for powermanaged devices */
-	private HostSim hostObj = null;
+	private MachineSim hostObj = null;
 	private DeviceSim devObj = null;
 
 	Logger logger = Logger.getLogger("Event");
@@ -63,7 +65,7 @@ public class Event implements Comparable<Event> {
 	}
 
 	/** added for device probe event */
-	Event(double evTime, EventType eventType, HostSim host, DeviceSim device) {
+	Event(double evTime, EventType eventType, MachineSim host, DeviceSim device) {
 		timestamp = evTime;
 		type = eventType;
 		this.hostObj = host;
@@ -101,7 +103,7 @@ public class Event implements Comparable<Event> {
 		// for open loop simulation generate next external arrival event
 		// for the scenario. check if its not the retry event: yogesh
 		if (!reqObj.retryRequest) {
-			if (ModelParameters.getSystemType() == SysType.OPEN) {
+			if (ModelParameters.getSystemType() == SystemType.OPEN) {
 				// if arrival rate is zero do not generate any events/requests.
 				if (reqObj.scenario.getArateToScenario() > 0) {
 					double arrivalTime = timestamp + SimulationParameters.exp.nextExp(1 / reqObj.scenario.getArateToScenario());
@@ -128,28 +130,28 @@ public class Event implements Comparable<Event> {
 		reqObj.scenario.noOfReqArrived.recordValue(1);
 
 		// The request will directly go to the first software server i.e. the root node of the scenario.
-		Node currentNode;
+		TaskNode currentNode;
 		if (reqObj.scenario.rootNode.name.compareToIgnoreCase("user") == 0) {
 			currentNode = reqObj.scenario.rootNode.children.get(0);
 		} else {
 			currentNode = reqObj.scenario.rootNode;
 		}
-		reqObj.currentNode = currentNode;
-		reqObj.nextNode = SimulationParameters.distributedSystemSim.findNextNode(currentNode);
+		reqObj.currentTaskNode = currentNode;
+		reqObj.nextTaskNode = SimulationParameters.distributedSystemSim.findNextTaskNode(currentNode);
 		reqObj.taskName = currentNode.name;
 		reqObj.softServName = currentNode.servername;
-		reqObj.hostObject = ((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)).getRandomHostObject();
-		if(reqObj.hostObject == null) {
+		reqObj.machineObject = ((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)).getRandomHostObject();
+		if(reqObj.machineObject == null) {
 			System.out.println(((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)));
 		}
 		reqObj.softServArrivalTime = SimulationParameters.currTime;
 
 		// get the soft server object to which this request will be offered
-		SoftServerSim sserver = reqObj.hostObject.getServer(reqObj.softServName);
+		SoftServerSim sserver = reqObj.machineObject.getServer(reqObj.softServName);
+
 		logger.debug("Task_Name: " + reqObj.taskName);
 		logger.debug("Server_Name: " + reqObj.softServName);
-		logger.debug("Host_Name: " + reqObj.hostObject.getName());
-
+		logger.debug("Host_Name: " + reqObj.machineObject.getName());
 		sserver.enqueue(reqObj, SimulationParameters.currTime);
 	}
 
@@ -172,7 +174,7 @@ public class Event implements Comparable<Event> {
 		if ((ModelParameters.timeoutEnabled == true) && (reqObj.scenarioTimeout < SimulationParameters.currTime)) {
 			timeoutInBuffer();
 		} else {
-			SoftServerSim softServerSim = reqObj.hostObject.getServer(reqObj.softServName);
+			SoftServerSim softServerSim = reqObj.machineObject.getServer(reqObj.softServName);
 			softServerSim.processTaskStartEvent(reqObj, SimulationParameters.currTime);
 		}
 	}
@@ -182,8 +184,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void hardwareTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
-
-		reqObj.hostObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
+		reqObj.machineObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
 	/**
@@ -191,7 +192,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void hardwareTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		reqObj.hostObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
+		reqObj.machineObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
 	}
 
 	/**
@@ -199,7 +200,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void softwareTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		reqObj.hostObject.getServer(reqObj.softServName).processTaskEndEvent(reqObj, reqObj.threadNum, SimulationParameters.currTime);
+		reqObj.machineObject.getServer(reqObj.softServName).processTaskEndEvent(reqObj, reqObj.threadNum, SimulationParameters.currTime);
 	}
 
 	/**
@@ -212,7 +213,7 @@ public class Event implements Comparable<Event> {
 		SimulationParameters.currTime = timestamp;
 		SimulationParameters.recordIntervalSlotRunTime();
 
-		for (Host host : SimulationParameters.distributedSystemSim.hosts) {
+		for (Machine host : SimulationParameters.distributedSystemSim.machines) {
 
 			// Collect all the device metrics value within a interval
 			for (Object device : host.devices) {
@@ -324,7 +325,7 @@ public class Event implements Comparable<Event> {
 		SimulationParameters.recordIntervalSlotRunTime();
 
 		// Collect all the device metrics value within a interval
-		for (Host host : SimulationParameters.distributedSystemSim.hosts) {
+		for (Machine host : SimulationParameters.distributedSystemSim.machines) {
 			for (Object device : host.devices) {
 				DeviceSim deviceSim = (DeviceSim) device;
 
@@ -422,14 +423,14 @@ public class Event implements Comparable<Event> {
 		}
 	}
 
-	public void virtualResourceTaskStarts() throws Exception {
+	public void softResourceTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		reqObj.hostObject.getVirtualRes(reqObj.virtResName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
+		reqObj.machineObject.getSoftRes(reqObj.softResName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
-	public void virtualResourceTaskEnds() throws Exception {
+	public void softResourceTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		reqObj.hostObject.getVirtualRes(reqObj.virtResName).processTaskEndEvent(reqObj, reqObj.virtualResInstance, SimulationParameters.currTime);
+		reqObj.machineObject.getSoftRes(reqObj.softResName).processTaskEndEvent(reqObj, reqObj.softResInstance, SimulationParameters.currTime);
 	}
 
 	/** This function is called when request is timed out in buffer */
@@ -441,7 +442,7 @@ public class Event implements Comparable<Event> {
 		reqObj.scenario.noOfReqTimedoutInBuffer.recordValue(1);
 
 		// Reduce the number of busy instances of softserver queue.
-		QueueSim resourceQueue = (QueueSim) reqObj.hostObject.getServer(reqObj.softServName).resourceQueue;
+		QueueSim resourceQueue = (QueueSim) reqObj.machineObject.getServer(reqObj.softServName).resourceQueue;
 		resourceQueue.numBusyInstances--;
 
 		// Reset the queue server instance parameters.
@@ -466,11 +467,11 @@ public class Event implements Comparable<Event> {
 		return timestamp + ":" + type.toString()+"\n";
 	}
 
-	public HostSim getHostObject() {
+	public MachineSim getHostObject() {
 		return hostObj;
 	}
 
-	public void setHostObject(HostSim hostObject) {
+	public void setHostObject(MachineSim hostObject) {
 		this.hostObj = hostObject;
 	}
 

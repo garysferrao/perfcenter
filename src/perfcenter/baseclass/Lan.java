@@ -48,7 +48,7 @@ public class Lan {
 		lans.add(lan);
 	}
 
-	public void addHost(String name) {
+	public void addMachine(String name) {
 		hosts.add(name);
 	}
 

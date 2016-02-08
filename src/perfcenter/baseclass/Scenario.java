@@ -34,7 +34,7 @@ public class Scenario {
 	public Variable scenarioProb;
 
 	/** Pointer to root node of scenario */
-	public Node rootNode;
+	public TaskNode rootNode;
 
 	//DOUBT: add power here?
 	public Metric avgRespTime = new Metric();
@@ -85,9 +85,9 @@ public class Scenario {
 	}
 
 	/** prints the tree present in scenario */
-	public void printTree(Node node) {
+	public void printTree(TaskNode node) {
 		node.print();
-		for (Node n : node.children) {
+		for (TaskNode n : node.children) {
 			printTree(n);
 		}
 	}
@@ -117,9 +117,9 @@ public class Scenario {
 	/** 
 	 * isCT is reset for all the nodes in the tree (used for finding compound task).
 	 */
-	void initializeTree(Node node) {
+	void initializeTree(TaskNode node) {
 		node.isCT = false;
-		for (Node n : node.children) {
+		for (TaskNode n : node.children) {
 			initializeTree(n);
 		}
 	}
@@ -130,7 +130,7 @@ public class Scenario {
 	 * The values of arrival rate and probability flow down the tree in
 	 * recursive manner. This function is used by analytical part.
 	 */
-	void findArrivalRateTree(Node node, double arate, double parentprob) {
+	void findArrivalRateTree(TaskNode node, double arate, double parentprob) {
 		if (node.isRoot == true) {
 			node.arrate = arate * node.prob.getValue();
 			node.prob.value = node.prob.value * parentprob;
@@ -140,7 +140,7 @@ public class Scenario {
 			node.arrate = arate;
 			node.prob.value = parentprob;
 		}
-		for (Node n : node.children) {
+		for (TaskNode n : node.children) {
 			findArrivalRateTree(n, arate, parentprob);
 		}
 	}

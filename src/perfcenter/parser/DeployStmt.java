@@ -1,6 +1,6 @@
 package perfcenter.parser;
 
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.Lan;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.SoftServer;
@@ -20,27 +20,27 @@ public class DeployStmt {
 
 	public void deploy() throws Exception {
 		SoftServer srv;
-		Host host;
+		Machine host;
 		ModelParameters.isModified = true;
 		try {
 			if (ModelParameters.inputDistSys.isServer(name1)) { // if first parameter is server then second should be host
-				if (ModelParameters.inputDistSys.isHost(name2) == false) {
+				if (ModelParameters.inputDistSys.isMachine(name2) == false) {
 					throw new Error(" \"" + name2 + "\" is not host");
 				}
 				srv = ModelParameters.inputDistSys.getServer(name1);
-				host = ModelParameters.inputDistSys.getHost(name2);
-				srv.addHost(name2);
+				host = ModelParameters.inputDistSys.getMachine(name2);
+				srv.addMachine(name2);
 				host.addServer(srv);
 				srv.deployVirtualResOnHost(host);
 				return;
-			} else if (ModelParameters.inputDistSys.isHost(name1)) { // if first parameter is host then second should be lan
+			} else if (ModelParameters.inputDistSys.isMachine(name1)) { // if first parameter is host then second should be lan
 				if (ModelParameters.inputDistSys.isLan(name2) == false) {
 					throw new Error(" \"" + name2 + "\" is not Lan");
 				}
-				host = ModelParameters.inputDistSys.getHost(name1);
+				host = ModelParameters.inputDistSys.getMachine(name1);
 				Lan ln = ModelParameters.inputDistSys.getLan(name2);
 				host.addLan(name2);
-				ln.addHost(name1);
+				ln.addMachine(name1);
 				return;
 			}
 			throw new Error(" \"" + name1 + "\" is not host or server");

@@ -24,12 +24,12 @@ import org.apache.log4j.Logger;
 
 import perfcenter.baseclass.Device;
 import perfcenter.baseclass.DistributedSystem;
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.Scenario;
 import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.Variable;
-import perfcenter.baseclass.enums.SysType;
+import perfcenter.baseclass.enums.SystemType;
 import perfcenter.simulator.request.Request;
 
 /**
@@ -87,7 +87,7 @@ public class PerfSim {
 		for(SoftServer softServer : distributedSystemSim.softServers) {
 			SoftServerSim softServerSim = (SoftServerSim) softServer;
 			for(String hostName : softServerSim.hosts) {
-				softServerSim.hostObjects.add(distributedSystemSim.getHost(hostName));
+				softServerSim.hostObjects.add(distributedSystemSim.getMachine(hostName));
 			}
 		}
 		
@@ -138,14 +138,15 @@ public class PerfSim {
 	public void startSimulation() throws Exception {
 		// generate requests and add them to the request list
 		// and add corresponding arrival events to event list
-		if (ModelParameters.getSystemType() == SysType.OPEN) {
+		if (ModelParameters.getSystemType() == SystemType.OPEN) {
 			generateRequestsForOpenSystem();
 		} else {
 			generateRequestsForClosedSystem();
 		}
-
+		
 		// run simulation till SIMULATION_ENDS event is encountered.
 		while (true) {
+			
 			Event currentEventToBeHandled = SimulationParameters.eventQueue.poll();
 
 			SimulationParameters.currEventBeingHandled = currentEventToBeHandled;
@@ -157,63 +158,77 @@ public class PerfSim {
 			logger.debug("Event: " + currentEventToBeHandled.type + "\t\ttime: " + currentEventToBeHandled.timestamp);
 			switch (currentEventToBeHandled.type) {
 			case NO_OF_USERS_CHANGES:
+				//System.out.println("No of User event is being handled");
 				currentEventToBeHandled.numberOfUserChanged();
 				break;
 			case ARRIVAL_RATE_CHANGES:
+				//System.out.println("Arrival Rate event is being handled");
 				currentEventToBeHandled.arrivalRateChanged();
 				break;
 			case DEVICE_PROBE:
+				//System.out.println("Device Probe event is being handled");
 				currentEventToBeHandled.deviceProbe();
 				break;
 			case SCENARIO_ARRIVAL:
+				//System.out.println("Scenario Arrival event is being handled");
 				currentEventToBeHandled.scenarioArrival();
 				break;
 
 			case SOFTWARE_TASK_STARTS:
+				//System.out.println("Software Task Starts event is being handled");
 				currentEventToBeHandled.softwareTaskStarts();
 				break;
 
 			case SOFTWARE_TASK_ENDS:
+				//System.out.println("Software Task Ends event is being handled");
 				currentEventToBeHandled.softwareTaskEnds();
 				break;
 
 			case HARDWARE_TASK_STARTS:
+				//System.out.println("Hardware Task Starts event is being handled");
 				currentEventToBeHandled.hardwareTaskStarts();
 				break;
 
 			case HARDWARE_TASK_ENDS:
+				//System.out.println("Hardware Task Starts event is being handled");
 				currentEventToBeHandled.hardwareTaskEnds();
 				break;
 
 			case NETWORK_TASK_STARTS:
+				//System.out.println("Network Task Starts event is being handled");
 				currentEventToBeHandled.networkTaskStarts();
 				break;
 
 			case NETWORK_TASK_ENDS:
+				//System.out.println("Network Task Ends event is being handled");
 				currentEventToBeHandled.networkTaskEnds();
 				break;
 
-			case VIRTUALRES_TASK_STARTS:
-				currentEventToBeHandled.virtualResourceTaskStarts();
+			case SOFTRES_TASK_STARTS:
+				//System.out.println("Softwre Resource Starts event is being handled");
+				currentEventToBeHandled.softResourceTaskStarts();
 				break;
 
-			case VIRTUALRES_TASK_ENDS:
-				currentEventToBeHandled.virtualResourceTaskEnds();
+			case SOFTRES_TASK_ENDS:
+				//System.out.println("Software Resource Task Starts event is being handled");
+				currentEventToBeHandled.softResourceTaskEnds();
 				break;
 
 			case REQUEST_DONE:
+				//System.out.println("Request Done event is being handled");
 				currentEventToBeHandled.requestCompleted();
 				break;
 
 			case WARMUP_ENDS:
-				SimulationParameters.warmupEnabled = false;
+				//SimulationParameters.warmupEnabled = false;
 				break;
 
 			case COOLDOWN_STARTS:
-				SimulationParameters.warmupEnabled = true;
+			//	SimulationParameters.warmupEnabled = true;
 				break;
 
 			case SIMULATION_COMPLETE:
+				//System.out.println("Simulation Complete event is being handled");
 				SimulationParameters.recordIntervalSlotRunTime();
 				SimulationParameters.distributedSystemSim.recordCISampleAtTheEndOfSimulation();
 				logger.debug("Sim end at : " + SimulationParameters.currTime);
@@ -256,8 +271,8 @@ public class PerfSim {
 		}
 
 		// If device type is powermanaged then create events and add then to global eventList: rakesh
-		for (Host h : SimulationParameters.distributedSystemSim.hosts) {
-			HostSim hs = (HostSim) h;
+		for (Machine h : SimulationParameters.distributedSystemSim.machines) {
+			MachineSim hs = (MachineSim) h;
 			for (Device d : hs.devices) {
 				DeviceSim ds = (DeviceSim) d;
 				if (ds.isDevicePowerManaged) {
@@ -271,7 +286,6 @@ public class PerfSim {
 	// added by akhila
 	public void generateRequestsForClosedSystem() throws Exception {
 		if (ModelParameters.isWorkloadTypeSet) {
-
 			if (ModelParameters.numberofUsersCount != ModelParameters.intervalSlotCount) {
 				System.out.println("Please check the pair of users and associate interval ");
 				System.exit(1);
@@ -280,8 +294,7 @@ public class PerfSim {
 			
 			Event ev = new Event(event_time, EventType.NO_OF_USERS_CHANGES);
 			SimulationParameters.offerEvent(ev);
-
-			// find the max users that this workload has use perticularly when workload is cyclic.... added by yogesh
+			//Find the max users that this workload is using when workload is cyclic 
 			double musers = findMaxUsers(ModelParameters.noOfUsersCyclic);
 			ModelParameters.setMaxUsers(musers);
 		}
@@ -292,15 +305,16 @@ public class PerfSim {
 			double interArrivalTimeNext = ModelParameters.getThinkTime().nextRandomVal(1);
 
 			// picks a scenario randomly: Login, Send, Read, Delete
-			ScenarioSim sceName = SimulationParameters.getRandomScenarioSimBasedOnProb();
+			ScenarioSim sce = SimulationParameters.getRandomScenarioSimBasedOnProb();
 
-			generateScenarioArrivalEvent(sceName, interArrivalTimeNext);
-			logger.debug("scenario name: " + sceName + "\t scenario_ID: " + i + "\t\t  scenario arrival time: " + interArrivalTimeNext);
+			generateScenarioArrivalEvent(sce, interArrivalTimeNext);
+			logger.debug("scenario name: " + sce + "\t scenario_ID: " + i + "\t\t  scenario arrival time: " + interArrivalTimeNext);
+            //System.out.println("No of users: "  + i + " scenario name: " + sce.getName() + "\t scenario_ID: " + i + "\t\t  scenario arrival time: " + interArrivalTimeNext);
 		}
 
 		// If device type id powermanaged then create events and add then to global eventList: rakesh
-		for (Host h : SimulationParameters.distributedSystemSim.hosts) {
-			HostSim hs = (HostSim) h;
+		for (Machine h : SimulationParameters.distributedSystemSim.machines) {
+			MachineSim hs = (MachineSim) h;
 			for (Device d : hs.devices) {
 				DeviceSim ds = (DeviceSim) d;
 				if (ds.isDevicePowerManaged) {
@@ -310,7 +324,7 @@ public class PerfSim {
 		}
 	}
 
-	void generateDeviceAssociatedEvents(HostSim host, DeviceSim device) { //added by rakesh
+	void generateDeviceAssociatedEvents(MachineSim host, DeviceSim device) { //added by rakesh
 		/***
 		 * TODO PONDER Rakesh: what if 2 different types of cpu(heterogenous) present on a same host How service-time will be affected
 		 ***/
@@ -327,7 +341,8 @@ public class PerfSim {
 	/** this is where we create the request and add it to requestList */
 	void generateScenarioArrivalEvent(ScenarioSim sceName, double time) {
 
-		logger.debug("reqID: " + SimulationParameters.reqIdGenerator);
+		logger.debug("reqID: " + SimulationParameters.reqIdGenerator + " Time : " + time);
+		//System.out.println("reqID: " + SimulationParameters.reqIdGenerator + " Time : " + time);
 		Request req = new Request(SimulationParameters.reqIdGenerator++, sceName, time);
 		// req.scenarioArrivalTime = time;
 

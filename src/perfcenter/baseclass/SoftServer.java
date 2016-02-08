@@ -19,7 +19,6 @@ package perfcenter.baseclass;
 
 import java.util.ArrayList;
 import java.util.Random;
-
 import org.apache.log4j.Logger;
 
 import perfcenter.baseclass.enums.SchedulingPolicy;
@@ -142,7 +141,7 @@ public class SoftServer extends QueuingResource {
 		}
 		for (String h : hosts) {
 			String hcpy = new String(h);
-			sscpy.addHost(hcpy);
+			sscpy.addMachine(hcpy);
 		}
 		return sscpy;
 	}
@@ -171,7 +170,7 @@ public class SoftServer extends QueuingResource {
 	}
 
 	/** add host name on which this server is deployed */
-	public void addHost(String name) {
+	public void addMachine(String name) {
 		hosts.add(name);
 	}
 
@@ -192,12 +191,12 @@ public class SoftServer extends QueuingResource {
 	}
 
 	/** Get a simple Task object given its name */
-	public Task getSimpleTask(String name) {
+	public Task getTaskObject(String name) {
 		for (Task task : simpleTasks) {
 			if (task.name.compareToIgnoreCase(name) == 0)
 				return task;
 		}
-		throw new Error(name + " is not Simple Task");
+		throw new Error(name + " is not Simple Task in server " + this.name);
 	}
 
 	/** Add a task to the list simpleTasks */
@@ -217,18 +216,18 @@ public class SoftServer extends QueuingResource {
 	 * Checks if softserver has any tasks that require virtual resource.
 	 * If there are then those virtual resources are deployed on the host
 	 * @param h
-	 * @param vrList
+	 * @param softResList
 	 * @throws Exception
 	 */
-	void deployVirtResRecursive(Host h, ArrayList<String> vrList) throws Exception {
-		for (String vr : vrList) {
+	void deployVirtResRecursive(Machine h, ArrayList<String> softResList) throws Exception {
+		for (String sr : softResList) {
 			// deploy the virtual resource
-			h.deployVirtualRes(vr, this.name);
+			h.deploySoftRes(sr, this.name);
 
 			// check if the virtual res calls other virtual resource.
-			VirtualResource currvr = ModelParameters.inputDistSys.getVirtualRes(vr);
-			if (currvr.virtRes.size() != 0) {
-				deployVirtResRecursive(h, currvr.virtRes);
+			SoftResource currSr = ModelParameters.inputDistSys.getSoftRes(sr);
+			if (currSr.softRes.size() != 0) {
+				deployVirtResRecursive(h, currSr.softRes);
 			}
 		}
 	}
@@ -236,25 +235,25 @@ public class SoftServer extends QueuingResource {
 	/** Checks if softserver has any tasks that require virtual resource.
 	 *  If it does then those virtual resources are undeployed from the host
 	 */
-	void undeployVirtResRecursive(Host h, ArrayList<String> vrList) throws Exception {
+	void undeployVirtResRecursive(Machine h, ArrayList<String> vrList) throws Exception {
 		for (String vr : vrList) {
 			// undeploy virtual resource
-			h.unDeployVirtualRes(vr, this.name);
+			h.unDeploySoftRes(vr, this.name);
 
 			// check if the virtual resource calls other virtual resources
-			VirtualResource currvr = ModelParameters.inputDistSys.getVirtualRes(vr);
-			if (currvr.virtRes.size() == 0) {
-				undeployVirtResRecursive(h, currvr.virtRes);
+			SoftResource currvr = ModelParameters.inputDistSys.getSoftRes(vr);
+			if (currvr.softRes.size() == 0) {
+				undeployVirtResRecursive(h, currvr.softRes);
 			}
 		}
 	}
 
 	/** deploys virtual resource on the host.
 	 * A virtual resource can call other virtual resources. hence this deployment is done recursively */
-	public void deployVirtualResOnHost(Host h) throws Exception {
+	public void deployVirtualResOnHost(Machine h) throws Exception {
 		for (Task t : simpleTasks) {
-			if (t.virRes.size() > 0) {
-				deployVirtResRecursive(h, t.virRes);
+			if (t.softRes.size() > 0) {
+				deployVirtResRecursive(h, t.softRes);
 			}
 
 		}
@@ -263,14 +262,14 @@ public class SoftServer extends QueuingResource {
 	/** undeploys virtual resource from the host. 
 	 * A virtual resource can call other virtual resources. hence this undeployment is done recursively
 	 */
-	public void unDeployVirtualResOnHost(Host h) throws Exception {
+	public void unDeployVirtualResOnHost(Machine h) throws Exception {
 		for (Task t : simpleTasks) {
-			if (t.virRes.size() > 0) {
-				undeployVirtResRecursive(h, t.virRes);
+			if (t.softRes.size() > 0) {
+				undeployVirtResRecursive(h, t.softRes);
 			}
 		}
 	}
-
+	
 	public void setStaticSize(Variable v) {
 		size = v;
 	}

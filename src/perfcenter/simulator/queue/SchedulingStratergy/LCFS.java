@@ -36,7 +36,7 @@ public class LCFS extends QueueSim {
 		int idleDeviceId = getIdleInstanceId();
 
 		// mark time when request enters the system
-		processRequestArrival(req, idleDeviceId, currTime);
+		bookkeepRequestArrival(req, idleDeviceId, currTime);
 
 		if (idleDeviceId == -1) {
 			// no instance of device free
@@ -66,7 +66,7 @@ public class LCFS extends QueueSim {
 		Request req = getRequestFromBuffer(curBufSize - 1, currTime);
 
 		int idleDeviceId = getIdleInstanceId();
-		processRequestArrival(req, idleDeviceId, currTime);
+		bookkeepRequestArrival(req, idleDeviceId, currTime);
 		
 		req.qServerInstanceID = idleDeviceId;
 

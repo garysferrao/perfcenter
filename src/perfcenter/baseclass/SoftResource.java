@@ -18,25 +18,26 @@
 package perfcenter.baseclass;
 
 import java.util.ArrayList;
+import perfcenter.baseclass.enums.DeviceType;
 
 import org.apache.log4j.Logger;
 
 import perfcenter.baseclass.enums.SchedulingPolicy;
-import perfcenter.simulator.VirtualResSim;
+import perfcenter.simulator.SoftResSim;
 
 /**
- * Defines virtual resource. A virtual resource can call another virtual resource, or real devices.
+ * Defines soft resource. A virtual resource can call another soft resource, or real devices.
  * 
  * @author akhila
  */
-public class VirtualResource extends QueuingResource {
+public class SoftResource extends QueuingResource {
 	public String name;
 
 	/** list of device and service times */
-	public ArrayList<DeviceServiceTime> deviceSTimes = new ArrayList<DeviceServiceTime>();
+	public ArrayList<ServiceTime> deviceServiceTimes = new ArrayList<ServiceTime>();
 
-	/** List of virtual resources */
-	public ArrayList<String> virtRes = new ArrayList<String>();
+	/** List of virtual resources */ // Why is it here? In single class, there should be only one software resource
+	public ArrayList<String> softRes = new ArrayList<String>();
 
 	/** line number used by parser */
 	int lineno;
@@ -44,7 +45,7 @@ public class VirtualResource extends QueuingResource {
 	/** List of soft servers to which a virtual resource belongs */
 	public ArrayList<String> softServers = new ArrayList<String>(); // made public by niranjan
 
-	Logger logger = Logger.getLogger("VirtualRes");
+	Logger logger = Logger.getLogger("SoftRes");
 
 	// number of instances of the queue server(virtual resource)
 	public Variable count;
@@ -59,11 +60,11 @@ public class VirtualResource extends QueuingResource {
 	String taskName;
 
 	// constructors
-	public VirtualResource() {
+	public SoftResource() {
 
 	}
 
-	public VirtualResource(String resname) {
+	public SoftResource(String resname) {
 		count = new Variable("local", 1);
 		buffer = new Variable("local", 99999);
 		pol = SchedulingPolicy.FCFS;
@@ -83,75 +84,93 @@ public class VirtualResource extends QueuingResource {
 	}
 
 	public void print() {
-		System.out.println("Virtual Res : " + name);
-		for (DeviceServiceTime servt : deviceSTimes) {
+		System.out.println("Soft Res : " + name);
+		for (ServiceTime servt : deviceServiceTimes) {
 			servt.print();
 		}
 	}
 
-	VirtualResource getCopy() {
-		VirtualResource vrcpy = new VirtualResource(name);
-		for (DeviceServiceTime dst : deviceSTimes) {
-			DeviceServiceTime dstcpy = dst.getCopy();
-			vrcpy.addDeviceServiceTime(dstcpy);
+	SoftResource getCopy() {
+		SoftResource srcpy = new SoftResource(name);
+		for (ServiceTime dst : deviceServiceTimes) {
+			ServiceTime dstcpy = dst.getCopy();
+			srcpy.addDeviceServiceTime(dstcpy);
 		}
-		vrcpy.virtRes = virtRes;
-		vrcpy.pol = pol;
+		srcpy.softRes = softRes;
+		srcpy.pol = pol;
 		if (buffer.getName().compareToIgnoreCase("local") != 0) {
-			vrcpy.buffer = buffer;
+			srcpy.buffer = buffer;
 		} else {
-			vrcpy.buffer.value = buffer.value;
+			srcpy.buffer.value = buffer.value;
 		}
 		if (count.getName().compareToIgnoreCase("local") != 0) {
-			vrcpy.count = count;
+			srcpy.count = count;
 		} else {
-			vrcpy.count.value = count.value;
+			srcpy.count.value = count.value;
 		}
 
-		return vrcpy;
+		return srcpy;
 	}
 
 	/** get a copy of virtual resource of type VirtualResSim */
-	public VirtualResSim getCopySim() {
-		VirtualResSim vrcpy = new VirtualResSim(name, count, buffer, pol);
-		for (DeviceServiceTime dst : deviceSTimes) {
-			DeviceServiceTime dstcpy = dst.getCopy();
-			vrcpy.addDeviceServiceTime(dstcpy);
+	public SoftResSim getCopySim() {
+		SoftResSim srcpy = new SoftResSim(name, count, buffer, pol);
+		for (ServiceTime dst : deviceServiceTimes) {
+			ServiceTime dstcpy = dst.getCopy();
+			srcpy.addDeviceServiceTime(dstcpy);
 		}
-		vrcpy.virtRes = virtRes;
-		vrcpy.virtRes = virtRes;
-		vrcpy.pol = pol;
+		srcpy.softRes = softRes;
+		srcpy.softRes = softRes;
+		srcpy.pol = pol;
 		if (buffer.getName().compareToIgnoreCase("local") != 0) {
-			vrcpy.buffer = buffer;
+			srcpy.buffer = buffer;
 		} else {
-			vrcpy.buffer.value = buffer.value;
+			srcpy.buffer.value = buffer.value;
 		}
 		if (count.getName().compareToIgnoreCase("local") != 0) {
-			vrcpy.count = count;
+			srcpy.count = count;
 		} else {
-			vrcpy.count.value = count.value;
+			srcpy.count.value = count.value;
 		}
-		return vrcpy;
+		return srcpy;
 	}
 
-	public void addVirtualRes(String name) {
-		virtRes.add(name);
+	public void addSoftRes(String name) {
+		softRes.add(name);
 	}
-
+	
 	/** add devices required by this virtual resource */
-	public void addDeviceAndServiceTime(String devicename, Distribution dist) {
-		for (DeviceServiceTime st : deviceSTimes) {
+	public void addDeviceAndServiceTime(String devcatname, Distribution dist) {
+	/*	for (SubtaskServiceTime st : deviceServiceTimes) { //MAKECHANGE
 			if (st.devName.compareToIgnoreCase(devicename) == 0) {
 				st.dist = dist;
+				st.basespeed = basespeed.value;
 				return;
 			}
 		}
-		DeviceServiceTime servt = new DeviceServiceTime(devicename, dist);
-		deviceSTimes.add(servt);
+	*/
+		DeviceCategory devcat = ModelParameters.inputDistSys.getDeviceCategory(devcatname);
+		ServiceTime servt = new ServiceTime(devcat, dist);
+		deviceServiceTimes.add(servt);
 	}
 
-	public void addDeviceServiceTime(DeviceServiceTime dst) {
-		deviceSTimes.add(dst);
+	/** add devices required by this virtual resource */
+	public void addDeviceAndServiceTime(String devcatname, Distribution dist, Variable basespeed) {
+	/*	for (SubtaskServiceTime st : deviceServiceTimes) { //MAKECHANGE
+			if (st.devName.compareToIgnoreCase(devicename) == 0) {
+				st.dist = dist;
+				st.basespeed = basespeed.value;
+				return;
+			}
+		}
+	*/
+		DeviceCategory devcat = ModelParameters.inputDistSys.getDeviceCategory(devcatname);
+		ServiceTime servt = new ServiceTime(devcat, dist, basespeed.value);
+		deviceServiceTimes.add(servt);
+	}
+
+	public void addDeviceServiceTime(ServiceTime dst) {
+		deviceServiceTimes.add(dst);
 	}
 
 	// Add soft server which has tasks calling this resource
@@ -180,28 +199,26 @@ public class VirtualResource extends QueuingResource {
 	}
 
 	/** Get next device name from which VirtualResource requires service. */
-	public String getNextDeviceName(int id) {
-		if (id < deviceSTimes.size()) {
-			return deviceSTimes.get(id).devName;
-		}
+	public DeviceCategory getNextDeviceCategory(int id) {
+		if (id < deviceServiceTimes.size()) {
+				return deviceServiceTimes.get(id).devCategory;
+			}
 		return null;
 	}
 
 	/** Get next virtual resource name from which current VirtualResource requires service. */
-	public String getNextVirtualResName(int id) {
-		if (id < virtRes.size()) {
-			return virtRes.get(id);
+	public String getNextSoftResName(int id) {
+		if (id < softRes.size()) {
+			return softRes.get(id);
 		}
 		return null;
 	}
 
-	/** get service time of a specified device */
-	public Distribution getServiceTime(String devicename) {
-		for (DeviceServiceTime st : deviceSTimes) {
-			if (st.devName.compareToIgnoreCase(devicename) == 0) {
-				return st.dist;
-			}
+	/** get service time distribution of a specified sub task id */
+	public Distribution getServiceTimeDist(int _stid) {
+		if(_stid < deviceServiceTimes.size()){
+			return deviceServiceTimes.get(_stid).dist;
 		}
-		return null;
+		throw new Error("Device Index is greater than number of devices to be used for service in SoftResource " + name + ". This should not happen. BUG");
 	}
 }
