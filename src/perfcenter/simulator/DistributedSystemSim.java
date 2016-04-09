@@ -27,6 +27,8 @@ import org.apache.log4j.Logger;
 import perfcenter.baseclass.Device;
 import perfcenter.baseclass.DistributedSystem;
 import perfcenter.baseclass.Machine;
+import perfcenter.baseclass.PhysicalMachine;
+import perfcenter.baseclass.VirtualMachine;
 import perfcenter.baseclass.LanLink;
 import perfcenter.baseclass.Metric;
 import perfcenter.baseclass.ModelParameters;
@@ -50,7 +52,7 @@ public class DistributedSystemSim extends DistributedSystem {
 
 	//bhavin: added for scalability
 	public HashMap<String, ScenarioSim> scenarioMap = new HashMap<String, ScenarioSim>();
-	public HashMap<String, MachineSim> hostMap = new HashMap<String, MachineSim>();
+	public HashMap<String, PhysicalMachineSim> machineMap = new HashMap<String, PhysicalMachineSim>();
 	public HashMap<String, SoftServerSim> softServerMap = new HashMap<String, SoftServerSim>();
 	
 	public ManuallyComputedMetric overallGoodputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
@@ -69,7 +71,7 @@ public class DistributedSystemSim extends DistributedSystem {
 		softRes = ds.softRes;
 		
 		devCategories = ds.devCategories;
-		devices = ds.devices;
+		pdevices = ds.pdevices;
 		
 		variables = ds.variables;
 		tasks = ds.tasks;
@@ -97,10 +99,10 @@ public class DistributedSystemSim extends DistributedSystem {
 			links.add(new LanLinkSim(lk));
 		}
 
-		for (Machine h : ds.machines) {
-			MachineSim hs = new MachineSim(h, softServerMap);
-			machines.add(hs);
-			hostMap.put(hs.getName(), hs);
+		for (PhysicalMachine pm : ds.pms) {
+			PhysicalMachineSim pmsim = new PhysicalMachineSim(pm, softServerMap);
+			pms.add(pmsim);
+			machineMap.put(pmsim.getName(), pmsim);
 		}
 		// this need not be done if its use in perfanalytic is fixed
 		for (SoftServer s : softServers) {
@@ -118,7 +120,7 @@ public class DistributedSystemSim extends DistributedSystem {
 
 	// clear all the variables but keep the confidence interval calculations
 	public void clearValuesButKeepConfIvals() {
-		for (Machine h : machines) {
+		for (Machine h : pms) {
 			for (SoftServer softServer : h.softServers) {
 				((SoftServerSim) softServer).clearValuesButKeepConfIvals();
 //				softServerSim.resourceQueue = QueueSim.loadSchedulingPolicyClass(softServerSim.schedp.toString(), buffSizeTemp, (int) softServerSim.thrdCount.getValue(), softServerSim);
@@ -158,7 +160,7 @@ public class DistributedSystemSim extends DistributedSystem {
 	// calculates confidence interval for each queue and
 	// addes the results to the queue variables
 	public void computeConfIvalsAtEndOfRepl() {
-		for (Machine host : machines) {
+		for (Machine host : pms) {
 			for (SoftServer softServer : host.softServers) {
 				((QueueSim) ((SoftServerSim) softServer).resourceQueue).computeConfIvalsAtEndOfRepl();
 				// so.setThroughput(((QueueSim) so.softQ).giveMeThroughtput());
@@ -167,7 +169,7 @@ public class DistributedSystemSim extends DistributedSystem {
 				// calculate RAM utilization for current host if device is RAM.
 				if (device.name.equals("ram")) {
 					//XXX argument passing redundant in next line
-					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsForRAM(ModelParameters.inputDistSys.getMachine(host.name));
+					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsForRAM(ModelParameters.inputDistSys.getPM(host.name));
 				} else {
 					((DeviceSim) device).avgFreqSim.computeConfIvalsAtEndOfRepl();
 					DistributedSystemSim.computeConfIvalForMetric(device.averageFrequency, ((DeviceSim) device).avgFreqSim);
@@ -251,7 +253,7 @@ public class DistributedSystemSim extends DistributedSystem {
 	 * nothing if the device is RAM. Procedure modified by nikhil, for the device RAM.
 	 */
 	public void recordCISampleAtTheEndOfSimulation() {
-		for (Machine host : machines) {
+		for (Machine host : pms) {
 			for (SoftServer softServer : host.softServers) {
 				((SoftServerSim) softServer).recordCISampleAtTheEndOfSimulation();
 			}
@@ -328,16 +330,16 @@ public class DistributedSystemSim extends DistributedSystem {
 		return scenarioMap.containsKey(name);
 	}
 	
-	public MachineSim getMachine(String name) {
-		MachineSim host = hostMap.get(name);
+	public PhysicalMachineSim getPM(String name) {
+		PhysicalMachineSim host = machineMap.get(name);
 		if(host != null) {
 			return host;
 		}
 		throw new Error(name + " is not Host");
 	}
 
-	public boolean isMachine(String name) {
-		return hostMap.containsKey(name);
+	public boolean isPM(String name) {
+		return machineMap.containsKey(name);
 	}
 	
 	public SoftServerSim getServer(String name) {

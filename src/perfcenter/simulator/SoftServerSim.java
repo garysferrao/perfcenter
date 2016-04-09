@@ -37,7 +37,7 @@ import perfcenter.simulator.request.SoftResVector;
 
 public class SoftServerSim extends SoftServer implements QueueServer {
 	
-	public ArrayList<MachineSim> hostObjects = new ArrayList<MachineSim>();
+	public ArrayList<PhysicalMachineSim> hostObjects = new ArrayList<PhysicalMachineSim>();
 
 	static int count = 0;
 	public SoftServerSim(SoftServer s) {
@@ -50,7 +50,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		resourceQueue = QueueSim.loadSchedulingPolicyClass(schedp.toString(), (int) thrdBuffer.getValue(), (int) thrdCount.getValue(), /* "swRes", */this);
 
 		resourceQueue.initialize();
-		hosts = s.hosts;
+		machines = s.machines;
 		for (Task t : simpleTasks) {
 			t.initialize();
 		}
@@ -64,7 +64,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 	 * A Software server can be deployed on more than one host. This function randomly returns name of one such host. this function is used by
 	 * simulation part
 	 */ 
-	public MachineSim getRandomHostObject() throws Exception {
+	public PhysicalMachineSim getRandomHostObject() throws Exception {
 		// String hostN="-1";
 
 		// generate a random number(d) between 0 and 1
@@ -206,13 +206,13 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 			// queue book keeping structures are updated`
 			endService(rq,instanceId, currTime);
 		} else {
-			System.err.println("Thread blocked permanently on a request - This usually means wrong configuration of SYNC parameter in the Scenario block of input file. Response from downstream server to upstream server (db to web) should not be SYNC!!");
+			//System.err.println("Thread blocked permanently on a request - This usually means wrong configuration of SYNC parameter in the Scenario block of input file. Response from downstream server to upstream server (db to web) should not be SYNC!!");
 		}
 
 		// ScenarioSim sce = (ScenarioSim) SimulationParameters.distributedSystemSim.getScenario(rq.scenarioName);
 
 		// check if the request is timed out during service,
-		// if so, then do not process the request further and declear the request as done with timeout flag set.
+		// if so, then do not process the request further and declare the request as done with timeout flag set.
 		if (ModelParameters.timeoutEnabled == true) {
 			if ((SimulationParameters.currTime >= rq.scenarioTimeout)) {
 				rq.timeoutFlagAfterService = true;

@@ -274,7 +274,7 @@ public class DeviceSim extends Device implements QueueServer {
 	 * @param currentTime
 	 * @param host
 	 */
-	void deviceProbeHandler(double currentTime, MachineSim host) throws Exception {
+	void deviceProbeHandler(double currentTime, PhysicalMachineSim host) throws Exception {
 		// for all device instances
 		// keep the values of maximum device speed
 		double maximumDeviceSpeedLevel = 0.0;

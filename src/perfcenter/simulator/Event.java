@@ -46,7 +46,7 @@ public class Event implements Comparable<Event> {
 	private Request reqObj;
 
 	/** keep track of event name and device name for powermanaged devices */
-	private MachineSim hostObj = null;
+	private PhysicalMachineSim hostObj = null;
 	private DeviceSim devObj = null;
 
 	Logger logger = Logger.getLogger("Event");
@@ -65,7 +65,7 @@ public class Event implements Comparable<Event> {
 	}
 
 	/** added for device probe event */
-	Event(double evTime, EventType eventType, MachineSim host, DeviceSim device) {
+	Event(double evTime, EventType eventType, PhysicalMachineSim host, DeviceSim device) {
 		timestamp = evTime;
 		type = eventType;
 		this.hostObj = host;
@@ -155,6 +155,24 @@ public class Event implements Comparable<Event> {
 		sserver.enqueue(reqObj, SimulationParameters.currTime);
 	}
 
+	
+
+	/**
+	 * Begins processing of Hardware execution
+	 */
+	public void hardwareTaskStarts() throws Exception {
+		SimulationParameters.currTime = timestamp;
+		reqObj.machineObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
+	}
+
+	/**
+	 * Hardware execution ending is handled.
+	 */
+	public void hardwareTaskEnds() throws Exception {
+		SimulationParameters.currTime = timestamp;
+		reqObj.machineObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
+	}
+
 	/**
 	 * Function: softwareTaskStarts Update the request object with the system arrival time etc. First find the hardware of the machine on which the
 	 * software server is hosted. Find whether the hardware is idle. If yes, then create a new event of type hardwareTaskStarts and enqueue in the
@@ -180,22 +198,6 @@ public class Event implements Comparable<Event> {
 	}
 
 	/**
-	 * Begins processing of Hardware execution
-	 */
-	public void hardwareTaskStarts() throws Exception {
-		SimulationParameters.currTime = timestamp;
-		reqObj.machineObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
-	}
-
-	/**
-	 * Hardware execution ending is handled.
-	 */
-	public void hardwareTaskEnds() throws Exception {
-		SimulationParameters.currTime = timestamp;
-		reqObj.machineObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
-	}
-
-	/**
 	 * Called when the software task ends.
 	 */
 	public void softwareTaskEnds() throws Exception {
@@ -213,7 +215,7 @@ public class Event implements Comparable<Event> {
 		SimulationParameters.currTime = timestamp;
 		SimulationParameters.recordIntervalSlotRunTime();
 
-		for (Machine host : SimulationParameters.distributedSystemSim.machines) {
+		for (Machine host : SimulationParameters.distributedSystemSim.pms) {
 
 			// Collect all the device metrics value within a interval
 			for (Object device : host.devices) {
@@ -325,7 +327,7 @@ public class Event implements Comparable<Event> {
 		SimulationParameters.recordIntervalSlotRunTime();
 
 		// Collect all the device metrics value within a interval
-		for (Machine host : SimulationParameters.distributedSystemSim.machines) {
+		for (Machine host : SimulationParameters.distributedSystemSim.pms) {
 			for (Object device : host.devices) {
 				DeviceSim deviceSim = (DeviceSim) device;
 
@@ -467,11 +469,11 @@ public class Event implements Comparable<Event> {
 		return timestamp + ":" + type.toString()+"\n";
 	}
 
-	public MachineSim getHostObject() {
+	public PhysicalMachineSim getHostObject() {
 		return hostObj;
 	}
 
-	public void setHostObject(MachineSim hostObject) {
+	public void setHostObject(PhysicalMachineSim hostObject) {
 		this.hostObj = hostObject;
 	}
 

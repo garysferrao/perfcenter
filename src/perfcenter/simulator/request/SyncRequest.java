@@ -17,7 +17,7 @@
  */
 package perfcenter.simulator.request;
 
-import perfcenter.simulator.MachineSim;
+import perfcenter.simulator.PhysicalMachineSim;
 
 /** Synchronous request between two servers */
 //CHECK
@@ -29,7 +29,7 @@ public class SyncRequest {
 
 	String taskName;
 
-	private MachineSim machineObject;
+	private PhysicalMachineSim machineObject;
 
 	int threadNum;
 
@@ -37,7 +37,7 @@ public class SyncRequest {
 
 	double swServerStartTime;
 
-	public SyncRequest(MachineSim h, String swID, String tskID, int thrdNum, int rqID, double servArrTime, double servStartTime) {
+	public SyncRequest(PhysicalMachineSim h, String swID, String tskID, int thrdNum, int rqID, double servArrTime, double servStartTime) {
 		softServerName = swID;
 		taskName = tskID;
 		threadNum = thrdNum;
@@ -47,11 +47,11 @@ public class SyncRequest {
 		setMachineObject(h);
 	}
 
-	MachineSim getMachineObject() {
+	PhysicalMachineSim getMachineObject() {
 		return machineObject;
 	}
 
-	void setMachineObject(MachineSim machineObject) {
+	void setMachineObject(PhysicalMachineSim machineObject) {
 		this.machineObject = machineObject;
 	}
 

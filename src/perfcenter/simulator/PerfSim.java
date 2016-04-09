@@ -86,8 +86,8 @@ public class PerfSim {
 		DistributedSystemSim distributedSystemSim = SimulationParameters.distributedSystemSim;
 		for(SoftServer softServer : distributedSystemSim.softServers) {
 			SoftServerSim softServerSim = (SoftServerSim) softServer;
-			for(String hostName : softServerSim.hosts) {
-				softServerSim.hostObjects.add(distributedSystemSim.getMachine(hostName));
+			for(String hostName : softServerSim.machines) {
+				softServerSim.hostObjects.add(distributedSystemSim.getPM(hostName));
 			}
 		}
 		
@@ -271,8 +271,8 @@ public class PerfSim {
 		}
 
 		// If device type is powermanaged then create events and add then to global eventList: rakesh
-		for (Machine h : SimulationParameters.distributedSystemSim.machines) {
-			MachineSim hs = (MachineSim) h;
+		for (Machine h : SimulationParameters.distributedSystemSim.pms) {
+			PhysicalMachineSim hs = (PhysicalMachineSim) h;
 			for (Device d : hs.devices) {
 				DeviceSim ds = (DeviceSim) d;
 				if (ds.isDevicePowerManaged) {
@@ -313,8 +313,8 @@ public class PerfSim {
 		}
 
 		// If device type id powermanaged then create events and add then to global eventList: rakesh
-		for (Machine h : SimulationParameters.distributedSystemSim.machines) {
-			MachineSim hs = (MachineSim) h;
+		for (Machine h : SimulationParameters.distributedSystemSim.pms) {
+			PhysicalMachineSim hs = (PhysicalMachineSim) h;
 			for (Device d : hs.devices) {
 				DeviceSim ds = (DeviceSim) d;
 				if (ds.isDevicePowerManaged) {
@@ -324,7 +324,7 @@ public class PerfSim {
 		}
 	}
 
-	void generateDeviceAssociatedEvents(MachineSim host, DeviceSim device) { //added by rakesh
+	void generateDeviceAssociatedEvents(PhysicalMachineSim host, DeviceSim device) { //added by rakesh
 		/***
 		 * TODO PONDER Rakesh: what if 2 different types of cpu(heterogenous) present on a same host How service-time will be affected
 		 ***/

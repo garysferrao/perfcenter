@@ -109,7 +109,7 @@ public class SoftResSim extends SoftResource implements QueueServer {
 	public void processTaskStartEvent(Request r, double currTime) throws Exception {
 		// offer the request to virtual resource device. before offering
 		// put the virtual res into the stack
-		MachineSim hs = r.machineObject;
+		PhysicalMachineSim hs = r.machineObject;
 		r.setRequestFromVirtRes();
 		r.setSubTaskIdx(0, "VirtualResSim:processTaskStartEvent");
 		SoftResVector vr = new SoftResVector(r.softResInstance, r.softResIdx, r.softResName, hs);

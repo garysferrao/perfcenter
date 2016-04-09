@@ -93,7 +93,7 @@ TOKEN : {
 			<SCENARIO: "scenario"> |
 				<END: "end"> |
 				<VARIABLE: "variable"> |
-				<DEVICE: "device"> |
+				<PDEVICE: "pdevice"> |
 				<DEVICECATEGORY: "devicecategory" > |
 				<VDEVICE: "vdevice"> |
 				<CPU: "cpu" > |	//DEVICETYPE-1 //Added by Samkit
@@ -106,8 +106,8 @@ TOKEN : {
 				<XCS: "xcs" >  |
 				<DEPLOY: "deploy"> |
 				<UNDEPLOY: "undeploy"> |
-				<MACHINE: "machine"> |
-				<VMACHINE: "vmachine"> |
+				<PHYSICALMACHINE: "physicalmachine"> |
+				<VIRTUALMACHINE: "virtualmachine"> |
 				<SERVER: "server"> |
 				<COUNT: "count"> |
 				<PROB: "prob"> | //prob of scenario
@@ -250,8 +250,11 @@ TOKEN : {
 				<ENABLE : "enable"> |//
 				<DISABLE : "disable">|//
 				<MAXRETRY : "maxretry">|//
-				<WORKLOAD : "workload">|//
+				<WORKLOAD : "workload">| //
 				<CYCLIC : "cyclic">|//
+				<VIRTUALIZATION : "virtualization" > | //
+				<ON : "ON" > | //
+				<OFF : "OFF" > | //
 				<CONSTANT  : "constant">//
 
 		}
@@ -284,15 +287,15 @@ void InputFile() throws DeviceNotFoundException,Exception:
 {
 	(
 	 DeviceCategoryDef() | 
-	 DeviceDef() 		|
+	 PDeviceDef() 		|
 	 VDeviceDef() 		|
 	 PowerManagementDef()|
 	 VariableDef() 		|
 	 LanDef() 			|
 	 LanLinkDef()		|
 	 res=SoftResourceDef()	{ModelParameters.inputDistSys.softRes.add(res);}	|
-	 MachineDef() 			|
-	 VMachineDef() 			|
+	 PhysicalMachineDef() 			|
+	 VirtualMachineDef() 			|
 	 task=TaskDef()     {ModelParameters.inputDistSys.tasks.add(task);}		|
 	 sce=ScenarioDef()	{ModelParameters.inputDistSys.scenarios.add(sce);}	|
 	 serv=ServerDef()	{ModelParameters.inputDistSys.softServers.add(serv);}	|
@@ -321,33 +324,33 @@ void DeviceCategoryDef() : { DeviceType devtype; String devcatname;}
 		}  
 }  
 //DeviceDef can be refactored to have DeviceDetail for more readablity
-void DeviceDef() : { Token devcatname; Token devname; }
+void PDeviceDef() : { Token devcatname; Token pdevname; }
 {
 	LOOKAHEAD(3)
-		(<DEVICE>
-		 (devcatname=ValidDeviceCategoryName() devname=DeviceName() {
-		  Device d = new Device(devname.image, devcatname.image);
-		  ModelParameters.inputDistSys.devices.add(d);
+		(<PDEVICE>
+		 (devcatname=ValidDeviceCategoryName() pdevname=PhysicalDeviceName() {
+		  PhysicalDevice pdev = new PhysicalDevice(pdevname.image, devcatname.image);
+		  ModelParameters.inputDistSys.pdevices.add(pdev);
 		  })*
 		 <END>)
-		|<DEVICE> devcatname=ValidDeviceCategoryName() devname=DeviceName(){
-			Device d = new Device(devname.image, devcatname.image);
-			ModelParameters.inputDistSys.devices.add(d); }
+		|<PDEVICE> devcatname=ValidDeviceCategoryName() pdevname=PhysicalDeviceName(){
+			PhysicalDevice pdev = new PhysicalDevice(pdevname.image, devcatname.image);
+			ModelParameters.inputDistSys.pdevices.add(pdev); }
 }
 
 //VDeviceDef can be refactored to have VDeviceDetail for more readablity
-void VDeviceDef() : { Token vdevcatname; Token vdevname; }
+void VDeviceDef() : { Token devcatname; Token vdevname; }
 {
 	LOOKAHEAD(3)
 		(<VDEVICE>
-		 (vdevcatname=ValidDeviceCategoryName() vdevname=VDeviceName() {
-		  VDevice vd = new VDevice(vdevname.image, vdevcatname.image);
-		  ModelParameters.inputDistSys.vdevices.add(vd);
+		 (devcatname=ValidDeviceCategoryName() vdevname=VirtualDeviceName() {
+		  VirtualDevice vdev = new VirtualDevice(vdevname.image, devcatname.image);
+		  ModelParameters.inputDistSys.vdevices.add(vdev);
 		  })*
 		 <END>)
-		|<VDEVICE> vdevcatname=ValidDeviceCategoryName() vdevname=VDeviceName(){
-			VDevice vd = new VDevice(vdevname.image, vdevcatname.image);
-			ModelParameters.inputDistSys.vdevices.add(vd); }
+		|<VDEVICE> devcatname=ValidDeviceCategoryName() vdevname=VirtualDeviceName(){
+			VirtualDevice vdev = new VirtualDevice(vdevname.image, devcatname.image);
+			ModelParameters.inputDistSys.vdevices.add(vdev); }
 }
 
 void VariableDef() :  {Variable var; }
@@ -400,122 +403,105 @@ void LanLinkDef() :
 			ModelParameters.inputDistSys.getLan(name2.image).addConnectedLan(name1.image);
 			ModelParameters.inputDistSys.links.add(l1);}
 }
-void MachineDef()throws DeviceNotFoundException, Exception:{Token name,n;Machine m;String machinename="";}
+void PhysicalMachineDef()throws DeviceNotFoundException, Exception:{Token name,n;PhysicalMachine pm;String pmname="";}
 {
-	<MACHINE> name=MachineName()"["n=<NUMBER>"]"
+	<PHYSICALMACHINE> name=PMName()"["n=<NUMBER>"]"
 	{
-		machinename=name.image;
-		m=new Machine(machinename,1);
+		pmname=name.image;
+		pm=new PhysicalMachine(pmname,1);
 	}
-	(MachineDetail(m))*
+	(PhysicalMachineDetail(pm))*
 		<END>
 		{
-			ModelParameters.inputDistSys.machines.add(m);
+			ModelParameters.inputDistSys.pms.add(pm);
 			int totMachines =  new Integer(n.image);
 			for(int i=2;i<=totMachines;i++){
-				Machine cpy = m.getCopy(machinename,i);
-				ModelParameters.inputDistSys.machines.add(cpy);
+				PhysicalMachine pmcpy = pm.getCopy(pmname,i);
+				ModelParameters.inputDistSys.pms.add(pmcpy);
 			}
 		}
 }
 
-void MachineDetail(Machine m)throws DeviceNotFoundException, Exception:
+void PhysicalMachineDetail(PhysicalMachine pm)throws DeviceNotFoundException, Exception:
 { Token name;  Variable v;	SchedulingPolicy pol; PowerManagementGovernor gov; }	//local variables
 {
 	//predefined addDeviceBuffer method is used for adding the size of ram.
-	<RAM>	v=Variable() 					{m.addDeviceBuffer("ram", v);}
+	<RAM>	v=Variable() 					{pm.addDeviceBuffer("ram", v);}
 	|
-		name=ValidDeviceName()
-		(      <COUNT>  v=Variable() {m.addDeviceCount(name.image,v);}
-			   |<BUFFER> v=Variable() {m.addDeviceBuffer(name.image,v);}
-			   |<SPEEDUP> v=Variable() {m.addDeviceSpeedUp(name.image,v);}
-			   |<SCHEDP>  pol=SchedPolicy(){m.addDeviceSchedPol(name.image,pol);}
-			   |<BASESPEED>  v=Variable() {m.addDeviceBaseSpeed(name.image, v);}			 	     
+		<VIRTUALIZATION> (<ON> {pm.virtualizationEnabled=true;	   } | <OFF> {pm.virtualizationEnabled=false;} )
+	| 
+		name=ValidPhysicalDeviceName()
+		(      <COUNT>  v=Variable() {pm.addDeviceCount(name.image,v);}
+			   |<BUFFER> v=Variable() {pm.addDeviceBuffer(name.image,v);}
+			   |<SPEEDUP> v=Variable() {pm.addDeviceSpeedUp(name.image,v);}
+			   |<SCHEDP>  pol=SchedPolicy(){pm.addDeviceSchedPol(name.image,pol);}
+			   |<BASESPEED>  v=Variable() {pm.addDeviceBaseSpeed(name.image, v);}
+			   			 	     
 
 			   // PM device associated attributes. These are available only for PM device, added by rakesh
 			   // parses PM device name, governor, speed level is gov is userspace: rakesh
-			   |(<POWERMANAGED> { m.setDeviceAsPowerManaged(name.image); }
-				   ( <GOVERNOR> gov=PMGovernor() { m.addPMGovernor(name.image, gov); }
+			   |(<POWERMANAGED> { pm.setDeviceAsPowerManaged(name.image); }
+				   ( <GOVERNOR> gov=PMGovernor() { pm.addPMGovernor(name.image, gov); }
 					 ( <SETSPEEDLEVELINDEX> v=Variable()
 					   { 
 					   if(gov == PowerManagementGovernor.USERSPACE)
 					   {
-					   m.addSetSpeedLevelIndex(name.image, v); 
+					   pm.addSetSpeedLevelIndex(name.image, v); 
 					   }
 					   } 
 					 )?
 				   )?
 				)
 			   // parse probe interval, up_threshold, down_threshold
-			   |<PROBEINTERVAL> v=Variable() { m.addProbeInterval(name.image, v); }
-			   |<GOVERNOR_UP_THRESHOLD> v=Variable() { m.addGovernorUpThreshold(name.image, v); }
-			   |<GOVERNOR_DOWN_THRESHOLD> v=Variable() { m.addGovernorDownThreshold(name.image, v); }
+			   |<PROBEINTERVAL> v=Variable() { pm.addProbeInterval(name.image, v); }
+			   |<GOVERNOR_UP_THRESHOLD> v=Variable() { pm.addGovernorUpThreshold(name.image, v); }
+			   |<GOVERNOR_DOWN_THRESHOLD> v=Variable() { pm.addGovernorDownThreshold(name.image, v); }
 			   )
 }
 
 
-void VMachineDef()throws DeviceNotFoundException, Exception:{Token name,n;VMachine vm;String vmname="";}
+void VirtualMachineDef()throws DeviceNotFoundException, Exception:{Token name,n;VirtualMachine vm;String vmname="";}
 {
-	<VMACHINE> name=VMachineName()"["n=<NUMBER>"]"
+	<VIRTUALMACHINE> name=VMName()"["n=<NUMBER>"]"
 	{
 		vmname=name.image;
-		vm=new VMachine(vmname,1);
+		vm=new VirtualMachine(vmname,1);
 	}
-	(VMachineDetail(vm))*
+	(VirtualMachineDetail(vm))*
 		<END>
 		{
-			ModelParameters.inputDistSys.vmachines.add(vm);
+			ModelParameters.inputDistSys.vms.add(vm);
 			int totVMachines =  new Integer(n.image);
 			for(int i=2;i<=totVMachines;i++){
-				VMachine vmcpy = vm.getCopy(vmname,i);
-				ModelParameters.inputDistSys.vmachines.add(vmcpy);
+				VirtualMachine vmcpy = vm.getCopy(vmname,i);
+				ModelParameters.inputDistSys.vms.add(vmcpy);
 			}
 		}
 }
 
 
-void VMachineDetail(VMachine vm)throws DeviceNotFoundException, Exception:
+void VirtualMachineDetail(VirtualMachine vm)throws DeviceNotFoundException, Exception:
 { Token name;  Variable v;	SchedulingPolicy pol; PowerManagementGovernor gov;}	//local variables
 {
 	//predefined addDeviceBuffer method is used for adding the size of ram.
-	<RAM>	v=Variable() 					{vm.addVDeviceBuffer("ram", v);}
+	<RAM>	v=Variable() 					{vm.addDeviceBuffer("ram", v);}
 	|
-		name=ValidVDeviceName()
-		(      <COUNT>  v=Variable() {vm.addVDeviceCount(name.image,v);}
-			   |<BUFFER> v=Variable() {vm.addVDeviceBuffer(name.image,v);}
-			   |<SPEEDUP> v=Variable() {vm.addVDeviceSpeedUp(name.image,v);}
-			   |<SCHEDP>  pol=SchedPolicy(){vm.addVDeviceSchedPol(name.image,pol);}
-			   |<BASESPEED>  v=Variable() {vm.addVDeviceBaseSpeed(name.image, v);}
-
-			   // PM device associated attributes. These are available only for PM device, added by rakesh
-			   // parses PM device name, governor, speed level is gov is userspace: rakesh
-			   |(<POWERMANAGED> { vm.setVDeviceAsPowerManaged(name.image); }
-				   ( <GOVERNOR> gov=PMGovernor() { vm.addPMGovernor(name.image, gov); }
-					 ( <SETSPEEDLEVELINDEX> v=Variable()
-					   { 
-					   if(gov == PowerManagementGovernor.USERSPACE)
-					   {
-					   vm.addSetSpeedLevelIndex(name.image, v); 
-					   }
-					   } 
-					 )?
-				   )?
-				)
-			   // parse probe interval, up_threshold, down_threshold
-			   |<PROBEINTERVAL> v=Variable() { vm.addProbeInterval(name.image, v); }
-			   |<GOVERNOR_UP_THRESHOLD> v=Variable() { vm.addGovernorUpThreshold(name.image, v); }
-			   |<GOVERNOR_DOWN_THRESHOLD> v=Variable() { vm.addGovernorDownThreshold(name.image, v); }
-			   )
+		name=ValidVirtualDeviceName()
+		(      <COUNT>  v=Variable() {vm.addDeviceCount(name.image,v);}
+			   |<BUFFER> v=Variable() {vm.addDeviceBuffer(name.image,v);}
+			   |<SPEEDUP> v=Variable() {vm.addDeviceSpeedUp(name.image,v);}
+			   |<SCHEDP>  pol=SchedPolicy(){vm.addDeviceSchedPol(name.image,pol);}
+		)
 }
 
 /****************************************************************************/
 void PowerManagementDef() throws DeviceNotFoundException: { Token name;} // added by rakesh
 {
-	<POWERMANAGEMENT> name=ValidDeviceName()
+	<POWERMANAGEMENT> name=ValidPhysicalDeviceName()
 	{
 		// we have device name here; Set it's PowerManaged attributes here.
 		// All devices having same device-name will inherit these attributes
-		Device dev = new Device(name.image);
+		PhysicalDevice dev = new PhysicalDevice(name.image);
 		ModelParameters.inputDistSys.powerManagedDevicePrototypes.add(dev);
 	}
 	( PowerManagementDetails(name, dev) )*
@@ -530,7 +516,7 @@ void PowerManagementDef() throws DeviceNotFoundException: { Token name;} // adde
 		}
 }
 
-void PowerManagementDetails(Token name, Device d)throws DeviceNotFoundException:
+void PowerManagementDetails(Token name, PhysicalDevice d)throws DeviceNotFoundException:
 { Variable v;} // SchedulingPolicy pol; PowerManagementGovernor gov; }	//local variables
 {
 	<SPEEDLEVELS>
@@ -553,11 +539,14 @@ Task TaskDef(): { 	Token name; 	Task task; 	}
 
 void TaskDetail(Task t): { 	Token devcatname;	Distribution dist; SoftResource res; Variable basespeed;}
 {
-	LOOKAHEAD(2)
-		devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution() <AT> basespeed=Variable()
+	(
+	  LOOKAHEAD(2)
+	 	devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution() <AT> basespeed=Variable()
 		{t.createAndAddSubTaskServiceTime(devcatname.image, dist, basespeed);}
-	|devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution()
-	{t.createAndAddSubTaskServiceTime(devcatname.image,dist);} 		
+|  devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution()
+		{t.createAndAddSubTaskServiceTime(devcatname.image,dist);} 
+		
+	)	
 }
 
 SoftResource SoftResourceDef(): {  	Token name; SoftResource res; }
@@ -668,15 +657,16 @@ void DeployDef()throws Exception:{Token name1,name2,n; DeployStmt dply;  String 
 	<DEPLOY>
 		(
 		 LOOKAHEAD(2)
-		 (name1=MachineNameDef() name2=<IDENTIFIER>)
+		 	(name1=MachineNameDef()  name2=MachineNameDef())
 		 |
-		 (name1=<IDENTIFIER> name2=MachineNameDef())
+		 	(name1=<IDENTIFIER> name2=MachineNameDef()) 
 		)
 		{
 			try{
-				dply = new DeployStmt(name1.image,name2.image); dply.deploy();}
-			catch(Error e)
-			{throw new Error("Wrong Deployment!  Line no:"+name1.beginLine+e.getMessage());}
+				dply = new DeployStmt(name1.image,name2.image); dply.deploy();
+			}catch(Error e){
+				throw new Error("Wrong Deployment!  Line no:"+name1.beginLine+e.getMessage());
+			}
 		}
 }
 
@@ -805,34 +795,25 @@ Token MachineNameDef(): { 	Token t,n;String machinename=""; }
 	}
 }
 
-Token VMachineNameDef(): { 	Token t,n;String vmachinename=""; }
-{
-	t=<IDENTIFIER>"["n=<NUMBER>"]"
-	{
-		t.image = t.image+"["+n.image+"]";
-		return(t);
-	}
-}
-
-Token MachineName(): { 	Token t,n;String machinename=""; }
+Token PMName(): { 	Token t,n;String pmname=""; }
 {
 	t=<IDENTIFIER>
 	{
-		machinename = t.image;
-		if(ModelParameters.inputDistSys.isMachine(machinename)==true)
-			throw new Error("Machine "+machinename+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		pmname = t.image;
+		if(ModelParameters.inputDistSys.isPM(pmname)==true)
+			throw new Error("Physical Machine "+pmname+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
 			return(t);
 	}
 }
 
-Token VMachineName(): { 	Token t,n;String vmachinename=""; }
+Token VMName(): { 	Token t,n;String vmname=""; }
 {
 	t=<IDENTIFIER>
 	{
-		vmachinename = t.image;
-		if(ModelParameters.inputDistSys.isMachine(vmachinename)==true)
-			throw new Error("Machine "+vmachinename+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		vmname = t.image;
+		if(ModelParameters.inputDistSys.isVM(vmname)==true)
+			throw new Error("Virtual Machine "+vmname+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
 			return(t);
 	}
@@ -871,19 +852,19 @@ String DeviceCategoryName(): { 	Token t; String devcatname="";}
 	}
 }
 
-Token DeviceName(): { 	Token t; String devname="";}
+Token PhysicalDeviceName(): { 	Token t; String pdevname="";}
 {
 	t=<IDENTIFIER>
 	{
-		devname = t.image;
-		if(ModelParameters.inputDistSys.isDevice(devname)==true)
-			throw new Error("Device \""+devname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		pdevname = t.image;
+		if(ModelParameters.inputDistSys.isPDevice(pdevname)==true)
+			throw new Error("Device \""+pdevname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
 			return(t);
 	}
 }
 
-Token VDeviceName(): { 	Token t; String vdevname="";}
+Token VirtualDeviceName(): { 	Token t; String vdevname="";}
 {
 	t=<IDENTIFIER>
 	{
@@ -948,31 +929,31 @@ Token ValidServerName(): { 	Token t; }
 
 	}
 }
-Token ValidMachineName(): { 	Token t,n;String machinename=""; }
+Token ValidPMName(): { 	Token t,n;String pmname=""; }
 {
 	t=<IDENTIFIER>"["n=<NUMBER>"]"
 	{
 		try{
-			machinename = t.image+"["+n.image+"]";
-			ModelParameters.inputDistSys.getMachine(machinename);
-			t.image = machinename;
+			pmname = t.image+"["+n.image+"]";
+			ModelParameters.inputDistSys.getPM(pmname);
+			t.image = pmname;
 			return(t);
 		}catch (Error e)
-		{throw new Error("Undefined machine \""+ machinename+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		{throw new Error("Undefined physical machine \""+ pmname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 	}
 }
 
-Token ValidVMachineName(): { 	Token t,n;String vmachinename=""; }
+Token ValidVMName(): { 	Token t,n;String vmname=""; }
 {
 	t=<IDENTIFIER>"["n=<NUMBER>"]"
 	{
 		try{
-			vmachinename = t.image+"["+n.image+"]";
-			ModelParameters.inputDistSys.getMachine(vmachinename);
-			t.image = vmachinename;
+			vmname = t.image+"["+n.image+"]";
+			ModelParameters.inputDistSys.getVM(vmname);
+			t.image = vmname;
 			return(t);
 		}catch (Error e)
-		{throw new Error("Undefined vmachine \""+ vmachinename+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		{throw new Error("Undefined vm \""+ vmname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 	}
 }
 
@@ -1011,21 +992,21 @@ Token ValidDeviceCategoryName(): { 	Token t; }
 	}
 }
 
-Token ValidDeviceName(): { 	Token t; }
+Token ValidPhysicalDeviceName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 		//Code change needed here to accept keyword "ram" as a valid device. If device is ram,
-		//then we should either not check done as below, or we should initialize machine declaration with ram
+		//then we should not check as done below, or we should initialize machine declaration with ram
 		//device already added
 	{
-		try{ModelParameters.inputDistSys.getDevice(t.image);return(t);}
+		try{ModelParameters.inputDistSys.getPDevice(t.image);return(t);}
 		catch (Error e)
-		{throw new Error("Undefined device \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		{throw new Error("Undefined physical device \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 
 	}
 }
 
-Token ValidVDeviceName(): { 	Token t; }
+Token ValidVirtualDeviceName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 		//Code change needed here to accept keyword "ram" as a valid device. If device is ram,
@@ -1034,7 +1015,7 @@ Token ValidVDeviceName(): { 	Token t; }
 	{
 		try{ModelParameters.inputDistSys.getVDevice(t.image);return(t);}
 		catch (Error e)
-		{throw new Error("Undefined device \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		{throw new Error("Undefined virtual device \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 
 	}
 }
@@ -1141,7 +1122,7 @@ SetStmt SetStm():
 	t=<SET> {SetStmt set = new SetStmt(t.beginLine);}
 	(
 	 LOOKAHEAD(5)
-	 (name1=ValidMachineName()":"  {set.addMachine(name1.image);   }
+	 (name1=ValidPMName()":"  {set.addPM(name1.image);   }
 	  (
 	   LOOKAHEAD(3)
 	   (name2=ValidServerName()":"<THREAD>":" {set.addServer(name2.image);   }
@@ -1151,7 +1132,7 @@ SetStmt SetStm():
 		)
 	   )
 	   |
-	   (name2=ValidDeviceName()":"{set.addDevice(name2.image);   }
+	   (name2=ValidPhysicalDeviceName()":"{set.addPDevice(name2.image);   }
 		(<COUNT>  num=<NUMBER>  {set.addCount(new Double(num.image));}
 		 |<BUFFER>  num=<NUMBER> {set.addBuffer(new Double(num.image));}
 		 |<SCHEDP>  pol=SchedPolicy() {set.addSchedulingPolicy(pol);}
@@ -1174,7 +1155,7 @@ SetStmt SetStm():
 	 |
 	 LOOKAHEAD(5)
 	 (name1=ValidTaskName()":" {set.addTask(name1.image);}
-	  name2=ValidDeviceName()":"{set.addDevice(name2.image);}
+	  name2=ValidPhysicalDeviceName()":"{set.addPDevice(name2.image);}
 	  <SERVT>  dist=Distribution(){set.addServiceTime(dist);}
 	 )
 	 |

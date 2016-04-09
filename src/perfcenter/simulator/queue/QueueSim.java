@@ -194,7 +194,7 @@ public class QueueSim extends Queue {
 			memoryRequirementOfCurrentServerCI = 0;
 
 			// get the handle of the server which contains the output data of current server.
-			SoftServer softServer = ((SoftServer) SimulationParameters.distributedSystemSim.getMachine(currentHost.name).getServer(server.name));
+			SoftServer softServer = ((SoftServer) SimulationParameters.distributedSystemSim.getPM(currentHost.name).getServer(server.name));
 
 			/* calcualte utilization for current softServer */
 			
@@ -470,7 +470,7 @@ public class QueueSim extends Queue {
 				// value perServer level
 				// else pass null as server name
 				if (devName != null && hostName != null) {
-					for (SoftServer softServ : SimulationParameters.distributedSystemSim.getMachine(hostName).getSoftServersList()) {
+					for (SoftServer softServ : SimulationParameters.distributedSystemSim.getPM(hostName).getSoftServersList()) {
 						recordCISampleofManuallyComputedMetricAtTheEndOfSimulation(slot, softServ.name);
 					}
 					
@@ -479,7 +479,7 @@ public class QueueSim extends Queue {
 						totalEnergyConsumedInThisRun += qsi.totalEnergyConsumption.getTotalValue(slot,"_idle");
 					}
 					try {
-						averagePowerConsumedSim.recordCISample(slot, "_idle", totalEnergyConsumedInThisRun / SimulationParameters.getIntervalSlotRunTime(slot) / SimulationParameters.distributedSystemSim.getMachine(this.hostName).getDevice(this.devName).count.getValue());
+						averagePowerConsumedSim.recordCISample(slot, "_idle", totalEnergyConsumedInThisRun / SimulationParameters.getIntervalSlotRunTime(slot) / SimulationParameters.distributedSystemSim.getPM(this.hostName).getDevice(this.devName).count.getValue());
 					} catch (DeviceNotFoundException e) {
 						//will never come here, as device name passed is always valid
 						e.printStackTrace();
@@ -511,7 +511,7 @@ public class QueueSim extends Queue {
 		int count = 1; //count of cpu cores
 		if(this.hostName != null && this.devName != null) {
 			try {
-				count = (int) SimulationParameters.distributedSystemSim.getMachine(this.hostName).getDevice(this.devName).count.getValue();
+				count = (int) SimulationParameters.distributedSystemSim.getPM(this.hostName).getDevice(this.devName).count.getValue();
 			} catch (DeviceNotFoundException e) {
 				// will never come here as the device name is always valid
 				e.printStackTrace();

@@ -55,7 +55,7 @@ public class SoftServer extends QueuingResource {
 	Logger logger = Logger.getLogger("SoftServer");
 
 	/** List of hosts on which this server is deployed */
-	public ArrayList<String> hosts = new ArrayList<String>();
+	public ArrayList<String> machines = new ArrayList<String>();
 
 	public Random r;
 
@@ -91,7 +91,7 @@ public class SoftServer extends QueuingResource {
 	}
 
 	public int getNumCopies() {
-		return hosts.size();
+		return machines.size();
 	}
 
 	public void setThreadCount(Variable count) {
@@ -139,16 +139,16 @@ public class SoftServer extends QueuingResource {
 			Task tcpy = task.getCopy();
 			sscpy.addTask(tcpy);
 		}
-		for (String h : hosts) {
-			String hcpy = new String(h);
-			sscpy.addMachine(hcpy);
+		for (String m : machines) {
+			String mcpy = new String(m);
+			sscpy.addMachine(mcpy);
 		}
 		return sscpy;
 	}
 
 	public void validate() {
-		if (hosts.isEmpty())
-			logger.warn("Warning:Server \"" + name + "\" is not deployed on to any host ");
+		if (machines.isEmpty())
+			logger.warn("Warning:Server \"" + name + "\" is not deployed on to any machine ");
 		if (simpleTasks.isEmpty())
 			logger.warn("Warning:Server \"" + name + "\" does not have tasks defined ");
 	}
@@ -164,14 +164,17 @@ public class SoftServer extends QueuingResource {
 			task.print();
 		}
 		System.out.println(" Deployed on ");
-		for (String host : hosts) {
-			System.out.println("   Host " + host);
+		for (String machineName : machines) {
+			if(ModelParameters.inputDistSys.isVM(machineName))
+				System.out.println("   Virtual Machine: " + machineName);
+			else if(ModelParameters.inputDistSys.isVM(machineName))
+				System.out.println("   Physical Machine: " + machineName);
 		}
 	}
 
 	/** add host name on which this server is deployed */
 	public void addMachine(String name) {
-		hosts.add(name);
+		machines.add(name);
 	}
 
 	public void modifyThreadCount(double var1) {
@@ -208,8 +211,8 @@ public class SoftServer extends QueuingResource {
 	/** 
 	 * Remove the host name. (called when server is un deployed from a host)
 	 */
-	public void removeHost(String name) {
-		hosts.remove(name);
+	public void removeMachine(String name) {
+		machines.remove(name);
 	}
 
 	/**
@@ -219,7 +222,7 @@ public class SoftServer extends QueuingResource {
 	 * @param softResList
 	 * @throws Exception
 	 */
-	void deployVirtResRecursive(Machine h, ArrayList<String> softResList) throws Exception {
+	void deploySoftResRecursive(Machine h, ArrayList<String> softResList) throws Exception {
 		for (String sr : softResList) {
 			// deploy the virtual resource
 			h.deploySoftRes(sr, this.name);
@@ -227,7 +230,7 @@ public class SoftServer extends QueuingResource {
 			// check if the virtual res calls other virtual resource.
 			SoftResource currSr = ModelParameters.inputDistSys.getSoftRes(sr);
 			if (currSr.softRes.size() != 0) {
-				deployVirtResRecursive(h, currSr.softRes);
+				deploySoftResRecursive(h, currSr.softRes);
 			}
 		}
 	}
@@ -235,25 +238,25 @@ public class SoftServer extends QueuingResource {
 	/** Checks if softserver has any tasks that require virtual resource.
 	 *  If it does then those virtual resources are undeployed from the host
 	 */
-	void undeployVirtResRecursive(Machine h, ArrayList<String> vrList) throws Exception {
-		for (String vr : vrList) {
+	void undeployVirtResRecursive(Machine m, ArrayList<String> srList) throws Exception {
+		for (String sr : srList) {
 			// undeploy virtual resource
-			h.unDeploySoftRes(vr, this.name);
+			m.unDeploySoftRes(sr, this.name);
 
 			// check if the virtual resource calls other virtual resources
-			SoftResource currvr = ModelParameters.inputDistSys.getSoftRes(vr);
-			if (currvr.softRes.size() == 0) {
-				undeployVirtResRecursive(h, currvr.softRes);
+			SoftResource currsr = ModelParameters.inputDistSys.getSoftRes(sr);
+			if (currsr.softRes.size() == 0) {
+				undeployVirtResRecursive(m, currsr.softRes);
 			}
 		}
 	}
 
 	/** deploys virtual resource on the host.
 	 * A virtual resource can call other virtual resources. hence this deployment is done recursively */
-	public void deployVirtualResOnHost(Machine h) throws Exception {
+	public void deploySoftResOnHost(Machine h) throws Exception {
 		for (Task t : simpleTasks) {
 			if (t.softRes.size() > 0) {
-				deployVirtResRecursive(h, t.softRes);
+				deploySoftResRecursive(h, t.softRes);
 			}
 
 		}
@@ -262,10 +265,10 @@ public class SoftServer extends QueuingResource {
 	/** undeploys virtual resource from the host. 
 	 * A virtual resource can call other virtual resources. hence this undeployment is done recursively
 	 */
-	public void unDeployVirtualResOnHost(Machine h) throws Exception {
+	public void unDeploySoftResOnHost(Machine m) throws Exception {
 		for (Task t : simpleTasks) {
 			if (t.softRes.size() > 0) {
-				undeployVirtResRecursive(h, t.softRes);
+				undeployVirtResRecursive(m, t.softRes);
 			}
 		}
 	}

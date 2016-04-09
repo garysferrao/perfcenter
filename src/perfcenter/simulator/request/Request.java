@@ -33,7 +33,7 @@ import perfcenter.simulator.DeviceSim;
 import perfcenter.simulator.Event;
 import perfcenter.simulator.EventType;
 import perfcenter.baseclass.Machine;
-import perfcenter.simulator.MachineSim;
+import perfcenter.simulator.PhysicalMachineSim;
 import perfcenter.simulator.ScenarioSim;
 import perfcenter.simulator.SimulationParameters;
 import perfcenter.simulator.SoftResSim;
@@ -70,7 +70,7 @@ public class Request {
 	public String fromServer;
 
 	/** Name of current host to which request belongs, added by nikhil */
-	public MachineSim machineObject;
+	public PhysicalMachineSim machineObject;
 	public String devName; //this is always from the current host // comes from Task and VirtualResSim class
 	public DeviceSim deviceObject;
 	public String taskName; // comes from Node
@@ -350,7 +350,9 @@ public class Request {
 	/**
 	 * free resources held by this sync request on upstream servers
 	 * 
-	 * this function iterates through the synReqVector and corresponding to each entry 1.free the associated thread 2.update the performance
+	 * this function iterates through the synReqVector and corresponding to each entry 
+	 * 1.free the associated thread 
+	 * 2.update the performance
 	 * measures(busytime(for calculating utilization) , avgQLength)
 	 */
 	public void freeHeldResourcesSync() {
@@ -379,7 +381,7 @@ public class Request {
 		softServStartTime = 0;
 		this.softServName = "";
 		machineObject = null;
-		this.devName = null;
+		this.devName = "";
 		this.taskName = "";
 		softResName = null;
 		linkName = "";
@@ -588,7 +590,7 @@ public class Request {
 	}
 
 	public void setHost(String hostName) {
-		this.machineObject = SimulationParameters.distributedSystemSim.getMachine(hostName);
+		this.machineObject = SimulationParameters.distributedSystemSim.getPM(hostName);
 	}
 
 	public boolean isRequestFromTask() {

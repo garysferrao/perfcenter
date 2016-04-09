@@ -17,7 +17,7 @@ public interface PerfParserConstants {
   /** RegularExpression Id. */
   int VARIABLE = 9;
   /** RegularExpression Id. */
-  int DEVICE = 10;
+  int PDEVICE = 10;
   /** RegularExpression Id. */
   int DEVICECATEGORY = 11;
   /** RegularExpression Id. */
@@ -43,9 +43,9 @@ public interface PerfParserConstants {
   /** RegularExpression Id. */
   int UNDEPLOY = 22;
   /** RegularExpression Id. */
-  int MACHINE = 23;
+  int PHYSICALMACHINE = 23;
   /** RegularExpression Id. */
-  int VMACHINE = 24;
+  int VIRTUALMACHINE = 24;
   /** RegularExpression Id. */
   int SERVER = 25;
   /** RegularExpression Id. */
@@ -287,21 +287,27 @@ public interface PerfParserConstants {
   /** RegularExpression Id. */
   int CYCLIC = 144;
   /** RegularExpression Id. */
-  int CONSTANT = 145;
+  int VIRTUALIZATION = 145;
   /** RegularExpression Id. */
-  int NUMBER = 146;
+  int ON = 146;
   /** RegularExpression Id. */
-  int STRING_LITERAL = 147;
+  int OFF = 147;
   /** RegularExpression Id. */
-  int FILENAME = 148;
+  int CONSTANT = 148;
   /** RegularExpression Id. */
-  int IDENTIFIER = 149;
+  int NUMBER = 149;
   /** RegularExpression Id. */
-  int DIGITS = 150;
+  int STRING_LITERAL = 150;
   /** RegularExpression Id. */
-  int LETTER = 151;
+  int FILENAME = 151;
   /** RegularExpression Id. */
-  int DIGIT = 152;
+  int IDENTIFIER = 152;
+  /** RegularExpression Id. */
+  int DIGITS = 153;
+  /** RegularExpression Id. */
+  int LETTER = 154;
+  /** RegularExpression Id. */
+  int DIGIT = 155;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -318,7 +324,7 @@ public interface PerfParserConstants {
     "\"scenario\"",
     "\"end\"",
     "\"variable\"",
-    "\"device\"",
+    "\"pdevice\"",
     "\"devicecategory\"",
     "\"vdevice\"",
     "\"cpu\"",
@@ -331,8 +337,8 @@ public interface PerfParserConstants {
     "\"xcs\"",
     "\"deploy\"",
     "\"undeploy\"",
-    "\"machine\"",
-    "\"vmachine\"",
+    "\"physicalmachine\"",
+    "\"virtualmachine\"",
     "\"server\"",
     "\"count\"",
     "\"prob\"",
@@ -453,6 +459,9 @@ public interface PerfParserConstants {
     "\"maxretry\"",
     "\"workload\"",
     "\"cyclic\"",
+    "\"virtualization\"",
+    "\"ON\"",
+    "\"OFF\"",
     "\"constant\"",
     "<NUMBER>",
     "<STRING_LITERAL>",

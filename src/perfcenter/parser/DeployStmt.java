@@ -3,7 +3,9 @@ package perfcenter.parser;
 import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.Lan;
 import perfcenter.baseclass.ModelParameters;
+import perfcenter.baseclass.PhysicalMachine;
 import perfcenter.baseclass.SoftServer;
+import perfcenter.baseclass.VirtualMachine;
 
 /**
  * This implements the deployment of server on to hosts and hosts on to Lan
@@ -19,31 +21,51 @@ public class DeployStmt {
 	}
 
 	public void deploy() throws Exception {
-		SoftServer srv;
-		Machine host;
+		PhysicalMachine pm;
 		ModelParameters.isModified = true;
 		try {
-			if (ModelParameters.inputDistSys.isServer(name1)) { // if first parameter is server then second should be host
-				if (ModelParameters.inputDistSys.isMachine(name2) == false) {
-					throw new Error(" \"" + name2 + "\" is not host");
+			if (ModelParameters.inputDistSys.isServer(name1)) { // if first parameter is softServer then second should be machine
+				if (ModelParameters.inputDistSys.isPM(name2)) {
+					SoftServer srv = ModelParameters.inputDistSys.getServer(name1);
+					pm = ModelParameters.inputDistSys.getPM(name2);
+					srv.addMachine(name2);
+					pm.addServer(srv);
+					srv.deploySoftResOnHost(pm);
 				}
-				srv = ModelParameters.inputDistSys.getServer(name1);
-				host = ModelParameters.inputDistSys.getMachine(name2);
-				srv.addMachine(name2);
-				host.addServer(srv);
-				srv.deployVirtualResOnHost(host);
+				else if (ModelParameters.inputDistSys.isVM(name2)) {
+					SoftServer srv = ModelParameters.inputDistSys.getServer(name1);
+					VirtualMachine vmachine = ModelParameters.inputDistSys.getVM(name2);
+					srv.addMachine(name2);
+					vmachine.addServer(srv);
+					srv.deploySoftResOnHost(vmachine);
+				}else{
+					throw new Error(" \"" + name2 + "\" is neither machine nor vm");
+				}
+				
 				return;
-			} else if (ModelParameters.inputDistSys.isMachine(name1)) { // if first parameter is host then second should be lan
+			} else if (ModelParameters.inputDistSys.isPM(name1)) { // if first parameter is machine then second should be lan
 				if (ModelParameters.inputDistSys.isLan(name2) == false) {
 					throw new Error(" \"" + name2 + "\" is not Lan");
 				}
-				host = ModelParameters.inputDistSys.getMachine(name1);
+				pm = ModelParameters.inputDistSys.getPM(name1);
 				Lan ln = ModelParameters.inputDistSys.getLan(name2);
-				host.addLan(name2);
+				pm.addLan(name2);
 				ln.addMachine(name1);
 				return;
+			} else if (ModelParameters.inputDistSys.isVM(name1)){ //First Parameter is vmachine name, then second needs to be machine name
+				if (ModelParameters.inputDistSys.isPM(name2) == false) {
+					throw new Error(" \"" + name2 + "\" is not machine. "+ name1 + "," + name2);
+				}
+				pm = ModelParameters.inputDistSys.getPM(name2);
+				if(!pm.virtualizationEnabled){
+					throw new Error("virtualization is not supported on " + "\"" + name2 + "\"");
+				}
+				VirtualMachine vmachine = ModelParameters.inputDistSys.getVM(name1);
+				vmachine.host = pm;
+				
+			}else {
+				throw new Error(" \"" + name1 + "\" is neither machine nor server");
 			}
-			throw new Error(" \"" + name1 + "\" is not host or server");
 		} catch (Error e) {
 			throw e;
 		}

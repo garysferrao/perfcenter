@@ -5,7 +5,7 @@ import java.util.HashMap;
 import perfcenter.simulator.DeviceSim;
 import perfcenter.simulator.SoftServerSim;
 import perfcenter.simulator.SoftResSim;
-import perfcenter.simulator.MachineSim;
+import perfcenter.simulator.PhysicalMachineSim;
 import perfcenter.simulator.ScenarioSim;
 import perfcenter.simulator.queue.QueueServer;
 import perfcenter.simulator.queue.QueueSim;

@@ -24,23 +24,23 @@ public class UnDeployStmt {
 		ModelParameters.isModified = true;
 		try {
 			// undeploy smtp hp1
-			if (ModelParameters.inputDistSys.isMachine(name2)) {
+			if (ModelParameters.inputDistSys.isPM(name2)) {
 				if (ModelParameters.inputDistSys.isServer(name1) == false) {
 					throw new Error(" \"" + name1 + "\" is not server");
 				}
 				srv = ModelParameters.inputDistSys.getServer(name1);
-				host = ModelParameters.inputDistSys.getMachine(name2);
-				srv.removeHost(name2);
+				host = ModelParameters.inputDistSys.getPM(name2);
+				srv.removeMachine(name2);
 				host.removeServer(name1);
-				srv.unDeployVirtualResOnHost(host);
+				srv.unDeploySoftResOnHost(host);
 				return;
 			}
 			// undeploy hp1 lan1
 			else if (ModelParameters.inputDistSys.isLan(name2)) {
-				if (ModelParameters.inputDistSys.isMachine(name1) == false) {
+				if (ModelParameters.inputDistSys.isPM(name1) == false) {
 					throw new Error(" \"" + name1 + "\" is not host");
 				}
-				host = ModelParameters.inputDistSys.getMachine(name1);
+				host = ModelParameters.inputDistSys.getPM(name1);
 				Lan ln = ModelParameters.inputDistSys.getLan(name2);
 				host.removeLan(name2);
 				ln.removeHost(name1);
