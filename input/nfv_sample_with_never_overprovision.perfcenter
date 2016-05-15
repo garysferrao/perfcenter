@@ -2,7 +2,7 @@ variable
 nusr 1
 end
 
-device
+pdevice
 cpu
 disk
 end

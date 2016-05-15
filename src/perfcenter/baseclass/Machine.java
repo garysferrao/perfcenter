@@ -17,6 +17,8 @@
  */package perfcenter.baseclass;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Collection;
 import java.util.Random;
 
 import org.apache.log4j.Logger;
@@ -41,15 +43,14 @@ public class Machine {
 	/** Name of the machine. */
 	public String name;
 	
-	//SCALABILITY: change the following ArrayList objects to TreeMap
 	/** Devices that are part of Machine. In simulation, this would contain DeviceSim objects. */
-	public ArrayList<Device> devices = new ArrayList<Device>();
+	public HashMap<String, Device> devices = new HashMap<String, Device>();
 	/** SoftResources deployed on machine. In simulation, this would contain SoftResourceSim objects. */
-	public ArrayList<SoftResource> softResources = new ArrayList<SoftResource>();
+	public HashMap<String, SoftResource> softResources = new HashMap<String, SoftResource>();
 	/** Arrival rate to machine. Used by analytical part. */
 	public double arrivalRate;
 	/** SoftServers deployed on this machine. In simulation, this would contain SoftServerSim objects. */
-	public ArrayList<SoftServer> softServers = new ArrayList<SoftServer>();
+	public HashMap<String, SoftServer> softServers = new HashMap<String, SoftServer>();
 	/** lan onto which machine will be deployed */
 	public String lan = "";
 	private Logger logger = Logger.getLogger("Machine");
@@ -82,14 +83,14 @@ public class Machine {
 
 	public void print() {
 		System.out.println("MachineName " + name);
-		for (Device dev : devices) {
+		for (Device dev : devices.values()) {
 			dev.print();
 		}
 		System.out.println(" Deploys ");
-		for (SoftServer serv : softServers) {
+		for (SoftServer serv : softServers.values()) {
 			serv.print();
 		}
-		for (SoftResource sr : softResources) {
+		for (SoftResource sr : softResources.values()) {
 			sr.print();
 		}
 		if (lan != null) {
@@ -102,11 +103,8 @@ public class Machine {
 	 * Returns the specified device object.
 	 */
 	public Device getDevice(String dname) throws DeviceNotFoundException {
-
-		for (Device dev : devices) {
-			if (dev.name.compareToIgnoreCase(dname) == 0) {
-				return (dev);
-			}
+		if (devices.containsKey(dname.toLowerCase())) {
+			return devices.get(dname.toLowerCase());
 		}
 		throw new DeviceNotFoundException(" \"" + dname + "\" is not device for machine " + name);
 	}
@@ -115,7 +113,7 @@ public class Machine {
 	public String getDeviceName(DeviceCategory devcat){
 		double d = r.nextDouble();
 		ArrayList<String> candidates = new ArrayList<String>();
-		for(Device device: devices){
+		for(Device device: devices.values()){
 			if(device.category.name.compareToIgnoreCase(devcat.name) == 0){
 				candidates.add(device.name);
 			}
@@ -128,29 +126,21 @@ public class Machine {
 
 
 	public boolean isDeviceDeployed(String deviceName) {
-		for (Device device : devices) {
-			if (device.name.compareToIgnoreCase(deviceName) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return devices.containsKey(deviceName.toLowerCase());
 	}
 
 	protected void addDevice(Device dev) {
-		devices.add(dev);
+		devices.put(dev.name, dev);
 	}
 
 	protected void addSoftRes(SoftResource sr) {
-		softResources.add(sr);
+		softResources.put(sr.name, sr);
 	}
 
 	protected void addSoftServer(SoftServer ss) {
-		softServers.add(ss);
+		softServers.put(ss.name, ss);
 	}
 	
-	
-
-
 	public void modifyDeviceCount(String dname, double count) throws DeviceNotFoundException {
 		Object dev = getDevice(dname);
 		if (((Device) dev).count.name.compareToIgnoreCase("local") == 0) {
@@ -179,35 +169,28 @@ public class Machine {
 		lan = name;
 	}
 
-	public void removeLan(String n) {
+	public void removeLan(String s) {
 		if (lan.length() == 0) {
-			throw new Error(name + " was not deployed on lan " + n);
+			throw new Error(name + " was not deployed on lan " + s);
 		} else {
 			lan = "";
 		}
 	}
 
 	public SoftServer getServer(String sname) {
-		for (SoftServer serv : softServers) {
-			if (serv.name.compareToIgnoreCase(sname) == 0) {
-				return serv;
-			}
+		if (softServers.containsKey(sname.toLowerCase())) {
+			return softServers.get(sname.toLowerCase());
 		}
 		throw new Error("\"" + sname + "\" is not Server on Machine " + name);
 	}
 
 	public boolean isServerDeployed(String sname) {
-		for (Object serv : softServers) {
-			if (((SoftServer) serv).name.compareToIgnoreCase(sname) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return softServers.containsKey(sname.toLowerCase());
 	}
 
 	public void addServer(SoftServer srv) {
 		SoftServer scpy = srv.getCopy();
-		softServers.add(scpy);
+		softServers.put(scpy.name, scpy);
 	}
 
 	/** 
@@ -215,11 +198,9 @@ public class Machine {
 	 * Called when undeploying server from machine.
 	 */
 	public void removeServer(String srvname) {
-		for (Object s : softServers) {
-			if (((SoftServer) s).name.compareToIgnoreCase(srvname) == 0) {
-				softServers.remove(s);
-				return;
-			}
+		if (softServers.containsKey(srvname.toLowerCase())) {
+			softServers.remove(srvname);
+			return;
 		}
 		throw new Error(srvname + " was not deployed on machine " + name);
 	}
@@ -236,7 +217,7 @@ public class Machine {
 			SoftResource sr = ModelParameters.inputDistSys.getSoftRes(srName);
 			SoftResource srcpy = sr.getCopy();
 			srcpy.addSoftServer(srvName);
-			softResources.add(srcpy);
+			softResources.put(srcpy.name, srcpy);
 		}
 	}
 
@@ -247,42 +228,33 @@ public class Machine {
 		if (sr.isDeployedOnSoftServer(srvName) == true) {
 			sr.removeSoftServer(srvName);
 		}
-		if (sr.softServers.size() == 0) {
-			softResources.remove(sr);
-		}
+		softResources.remove(srName);
 	}
 
 	public boolean isSoftResourceDeployed(String srName) {
-		for (SoftResource sr : softResources) {
-			if (sr.name.compareToIgnoreCase(srName) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return softResources.containsKey(srName.toLowerCase());
 	}
 
 	public SoftResource getSoftRes(String srName) throws Exception {
-		for (SoftResource sr : softResources) {
-			if (sr.name.compareToIgnoreCase(srName) == 0) {
-				return sr;
-			}
+		if (softResources.containsKey(srName.toLowerCase())) {
+			return softResources.get(srName.toLowerCase());
 		}
 		throw new Exception("softres " + srName + " is not deployed on Machine " + name);
 	}
 
-	public ArrayList<SoftServer> getSoftServersList() {
-		return (softServers);
+	public Collection<SoftServer> getSoftServersList() {
+		return softServers.values();
 	}
 
-	public ArrayList<Device> getDevicesList() {
-		return (devices);
+	public Collection<Device> getDevicesList() {
+		return devices.values();
 	}
 
 	public void setDeviceAsPowerManaged(String pdevname) throws DeviceNotFoundException {
 		if (isDeviceDeployed(pdevname) == false) {
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat);
-			devices.add(pdev);
+			devices.put(pdev.name, pdev);
 		}
 		// set device-type as power-managed with governor as
 		// ONDEMAND[default gov for power-managed devices]
@@ -291,7 +263,7 @@ public class Machine {
 		pdev.governor = PowerManagementGovernor.ONDEMAND;
 
 		// Set other PowerManaged attributes of this device
-		for (Device dev : ModelParameters.inputDistSys.powerManagedDevicePrototypes) {
+		for (Device dev : ModelParameters.inputDistSys.powerManagedDevicePrototypes.values()) {
 			if (dev.name.equalsIgnoreCase(pdevname)) // device type is found
 			{
 				// copy all attributes from device type object to this device
@@ -380,4 +352,6 @@ public class Machine {
 		throw new Error("Attempt to modify the device down_threshold of machine " + name + ", instead variable " + ((Device) dev).downThreshold
 				+ " should be modified");
 	}
+	
+
 }

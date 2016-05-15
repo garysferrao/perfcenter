@@ -71,7 +71,7 @@ server db
 end
 
 scenario sc1 prob 1.0
-	wt1 dt1 300
+	wt1 dt1 300 sync
 	dt1 wt2 400
 end
 

@@ -657,22 +657,22 @@ public class Output {
 	 * 
 	 * This method needs reverification, and possible fixing. */
 	public String findBottleNeck(Double n) {
-		for (Machine host : resultantDistSys.pms) {
-			for (Object d : host.devices) {
+		for (Machine machine : resultantDistSys.pms.values()) {
+			for (Object d : machine.devices.values()) {
 				// BottleNeck bn = new BottleNeck( ((Device) d).getUtilization(), host.name + ":" + ((Device) d).getDeviceName() );
-				BottleNeck bn = new BottleNeck(((Device) d).getUtilization(), host, ((Device) d));
+				BottleNeck bn = new BottleNeck(((Device) d).getUtilization(), machine, ((Device) d));
 				bottleneck.add(bn);
 			}
-			for (Object s : host.softServers) {
-				BottleNeck bn = new BottleNeck(((SoftServer) s).getUtilization(), host.name + ":" + ((SoftServer) s).name);
+			for (Object s : machine.softServers.values()) {
+				BottleNeck bn = new BottleNeck(((SoftServer) s).getUtilization(), machine.name + ":" + ((SoftServer) s).name);
 				bottleneck.add(bn);
 			}
-			for (Object vr : host.softResources) {
-				BottleNeck bn = new BottleNeck(((SoftResource) vr).getUtilization(), host.name + ":" + ((SoftResource) vr).name);
+			for (Object vr : machine.softResources.values()) {
+				BottleNeck bn = new BottleNeck(((SoftResource) vr).getUtilization(), machine.name + ":" + ((SoftResource) vr).name);
 				bottleneck.add(bn);
 			}
 		}
-		for (LanLink lk : resultantDistSys.links) {
+		for (LanLink lk : resultantDistSys.links.values()) {
 			BottleNeck bn = new BottleNeck(lk.getUtilization(lk.srclan, lk.destlan), "link " + lk.srclan + ":" + lk.destlan);
 			bottleneck.add(bn);
 			BottleNeck bn1 = new BottleNeck(lk.getUtilization(lk.destlan, lk.srclan), "link " + lk.destlan + ":" + lk.srclan);
@@ -682,8 +682,8 @@ public class Output {
 		int count = 0;
 
 		// run for all the DevQ in a host
-		for (Machine h : resultantDistSys.pms) {
-			for (Device d : h.devices) {
+		for (Machine h : resultantDistSys.pms.values()) {
+			for (Device d : h.devices.values()) {
 				d.calculateAndPrintAverageDeviceSpeedup(h);
 			}
 		}
@@ -726,20 +726,20 @@ public class Output {
 		if (refUtil > 1) {
 			refUtil = 1;
 		}
-		for (Machine host : resultantDistSys.pms) {
-			for (Device d : host.devices) {
+		for (Machine host : resultantDistSys.pms.values()) {
+			for (Device d : host.devices.values()) {
 				if (d.getUtilization() > refUtil) {
 					logger.error("Analyse:Overload at " + host.name + "/" + d.getDeviceName() + " util:" + d.getUtilization());
 					error = true;
 				}
 			}
-			for (SoftServer s : host.softServers) {
+			for (SoftServer s : host.softServers.values()) {
 				if (s.getUtilization() > refUtil) {
 					logger.error("Analyse:Overload at " + host.name + "/" + s.name + " util:" + s.getUtilization());
 					error = true;
 				}
 			}
-			for (SoftResource s : host.softResources) {
+			for (SoftResource s : host.softResources.values()) {
 				if (s.getUtilization() > refUtil) {
 					logger.error("A	// find response timenalyse:Overload at " + host.name + "/" + s.name + " util:"
 							+ s.getUtilization());
@@ -747,7 +747,7 @@ public class Output {
 				}
 			}
 		}
-		for (LanLink lk : resultantDistSys.links) {
+		for (LanLink lk : resultantDistSys.links.values()) {
 			if (lk.getUtilization(lk.srclan, lk.destlan) > refUtil) {
 				logger.error("Analyse:Overload at Link:" + lk.getName() + " util:" + lk.getUtilization(lk.srclan, lk.destlan));
 				error = true;

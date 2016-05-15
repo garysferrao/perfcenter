@@ -293,12 +293,12 @@ void InputFile() throws DeviceNotFoundException,Exception:
 	 VariableDef() 		|
 	 LanDef() 			|
 	 LanLinkDef()		|
-	 res=SoftResourceDef()	{ModelParameters.inputDistSys.softRes.add(res);}	|
+	 res=SoftResourceDef()	{ModelParameters.inputDistSys.softRes.put(res.name.toLowerCase(), res);}	|
 	 PhysicalMachineDef() 			|
 	 VirtualMachineDef() 			|
-	 task=TaskDef()     {ModelParameters.inputDistSys.tasks.add(task);}		|
-	 sce=ScenarioDef()	{ModelParameters.inputDistSys.scenarios.add(sce);}	|
-	 serv=ServerDef()	{ModelParameters.inputDistSys.softServers.add(serv);}	|
+	 task=TaskDef()     {ModelParameters.inputDistSys.tasks.put(task.name.toLowerCase(), task);}		|
+	 sce=ScenarioDef()	{ModelParameters.inputDistSys.scenarios.put(sce.name.toLowerCase(), sce);}	|
+	 serv=ServerDef()	{ModelParameters.inputDistSys.softServers.put(serv.name.toLowerCase(), serv);}	|
 	 DeployDef()	|
 	 stmt=StatementDef(){stmt.execute();} |
 	 LoadParamDef()|
@@ -315,12 +315,12 @@ void DeviceCategoryDef() : { DeviceType devtype; String devcatname;}
 	LOOKAHEAD(3)
 		(	<DEVICECATEGORY>   (  devtype=DevType() devcatname=DeviceCategoryName() {
 									DeviceCategory devcat = new DeviceCategory(devcatname, devtype);
-									ModelParameters.inputDistSys.devCategories.add(devcat);
+									ModelParameters.inputDistSys.devcats.put(devcat.name.toLowerCase(), devcat);
 									})*
 			<END> )
 		| <DEVICECATEGORY> devtype=DevType() devcatname=DeviceCategoryName(){
 			DeviceCategory devcat = new DeviceCategory(devcatname, devtype);
-			ModelParameters.inputDistSys.devCategories.add(devcat);
+			ModelParameters.inputDistSys.devcats.put(devcat.name.toLowerCase(), devcat);
 		}  
 }  
 //DeviceDef can be refactored to have DeviceDetail for more readablity
@@ -330,12 +330,12 @@ void PDeviceDef() : { Token devcatname; Token pdevname; }
 		(<PDEVICE>
 		 (devcatname=ValidDeviceCategoryName() pdevname=PhysicalDeviceName() {
 		  PhysicalDevice pdev = new PhysicalDevice(pdevname.image, devcatname.image);
-		  ModelParameters.inputDistSys.pdevices.add(pdev);
+		  ModelParameters.inputDistSys.pdevices.put(pdev.name.toLowerCase(), pdev);
 		  })*
 		 <END>)
 		|<PDEVICE> devcatname=ValidDeviceCategoryName() pdevname=PhysicalDeviceName(){
 			PhysicalDevice pdev = new PhysicalDevice(pdevname.image, devcatname.image);
-			ModelParameters.inputDistSys.pdevices.add(pdev); }
+			ModelParameters.inputDistSys.pdevices.put(pdev.name.toLowerCase(), pdev); }
 }
 
 //VDeviceDef can be refactored to have VDeviceDetail for more readablity
@@ -345,21 +345,21 @@ void VDeviceDef() : { Token devcatname; Token vdevname; }
 		(<VDEVICE>
 		 (devcatname=ValidDeviceCategoryName() vdevname=VirtualDeviceName() {
 		  VirtualDevice vdev = new VirtualDevice(vdevname.image, devcatname.image);
-		  ModelParameters.inputDistSys.vdevices.add(vdev);
+		  ModelParameters.inputDistSys.vdevices.put(vdev.name.toLowerCase(), vdev);
 		  })*
 		 <END>)
 		|<VDEVICE> devcatname=ValidDeviceCategoryName() vdevname=VirtualDeviceName(){
 			VirtualDevice vdev = new VirtualDevice(vdevname.image, devcatname.image);
-			ModelParameters.inputDistSys.vdevices.add(vdev); }
+			ModelParameters.inputDistSys.vdevices.put(vdev.name.toLowerCase(), vdev); }
 }
 
 void VariableDef() :  {Variable var; }
 {
 	LOOKAHEAD(4)
 		(<VARIABLE>
-		 (var=VariableDetail(){ModelParameters.inputDistSys.variables.add(var);})*
+		 (var=VariableDetail(){ModelParameters.inputDistSys.variables.put(var.name, var);})*
 		 <END>)
-		|<VARIABLE> var=VariableDetail(){ModelParameters.inputDistSys.variables.add(var);}
+		|<VARIABLE> var=VariableDetail(){ModelParameters.inputDistSys.variables.put(var.name.toLowerCase(), var);}
 }
 
 Variable VariableDetail():  { 	Token name; Token val; }
@@ -372,9 +372,9 @@ void LanDef() : { 	Token name; }
 {
 	LOOKAHEAD(3)
 		(<LAN>
-		 (name=LanName() {ModelParameters.inputDistSys.lans.add(new Lan(name.image)); })*
+		 (name=LanName() {ModelParameters.inputDistSys.lans.put(name.image.toLowerCase(), new Lan(name.image)); })*
 		 <END>)
-		|<LAN> name=LanName(){ModelParameters.inputDistSys.lans.add(new Lan(name.image)); }
+		|<LAN> name=LanName(){ModelParameters.inputDistSys.lans.put(name.image, new Lan(name.image)); }
 }
 void LanLinkDef() :
 { 	Token n, name1,name2; 	LanLink l1;Token unit;Variable v;}
@@ -401,7 +401,7 @@ void LanLinkDef() :
 		<END>
 		{ModelParameters.inputDistSys.getLan(name1.image).addConnectedLan(name2.image);
 			ModelParameters.inputDistSys.getLan(name2.image).addConnectedLan(name1.image);
-			ModelParameters.inputDistSys.links.add(l1);}
+			ModelParameters.inputDistSys.links.put(l1.name.toLowerCase(), l1);}
 }
 void PhysicalMachineDef()throws DeviceNotFoundException, Exception:{Token name,n;PhysicalMachine pm;String pmname="";}
 {
@@ -413,11 +413,11 @@ void PhysicalMachineDef()throws DeviceNotFoundException, Exception:{Token name,n
 	(PhysicalMachineDetail(pm))*
 		<END>
 		{
-			ModelParameters.inputDistSys.pms.add(pm);
+			ModelParameters.inputDistSys.pms.put(pm.name.toLowerCase(), pm);
 			int totMachines =  new Integer(n.image);
 			for(int i=2;i<=totMachines;i++){
 				PhysicalMachine pmcpy = pm.getCopy(pmname,i);
-				ModelParameters.inputDistSys.pms.add(pmcpy);
+				ModelParameters.inputDistSys.pms.put(pmcpy.name.toLowerCase(), pmcpy);
 			}
 		}
 }
@@ -470,11 +470,11 @@ void VirtualMachineDef()throws DeviceNotFoundException, Exception:{Token name,n;
 	(VirtualMachineDetail(vm))*
 		<END>
 		{
-			ModelParameters.inputDistSys.vms.add(vm);
+			ModelParameters.inputDistSys.vms.put(vm.name.toLowerCase(), vm);
 			int totVMachines =  new Integer(n.image);
 			for(int i=2;i<=totVMachines;i++){
 				VirtualMachine vmcpy = vm.getCopy(vmname,i);
-				ModelParameters.inputDistSys.vms.add(vmcpy);
+				ModelParameters.inputDistSys.vms.put(vmcpy.name.toLowerCase(), vmcpy);
 			}
 		}
 }
@@ -502,7 +502,7 @@ void PowerManagementDef() throws DeviceNotFoundException: { Token name;} // adde
 		// we have device name here; Set it's PowerManaged attributes here.
 		// All devices having same device-name will inherit these attributes
 		PhysicalDevice dev = new PhysicalDevice(name.image);
-		ModelParameters.inputDistSys.powerManagedDevicePrototypes.add(dev);
+		ModelParameters.inputDistSys.powerManagedDevicePrototypes.put(dev.name.toLowerCase(), dev);
 	}
 	( PowerManagementDetails(name, dev) )*
 		<END>

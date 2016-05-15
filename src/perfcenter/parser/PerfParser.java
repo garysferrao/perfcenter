@@ -156,7 +156,7 @@
         break;
       case SOFTRES:
         res = SoftResourceDef();
-                                 ModelParameters.inputDistSys.softRes.add(res);
+                                 ModelParameters.inputDistSys.softRes.put(res.name.toLowerCase(), res);
         break;
       case PHYSICALMACHINE:
         PhysicalMachineDef();
@@ -166,15 +166,15 @@
         break;
       case TASK:
         task = TaskDef();
-                             ModelParameters.inputDistSys.tasks.add(task);
+                             ModelParameters.inputDistSys.tasks.put(task.name.toLowerCase(), task);
         break;
       case SCENARIO:
         sce = ScenarioDef();
-                                 ModelParameters.inputDistSys.scenarios.add(sce);
+                                 ModelParameters.inputDistSys.scenarios.put(sce.name.toLowerCase(), sce);
         break;
       case SERVER:
         serv = ServerDef();
-                                 ModelParameters.inputDistSys.softServers.add(serv);
+                                 ModelParameters.inputDistSys.softServers.put(serv.name.toLowerCase(), serv);
         break;
       case DEPLOY:
         DeployDef();
@@ -253,7 +253,7 @@
         devtype = DevType();
         devcatname = DeviceCategoryName();
                                                                         DeviceCategory devcat = new DeviceCategory(devcatname, devtype);
-                                                                        ModelParameters.inputDistSys.devCategories.add(devcat);
+                                                                        ModelParameters.inputDistSys.devcats.put(devcat.name.toLowerCase(), devcat);
       }
       jj_consume_token(END);
     } else {
@@ -263,7 +263,7 @@
         devtype = DevType();
         devcatname = DeviceCategoryName();
                         DeviceCategory devcat = new DeviceCategory(devcatname, devtype);
-                        ModelParameters.inputDistSys.devCategories.add(devcat);
+                        ModelParameters.inputDistSys.devcats.put(devcat.name.toLowerCase(), devcat);
         break;
       default:
         jj_la1[3] = jj_gen;
@@ -291,7 +291,7 @@
         devcatname = ValidDeviceCategoryName();
         pdevname = PhysicalDeviceName();
                   PhysicalDevice pdev = new PhysicalDevice(pdevname.image, devcatname.image);
-                  ModelParameters.inputDistSys.pdevices.add(pdev);
+                  ModelParameters.inputDistSys.pdevices.put(pdev.name.toLowerCase(), pdev);
       }
       jj_consume_token(END);
     } else {
@@ -301,7 +301,7 @@
         devcatname = ValidDeviceCategoryName();
         pdevname = PhysicalDeviceName();
                         PhysicalDevice pdev = new PhysicalDevice(pdevname.image, devcatname.image);
-                        ModelParameters.inputDistSys.pdevices.add(pdev);
+                        ModelParameters.inputDistSys.pdevices.put(pdev.name.toLowerCase(), pdev);
         break;
       default:
         jj_la1[5] = jj_gen;
@@ -329,7 +329,7 @@
         devcatname = ValidDeviceCategoryName();
         vdevname = VirtualDeviceName();
                   VirtualDevice vdev = new VirtualDevice(vdevname.image, devcatname.image);
-                  ModelParameters.inputDistSys.vdevices.add(vdev);
+                  ModelParameters.inputDistSys.vdevices.put(vdev.name.toLowerCase(), vdev);
       }
       jj_consume_token(END);
     } else {
@@ -339,7 +339,7 @@
         devcatname = ValidDeviceCategoryName();
         vdevname = VirtualDeviceName();
                         VirtualDevice vdev = new VirtualDevice(vdevname.image, devcatname.image);
-                        ModelParameters.inputDistSys.vdevices.add(vdev);
+                        ModelParameters.inputDistSys.vdevices.put(vdev.name.toLowerCase(), vdev);
         break;
       default:
         jj_la1[7] = jj_gen;
@@ -364,7 +364,7 @@
           break label_5;
         }
         var = VariableDetail();
-                                       ModelParameters.inputDistSys.variables.add(var);
+                                       ModelParameters.inputDistSys.variables.put(var.name, var);
       }
       jj_consume_token(END);
     } else {
@@ -372,7 +372,7 @@
       case VARIABLE:
         jj_consume_token(VARIABLE);
         var = VariableDetail();
-                                                 ModelParameters.inputDistSys.variables.add(var);
+                                                 ModelParameters.inputDistSys.variables.put(var.name.toLowerCase(), var);
         break;
       default:
         jj_la1[9] = jj_gen;
@@ -405,7 +405,7 @@
           break label_6;
         }
         name = LanName();
-                                  ModelParameters.inputDistSys.lans.add(new Lan(name.image));
+                                  ModelParameters.inputDistSys.lans.put(name.image.toLowerCase(), new Lan(name.image));
       }
       jj_consume_token(END);
     } else {
@@ -413,7 +413,7 @@
       case LAN:
         jj_consume_token(LAN);
         name = LanName();
-                                      ModelParameters.inputDistSys.lans.add(new Lan(name.image));
+                                      ModelParameters.inputDistSys.lans.put(name.image, new Lan(name.image));
         break;
       default:
         jj_la1[11] = jj_gen;
@@ -514,7 +514,7 @@
     jj_consume_token(END);
                  ModelParameters.inputDistSys.getLan(name1.image).addConnectedLan(name2.image);
                         ModelParameters.inputDistSys.getLan(name2.image).addConnectedLan(name1.image);
-                        ModelParameters.inputDistSys.links.add(l1);
+                        ModelParameters.inputDistSys.links.put(l1.name.toLowerCase(), l1);
   }
 
   static final public void PhysicalMachineDef() throws ParseException, DeviceNotFoundException, Exception {
@@ -541,11 +541,11 @@
       PhysicalMachineDetail(pm);
     }
     jj_consume_token(END);
-                        ModelParameters.inputDistSys.pms.add(pm);
+                        ModelParameters.inputDistSys.pms.put(pm.name.toLowerCase(), pm);
                         int totMachines =  new Integer(n.image);
                         for(int i=2;i<=totMachines;i++){
                                 PhysicalMachine pmcpy = pm.getCopy(pmname,i);
-                                ModelParameters.inputDistSys.pms.add(pmcpy);
+                                ModelParameters.inputDistSys.pms.put(pmcpy.name.toLowerCase(), pmcpy);
                         }
   }
 
@@ -680,11 +680,11 @@
       VirtualMachineDetail(vm);
     }
     jj_consume_token(END);
-                        ModelParameters.inputDistSys.vms.add(vm);
+                        ModelParameters.inputDistSys.vms.put(vm.name.toLowerCase(), vm);
                         int totVMachines =  new Integer(n.image);
                         for(int i=2;i<=totVMachines;i++){
                                 VirtualMachine vmcpy = vm.getCopy(vmname,i);
-                                ModelParameters.inputDistSys.vms.add(vmcpy);
+                                ModelParameters.inputDistSys.vms.put(vmcpy.name.toLowerCase(), vmcpy);
                         }
   }
 
@@ -740,7 +740,7 @@
                 // we have device name here; Set it's PowerManaged attributes here.
                 // All devices having same device-name will inherit these attributes
                 PhysicalDevice dev = new PhysicalDevice(name.image);
-                ModelParameters.inputDistSys.powerManagedDevicePrototypes.add(dev);
+                ModelParameters.inputDistSys.powerManagedDevicePrototypes.put(dev.name.toLowerCase(), dev);
     label_10:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {

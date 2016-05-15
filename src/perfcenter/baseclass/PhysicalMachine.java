@@ -44,15 +44,15 @@ public class PhysicalMachine extends Machine {
 	
 	public PhysicalMachine getCopy(String pmname, int num) throws DeviceNotFoundException {
 		PhysicalMachine pmcpy = new PhysicalMachine(pmname, num);
-		for (Device d : devices) {
+		for (Device d : devices.values()) {
 			Device dcpy = d.getCopy();
 			pmcpy.addDevice(dcpy);
 		}
-		for (SoftResource sr : softResources) {
+		for (SoftResource sr : softResources.values()) {
 			SoftResource srcpy = sr.getCopy();
 			pmcpy.addSoftRes(srcpy);
 		}
-		for (SoftServer ss : softServers) {
+		for (SoftServer ss : softServers.values()) {
 			SoftServer sscpy = ss.getCopy();
 			pmcpy.addSoftServer(sscpy);
 		}
@@ -65,7 +65,7 @@ public class PhysicalMachine extends Machine {
 		if (isDeviceDeployed(pdevname) == false) {
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat);
-			devices.add(pdev);
+			devices.put(pdev.name, pdev);
 		}
 		getDevice(pdevname).count = count;
 	}
@@ -75,7 +75,7 @@ public class PhysicalMachine extends Machine {
 			//System.out.println(name + " Device Created in addDeviceBuffer");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat);
-			devices.add(pdev);
+			devices.put(pdev.name, pdev);
 		}
 		getDevice(pdevname).buffer = buffersize;
 		return;
@@ -86,7 +86,7 @@ public class PhysicalMachine extends Machine {
 			//System.out.println(name + " Device Created in addDeviceSpeedUp");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat);
-			devices.add(pdev);
+			devices.put(pdev.name, pdev);
 		}
 		getDevice(pdevname).speedUpFactor = pspeed;
 	}
@@ -96,7 +96,7 @@ public class PhysicalMachine extends Machine {
 			//System.out.println(name + " Device Created in addDeviceSchedPol");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat);
-			devices.add(pdev);
+			devices.put(pdev.name, pdev);
 		}
 		getDevice(pdevname).schedulingPolicy = pol;
 	}
@@ -106,7 +106,7 @@ public class PhysicalMachine extends Machine {
 			//System.out.println(name + " Device Created in addDeviceSpeedUp");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat, basespeed.value);
-			devices.add(pdev);
+			devices.put(pdev.name, pdev);
 		}
 		getDevice(pdevname).basespeed.value = basespeed.value;
 	}

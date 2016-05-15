@@ -23,6 +23,7 @@ package perfcenter.baseclass;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import perfcenter.baseclass.enums.DeviceType;
 import perfcenter.baseclass.DeviceCategory;
@@ -40,22 +41,22 @@ public class DistributedSystem {
 
 	// List of soft resources. used for reference only. they are deployed on
 	// machines
-	public ArrayList<SoftResource> softRes; // list of soft resources
-	public ArrayList<DeviceCategory> devCategories;
-	public ArrayList<PhysicalDevice> pdevices;
-	public ArrayList<VirtualDevice> vdevices;
-	public ArrayList<Variable> variables;
-	public ArrayList<Task> tasks;
+	public HashMap<String, SoftResource> softRes; // list of soft resources
+	public HashMap<String, DeviceCategory> devcats;
+	public HashMap<String, PhysicalDevice> pdevices;
+	public HashMap<String, VirtualDevice> vdevices;
+	public HashMap<String, Variable> variables;
+	public HashMap<String, Task> tasks;
 	/** List of softServers. used for reference only. They are deployed on Machines */
-	public ArrayList<SoftServer> softServers;
+	public HashMap<String, SoftServer> softServers;
 	/** All the Machines. For simulation, this would contain objects of MachineSim. */
-	public ArrayList<PhysicalMachine> pms;
-	public ArrayList<VirtualMachine> vms;
+	public HashMap<String, PhysicalMachine> pms;
+	public HashMap<String, VirtualMachine> vms;
 	/** All the Scenarios. For simulation, this would contain objects of ScenarioSim. */
-	public ArrayList<Scenario> scenarios;
-	public ArrayList<Lan> lans;
+	public HashMap<String, Scenario> scenarios;
+	public HashMap<String, Lan> lans;
 	/** All the LanLinks. For simulation, this would contain objects of LanLinkSim. */ 
-	public ArrayList<LanLink> links;
+	public HashMap<String, LanLink> links;
 	
 	// parameters across all scenarios
 	public Metric overallRespTime = new Metric();
@@ -69,28 +70,28 @@ public class DistributedSystem {
 
 	// this list contains different device types and used to copy attributes
 	// from this device to other devices of same type: rakesh
-	public List<PhysicalDevice> powerManagedDevicePrototypes;
+	public HashMap<String, PhysicalDevice> powerManagedDevicePrototypes;
 	// list of power managed devices
-	public List<PhysicalDevice> powerManagedDevices;
+	public HashMap<String, PhysicalDevice> powerManagedDevices;
 
 	public DistributedSystem() {
-		pms = new ArrayList<PhysicalMachine>();
-		vms = new ArrayList<VirtualMachine>();
-		softRes = new ArrayList<SoftResource>();
-		devCategories = new ArrayList<DeviceCategory>();
-		pdevices = new ArrayList<PhysicalDevice>();
-		vdevices = new ArrayList<VirtualDevice>();
+		pms = new HashMap<String, PhysicalMachine>();
+		vms = new HashMap<String, VirtualMachine>();
+		softRes = new HashMap<String, SoftResource>();
+		devcats = new HashMap<String, DeviceCategory>();
+		pdevices = new HashMap<String, PhysicalDevice>();
+		vdevices = new HashMap<String, VirtualDevice>();
 
 		/***************************************************************************/
-		powerManagedDevicePrototypes = new ArrayList<PhysicalDevice>(); // added by Rakesh
-		powerManagedDevices = new ArrayList<PhysicalDevice>(); // added by Rakesh
+		powerManagedDevicePrototypes = new HashMap<String, PhysicalDevice>(); // added by Rakesh
+		powerManagedDevices = new HashMap<String, PhysicalDevice>(); // added by Rakesh
 		/***************************************************************************/
-		variables = new ArrayList<Variable>();
-		tasks = new ArrayList<Task>();
-		softServers = new ArrayList<SoftServer>();
-		scenarios = new ArrayList<Scenario>();
-		lans = new ArrayList<Lan>();
-		links = new ArrayList<LanLink>();
+		variables = new HashMap<String, Variable>();
+		tasks = new HashMap<String, Task>();
+		softServers = new HashMap<String, SoftServer>();
+		scenarios = new HashMap<String, Scenario>();
+		lans = new HashMap<String, Lan>();
+		links = new HashMap<String, LanLink>();
 
 		// This is done to have a dummy task "user" at the start and end of a scenario
 		Task t = new Task("user", 0);
@@ -98,10 +99,10 @@ public class DistributedSystem {
 		SoftServer sdummy = new SoftServer("user");
 		sdummy.addTask(t);
 //		sdummy.addHost("dummy");
-		softServers.add(sdummy);
+		softServers.put("user",sdummy);
 		
 		t.softServerName = "user";
-		tasks.add(t);
+		tasks.put("user",t);
 		
 		// why these things are here? they are local variables which are being used nowhere else
 //		Host hdummy = new Host("dummy", 1);
@@ -111,7 +112,7 @@ public class DistributedSystem {
 
 	public void printConfiguration() {
 		System.out.println("---printcfg start----");
-		for (Machine machine : pms) {
+		for (Machine machine : pms.values()) {
 			System.out.println("---MachineDef----");
 			machine.print();
 		}
@@ -119,16 +120,14 @@ public class DistributedSystem {
 	}
 
 	public Task getTask(String name) {
-		for (Task task : tasks) {
-			if (task.name.compareToIgnoreCase(name) == 0) {
-				return task;
-			}
-		}
+        if (tasks.containsKey(name.toLowerCase())) {
+                return tasks.get(name.toLowerCase());
+        }
 		throw new Error(name + " is not Task");
 	}
 
 	public LanLink getLink(String name1, String name2) {
-		for (LanLink link : links) {
+		for (LanLink link : links.values()) {
 			if (link.srclan.compareToIgnoreCase(name1) == 0) {
 				if (link.destlan.compareToIgnoreCase(name2) == 0) {
 					return link;
@@ -144,25 +143,18 @@ public class DistributedSystem {
 	}
 
 	public LanLink getLink(String name1) {
-		for (LanLink link : links) {
-			if (link.name.compareToIgnoreCase(name1) == 0) {
-				return link;
-			}
+		if (links.containsKey(name1.toLowerCase())) {
+			return links.get(name1.toLowerCase());
 		}
 		throw new Error(name1 + "is not defined as Link");
 	}
 
 	public boolean isLink(String name1) {
-		for (LanLink link : links) {
-			if (link.name.compareToIgnoreCase(name1) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return links.containsKey(name1.toLowerCase());
 	}
 
 	public boolean isLink(String name1, String name2) {
-		for (LanLink link : links) {
+		for (LanLink link : links.values()) {
 			if (link.srclan.compareToIgnoreCase(name1) == 0) {
 				if (link.destlan.compareToIgnoreCase(name2) == 0) {
 					return true;
@@ -178,210 +170,131 @@ public class DistributedSystem {
 	}
 
 	public boolean isTask(String name) {
-		for (Task task : tasks) {
-			if (task.name.compareToIgnoreCase(name) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return tasks.containsKey(name.toLowerCase());
 	}
 
 	public SoftServer getServer(String name) {
-		for (SoftServer serv : softServers) {
-			if (serv.name.compareToIgnoreCase(name) == 0) {
-				return serv;
-			}
+		if (softServers.containsKey(name.toLowerCase())) {
+			return softServers.get(name.toLowerCase());
 		}
 		throw new Error(name + " is not Server");
 	}
 
 	public boolean isServer(String name) {
-		for (SoftServer serv : softServers) {
-			if (serv.name.compareToIgnoreCase(name) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return softServers.containsKey(name.toLowerCase());
 	}
 
 	public PhysicalMachine getPM(String pmname) {
-		for (Object machine : pms) {
-			if (((PhysicalMachine) machine).name.compareToIgnoreCase(pmname) == 0) {
-				return (PhysicalMachine) machine;
-			}
+		if (pms.containsKey(pmname.toLowerCase())) {
+			return pms.get(pmname.toLowerCase());
 		}
 		throw new Error(pmname + " is not Machine");
 	}
 	
 	public VirtualMachine getVM(String vmname) {
-		for (Object vmachine : vms) {
-			if (((VirtualMachine) vmachine).name.compareToIgnoreCase(vmname) == 0) {
-				return (VirtualMachine) vmachine;
-			}
+		if (vms.containsKey(vmname.toLowerCase())) {
+			return vms.get(vmname.toLowerCase());
 		}
 		throw new Error(vmname + " is not Virtual Machine");
 	}
 
-	public boolean isPM(String name) {
-		for (Object pm : pms) {
-			if (((PhysicalMachine) pm).name.compareToIgnoreCase(name) == 0) {
-				return true;
-			}
-		}
-		return false;
+	public boolean isPM(String pmname) {
+		return pms.containsKey(pmname.toLowerCase());
 	}
 	
 	public boolean isVM(String vmname) {
-		for (Object vm : vms) {
-			if (((VirtualMachine) vm).name.compareToIgnoreCase(vmname) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return vms.containsKey(vmname.toLowerCase());
 	}
 	
 	public DeviceCategory getDeviceCategory(String devcatname){
-		for (DeviceCategory devcat : devCategories){
-			if(devcat.name.compareToIgnoreCase(devcatname) == 0){
-				return devcat;
-			}
+		if(devcats.containsKey(devcatname.toLowerCase())){
+			return devcats.get(devcatname.toLowerCase());
 		}
 		throw new Error(devcatname + " is not Device Category");
 	}
 	
 	public PhysicalDevice getPDevice(String devname) {
-		for (PhysicalDevice pdev : pdevices) {
-			if (pdev.name.compareToIgnoreCase(devname) == 0) {
-				return pdev;
-			}
+		if (pdevices.containsKey(devname.toLowerCase())) {
+			return pdevices.get(devname.toLowerCase());
 		}
 		throw new Error(devname + " is not Physical Device");
 	}
 	
 	public VirtualDevice getVDevice(String vdevname) {
-		for (VirtualDevice vdev : vdevices) {
-			if (vdev.name.compareToIgnoreCase(vdevname) == 0) {
-				return vdev;
-			}
+		if (vdevices.containsKey(vdevname.toLowerCase())) {
+			return vdevices.get(vdevname.toLowerCase());
 		}
 		throw new Error(vdevname + " is not Virtual Device");
 	}
 	
 	public DeviceType getDeviceType(String devcatname){
-		for(DeviceCategory devcat: devCategories){
-			if(devcat.name.compareToIgnoreCase(devcatname) == 0){
-				return devcat.type;
-			}
+		if(devcats.containsKey(devcatname.toLowerCase())){
+			return devcats.get(devcatname.toLowerCase()).type;
 		}
-		throw new Error(devcatname + " is not Device");
+		throw new Error(devcatname + " is not Device Category");
 	}
 	
 	public DeviceCategory getVDeviceCategory(String vdevname){
-		for(VirtualDevice vdev: vdevices){
-			if(vdev.name.compareToIgnoreCase(vdevname) == 0){
-				return vdev.category;
-			}
+		if(vdevices.containsKey(vdevname.toLowerCase())){
+			return vdevices.get(vdevname.toLowerCase()).category;
 		}
 		throw new Error(vdevname + " is not Device");
 	}
 
 	public boolean isDeviceCategory(String devcatname) {
-		for (DeviceCategory devcat : devCategories) {
-			if (devcat.name.compareToIgnoreCase(devcatname) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return devcats.containsKey(devcatname);
 	}
 	
 	public boolean isPDevice(String pdevname) {
-		for (PhysicalDevice pdev : pdevices) {
-			if (pdev.name.compareToIgnoreCase(pdevname) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return pdevices.containsKey(pdevname.toLowerCase());
 	}
 	
 	public boolean isVDevice(String vdevname) {
-		for (VirtualDevice vdev : vdevices) {
-			if (vdev.name.compareToIgnoreCase(vdevname) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return vdevices.containsKey(vdevname.toLowerCase());
 	}
 
 	public SoftResource getSoftRes(String name) {
-		for (SoftResource sr : softRes) {
-			if (sr.name.compareToIgnoreCase(name) == 0) {
-				return sr;
-			}
+		if (softRes.containsKey(name.toLowerCase())) {
+			return softRes.get(name.toLowerCase());
 		}
 		throw new Error(name + " is not soft resource");
 	}
 
 	public boolean isSoftRes(String name) {
-		for (SoftResource sr : softRes) {
-			if (sr.name.compareToIgnoreCase(name) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return softRes.containsKey(name.toLowerCase());
 	}
 
 	public Scenario getScenario(String name) {
-		for (Scenario sce : scenarios) {
-			if (sce.name.compareToIgnoreCase(name) == 0) {
-				return sce;
-			}
+		if (scenarios.containsKey(name.toLowerCase())) {
+			return scenarios.get(name.toLowerCase());
 		}
 		throw new Error(name + " is not Scenario");
 	}
 
 	public boolean isScenario(String name) {
-		for (Scenario sce : scenarios) {
-			if (sce.name.compareToIgnoreCase(name) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return scenarios.containsKey(name.toLowerCase());
 	}
 
 	public Variable getVariable(String name) {
-		for (Variable var : variables) {
-			if (var.name.compareToIgnoreCase(name) == 0) {
-				return var;
-			}
+		if (variables.containsKey(name.toLowerCase())) {
+			return variables.get(name.toLowerCase());
 		}
 		throw new Error(name + " is not Variable");
 	}
 
 	public boolean isVariable(String name) {
-		for (Variable var : variables) {
-			if (var.name.compareToIgnoreCase(name) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return variables.containsKey(name.toLowerCase());
 	}
 
 	public Lan getLan(String name) {
-		for (Lan lan : lans) {
-			if (lan.name.compareToIgnoreCase(name) == 0) {
-				return lan;
-			}
+		if (lans.containsKey(name.toLowerCase())) {
+			return lans.get(name.toLowerCase());
 		}
 		throw new Error(name + " is not Lan");
 	}
 
 	public boolean isLan(String name) {
-		for (Lan lan : lans) {
-			if (lan.name.compareToIgnoreCase(name) == 0) {
-				return true;
-			}
-		}
-		return false;
+		return lans.containsKey(name.toLowerCase());
 	}
 	
 	//CHECK : This method is not used anywhere
@@ -406,19 +319,19 @@ public class DistributedSystem {
 	}
 
 	public void validate() {
-		for (Task task : tasks) {
+		for (Task task : tasks.values()) {
 			task.validate();
 		}
-		for (SoftServer serv : softServers) {
+		for (SoftServer serv : softServers.values()) {
 			serv.validate();
 		}
-		for (Machine machine : pms) {
+		for (Machine machine : pms.values()) {
 			machine.validate();
 		}
-		for (Lan lan : lans) {
+		for (Lan lan : lans.values()) {
 			lan.validate();
 		}
-		for (Variable var : variables) {
+		for (Variable var : variables.values()) {
 			var.validate();
 		}
 	}
@@ -426,7 +339,7 @@ public class DistributedSystem {
 	// check that sum of all scenario prob is one
 	public void checkParameters() throws IOException {
 		double total_prob = 0;
-		for (Scenario sc : ModelParameters.inputDistSys.scenarios) {
+		for (Scenario sc : ModelParameters.inputDistSys.scenarios.values()) {
 			total_prob += sc.getProbability();
 		}
 		if (total_prob != 1) {
@@ -443,28 +356,16 @@ public class DistributedSystem {
 	// scenario arrival rate is based on scenario probability
 	public void setScenarioArrivalRate() {
 		for (int slot = 0; slot < ModelParameters.intervalSlotCount; slot++) {
-			for (Scenario sc : ModelParameters.inputDistSys.scenarios) {
+			for (Scenario sc : ModelParameters.inputDistSys.scenarios.values()) {
 				sc.setArateToScenario(slot, ModelParameters.getArrivalRate(slot).getValue() * sc.getProbability());
 			}
 		}
 	}
 
-	public ArrayList<PhysicalMachine> getMachineList() {
-		return (pms);
-	}
-	
-	public ArrayList<VirtualMachine> getVMachineList() {
-		return (vms);
-	}
-
-	public ArrayList<SoftServer> getSoftserverList() {
-		return (softServers);
-	}
-
 	/********************************************************************/
 	// Add power-managed device into the list
 	public void addPowerManagedDevices(PhysicalDevice pdevice) {
-		powerManagedDevices.add(pdevice);
+		powerManagedDevices.put(pdevice.name, pdevice);
 	}
 	/********************************************************************/
 }

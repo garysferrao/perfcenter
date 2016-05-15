@@ -46,7 +46,7 @@ public class VirtualMachine extends Machine{
 		if (isDeviceDeployed(vdevname) == false) {
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat);
-			devices.add(vdev);
+			devices.put(vdev.name, vdev);
 		}
 		getDevice(vdevname).count = count;
 	}
@@ -56,7 +56,7 @@ public class VirtualMachine extends Machine{
 			//System.out.println(name + " Device Created in addDeviceBuffer");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat);
-			devices.add(vdev);
+			devices.put(vdev.name, vdev);
 		}
 		getDevice(vdevname).buffer = buffersize;
 		return;
@@ -67,7 +67,7 @@ public class VirtualMachine extends Machine{
 			//System.out.println(name + " Device Created in addDeviceSpeedUp");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat);
-			devices.add(vdev);
+			devices.put(vdev.name, vdev);
 		}
 		getDevice(vdevname).speedUpFactor = pspeed;
 	}
@@ -77,7 +77,7 @@ public class VirtualMachine extends Machine{
 			//System.out.println(name + " Device Created in addDeviceSchedPol");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat);
-			devices.add(vdev);
+			devices.put(vdev.name, vdev);
 		}
 		getDevice(vdevname).schedulingPolicy = pol;
 	}
@@ -87,22 +87,22 @@ public class VirtualMachine extends Machine{
 			//System.out.println(name + " Device Created in addDeviceSpeedUp");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat, basespeed.value);
-			devices.add(vdev);
+			devices.put(vdev.name, vdev);
 		}
 		getDevice(vdevname).basespeed.value = basespeed.value;
 	}
 	
 	public VirtualMachine getCopy(String vmname, int num) throws DeviceNotFoundException {
 		VirtualMachine vmcpy = new VirtualMachine(vmname, num);
-		for (Device d : devices) {
+		for (Device d : devices.values()) {
 			Device dcpy = d.getCopy();
 			vmcpy.addDevice(dcpy);
 		}
-		for (SoftResource sr : softResources) {
+		for (SoftResource sr : softResources.values()) {
 			SoftResource srcpy = sr.getCopy();
 			vmcpy.addSoftRes(srcpy);
 		}
-		for (SoftServer ss : softServers) {
+		for (SoftServer ss : softServers.values()) {
 			SoftServer sscpy = ss.getCopy();
 			vmcpy.addSoftServer(sscpy);
 		}

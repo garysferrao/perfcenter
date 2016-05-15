@@ -99,7 +99,7 @@ public class SimulationParameters {
 		// the value in d will be in between 0 and 1
 		double d = r.nextDouble();
 		double dbl = 0.0;
-		for (Scenario c : distributedSystemSim.scenarios) {
+		for (Scenario c : distributedSystemSim.scenarios.values()) {
 			dbl += c.getProbability();
 			if (dbl >= d) {
 				return (ScenarioSim)c;
@@ -155,7 +155,7 @@ public class SimulationParameters {
 	 */
 	public static int getTotalRequestArrived() {
 		int totalreq = 0;
-		for (Object c : distributedSystemSim.scenarios) {
+		for (Object c : distributedSystemSim.scenarios.values()) {
 
 			totalreq += (((ScenarioSim) c).getNumOfRequestsArrived());
 		}
@@ -165,7 +165,7 @@ public class SimulationParameters {
 
 	public static int getTotalRequestProcessed() {
 		int totalreq = 0;
-		for (Object c : distributedSystemSim.scenarios) {
+		for (Object c : distributedSystemSim.scenarios.values()) {
 			totalreq += (((ScenarioSim) c).getNumOfRequestsProcessed());
 		}
 		return totalreq;

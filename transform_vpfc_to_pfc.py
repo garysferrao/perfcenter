@@ -77,7 +77,7 @@ class SoftServer:
         self.count = 1
         self.buf = 1
         self.schedp = "fcfs"
-        self.tasks = []
+        self.tasks = dict()
         self.machineName = ""
         self.isDummy = False
         self.pm = None
@@ -100,6 +100,7 @@ class MessagePassed:
         self.toTask = _toTask
         self.pktSz = _pktSz
         self.isSync = _isSync
+        self.modified = False
 
     def __str__(self):
         s = "\t" + str(self.fromTask) + " " + str(self.toTask) + " " + str(self.pktSz) + (" sync" if self.isSync else "") + "\n"
@@ -189,10 +190,12 @@ class Lan:
         return s
 
 class Variable:
-    def __init__(self, _name):
+    def __init__(self, _name, _val):
         self.name = _name
+        self.val = _val
     def __str__(self):
         s = self.name
+        s += " " + self.val
         return s
 
 class System:
@@ -287,7 +290,6 @@ class System:
         for k,v in self.pmGrpMap.iteritems():
             pmname = k + "[" + str(v) + "]"
             s += str(self.pmMap[pmname]) + "\n\n"
-            print pmname 
         if not self.transformed:
             for k,v in self.vmGrpMap.iteritems():
                 vmname = k + "[" + str(v) + "]"
@@ -460,7 +462,7 @@ def parseServer(body, _name, taskMap):
                 server.schedp = words[2]
         elif len(words) > 0 and words[0] == "task":
             if words[1] in taskMap:
-                server.tasks.append(taskMap[words[1]].name)
+                server.tasks[taskMap[words[1]].name] = True
                 taskMap[words[1]].server = server.name
             else:
                 sys.stderr.write("Make sure that tasks are declared first before softServers. Problem in line:" + line)
@@ -530,6 +532,14 @@ def parseLan(body):
             lanMap[tokens[0]] = lantemp
     return lanMap
 
+def parseVar(body):
+    varMap = dict() 
+    for line in body:
+        tokens = line.split()
+        if len(tokens) >= 2:
+            vartemp = Variable(tokens[0], tokens[1])
+            varMap[tokens[0]] = vartemp
+    return varMap
         
 def getVserver(vmname, vservers):
     i = random.randint(0, len(vservers[vmname])-1)
@@ -544,22 +554,35 @@ def transform(inputSys):
     outputSys.lanMap = deepcopy(inputSys.lanMap)
 
     outputSys.pmMap = deepcopy(inputSys.pmMap)
+    for pmname, pm in outputSys.pmMap.iteritems():
+        pm.virtSupported = "no"
     outputSys.pmGrpMap = deepcopy(inputSys.pmGrpMap)
     outputSys.serverMap = deepcopy(inputSys.serverMap)
-    #Set list of tasks for each server to empty list
+    #Set list of tasks for each server to empty dict 
     for sname, server in outputSys.serverMap.iteritems():
-        outputSys.serverMap[sname].tasks = []
+        mname = inputSys.deployment[sname] 
+        if mname in inputSys.vmMap:
+            outputSys.serverMap[sname].tasks = dict()
 
     outputSys.transformed = True
+
+    #For each physicalMachine with virtualization support, add hypervisor
     for pmname, pm in inputSys.pmMap.iteritems():
-        if pm.virtSupported:
+        if pm.virtSupported != "no":
             hypervisor = SoftServer()
             hypervisor.name = removeBrackets(pm.name) + "_hypervisor"
             hypervisor.count = 10           #THINK
             hypervisor.buf = 100            #THINK
             hypervisor.schedP = "fcfs"      #CHECK
-            outputSys.serverMap[hypervisor.name] = hypervisor
+            outputSys.serverMap[hypervisor.name] = deepcopy(hypervisor)
             outputSys.deployment[hypervisor.name] = pm.name
+        ##For each hypervisor, add network call task 
+            t = Task("network_call_"  + hypervisor.name)
+            st = SubTaskServiceTime(inputSys.getCpuDevCat(pmname), 0.001, 2.8)     #ADD    #CHANGE
+            t.subtasks.append(st)
+            t.server = hypervisor.name 
+            outputSys.taskMap[t.name] = deepcopy(t)
+            outputSys.serverMap[hypervisor.name].tasks[t.name] = True
 
     ##For each cpu type device in VM, create a softserver
     vservers = dict()     #For each cpu type device in it, create server. Key will be vmname and value will be list of soft servers for it
@@ -583,9 +606,11 @@ def transform(inputSys):
     for sname, server in inputSys.serverMap.iteritems():
         if not inputSys.isDeployedOnVm(sname):
             outputSys.deployment[sname] = deepcopy(inputSys.deployment[sname])
+            for taskname, flag in inputSys.serverMap[sname].tasks.iteritems():
+                outputSys.taskMap[taskname] = deepcopy(inputSys.taskMap[taskname])
             continue
         outputSys.deployment[sname] = inputSys.vmMap[inputSys.deployment[sname]].deployedOn
-        for taskname in server.tasks:
+        for taskname, flag in server.tasks.iteritems():
             tstart = deepcopy(inputSys.taskMap[taskname])
             if len(tstart.subtasks) == 0:
                 print sname + "'s task " + taskname + " has no subtasks"        #errexit
@@ -599,7 +624,7 @@ def transform(inputSys):
             taskgroup[taskname] = []
             taskgroup[taskname].append(tstart.name)
             outputSys.taskMap[tstart.name] = deepcopy(tstart)
-            outputSys.serverMap[tstart.server].tasks.append(tstart.name)         #To complete sync call, just placeholder task
+            outputSys.serverMap[tstart.server].tasks[tstart.name] = True        #To complete sync call, just placeholder task
 
             #Check each subtask, according to device type of its device category group them accordingly and create corresponding tasks
             for i in range(l):
@@ -623,7 +648,7 @@ def transform(inputSys):
                 ttemp.server = ssname
                 taskgroup[taskname].append(ttemp.name)
                 outputSys.taskMap[ttemp.name] = ttemp
-                outputSys.serverMap[ttemp.server].tasks.append(ttemp.name)
+                outputSys.serverMap[ttemp.server].tasks[ttemp.name] = True
 
             for i in range(len(noncputgroups)):
                 ssname = removeBrackets(inputSys.vmMap[inputSys.deployment[sname]].deployedOn) + "_hypervisor"
@@ -633,32 +658,38 @@ def transform(inputSys):
                 ttemp.server = ssname
                 taskgroup[taskname].append(ttemp.name)
                 outputSys.taskMap[ttemp.name] = ttemp
-                outputSys.serverMap[ttemp.server].tasks.append(ttemp.name)         
+                outputSys.serverMap[ttemp.server].tasks[ttemp.name] = True
             tend = deepcopy(tstart)
             tend.name = (tend.name)[:-6] + "_end"
             taskgroup[taskname].append(tend.name)
             outputSys.taskMap[tend.name] = deepcopy(tend)
-            outputSys.serverMap[tend.server].tasks.append(tend.name)         #To complete sync call, just placeholder task
+            outputSys.serverMap[tend.server].tasks[tend.name] = True         #To complete sync call, just placeholder task
 
     #We want actual server deployed on vmachine to make have tasks with zero service time and make transfer their actual service demand to vcpu_server(s) and hypervisor. Now the actual task will make a sync call to other other servers. 
-
     ##Trasnform scenarios
-    for scename, scenario in copy(inputSys.scenarioMap).iteritems():
+    for scename, scenario in deepcopy(inputSys.scenarioMap).iteritems():
         newsce = Scenario()
         newsce.name = scenario.name
         newsce.prob = scenario.prob
         newsce.msgSeq = []
-        #replace original task with its new equivalent list of new tasks
+        
+        ''' subpart1 starts
+            1. Replace each task in original message sequence with equivalent sequence of tasks in new set-up. 
+            2. Based on original message's synchronous property, handling will slightly vary
 
-        #Only fromTask will be transformed for first msg, for rest of messages, it will be already get transformed in previous msg's toTask
-        #So first message will be transformed differently, then rest of the messages
+            3. Only fromTask will be transformed for first msg, for rest of messages, it will be already get transformed in previous msg's toTask
+               So first message will be transformed differently, then rest of the messages
+        '''
         l = len(scenario.msgSeq)
         if l != 0:
             msg = scenario.msgSeq[0]
             fromTaskList = taskgroup.get(msg.fromTask)
             toTaskList = taskgroup.get(msg.toTask)
+            if fromTaskList != None and msg.isSync and fromTaskList[-1][-4:] == "_end":
+                fromTaskList = fromTaskList[:-1]
             if fromTaskList != None and toTaskList != None:
                 newmsg = MessagePassed("", "", 0, True)
+                newmsg.modified = True
                 for i in range(0, len(fromTaskList)):
                     newmsg.fromTask = fromTaskList[i]
                     if i == len(fromTaskList)-1:
@@ -668,6 +699,7 @@ def transform(inputSys):
                         newmsg.pktSz = msg.pktSz
                         newsce.msgSeq.append(copy(newmsg))
                         newmsg = MessagePassed("", "", 0, False)
+                        newmsg.modified = True
                 first = True
                 for i in range(0, len(toTaskList)):
                     newmsg.toTask = toTaskList[i]
@@ -675,12 +707,14 @@ def transform(inputSys):
                     newsce.msgSeq.append(copy(newmsg))
                     if i != len(toTaskList)-1:
                         newmsg = MessagePassed("","", 0, first)
+                        newmsg.modified = True
                         newmsg.fromTask = toTaskList[i]
                     first = False
             elif fromTaskList != None:
                 first = True
                 for i in range(0, len(fromTaskList)):
                     newmsg = MessagePassed("", "", 0, first) #For only first message, it will be synchronous. For rest, it will be async
+                    newmsg.modified = True
                     newmsg.fromTask = fromTaskList[i]
                     if i == len(fromTaskList)-1:
                         newmsg.toTask = msg.toTask
@@ -691,6 +725,7 @@ def transform(inputSys):
                     first = False
             elif toTaskList != None:
                 newmsg = MessagePassed("", "", 0, True)
+                newmsg.modified = True
                 newmsg.fromTask = msg.fromTask 
                 for i in range(0, len(toTaskList)):
                     newmsg.toTask = toTaskList[i]
@@ -702,12 +737,19 @@ def transform(inputSys):
             else:
                newsce.msgSeq.append(msg)
 
+        ''' Continuation, of subpart1 
+            Now replacing will be done for message 2 to end of message sequence
+        '''
         for i in range(1,len(scenario.msgSeq)):
             msg = scenario.msgSeq[i]
             fromTaskList = taskgroup.get(msg.fromTask)
             toTaskList = taskgroup.get(msg.toTask)
+            #If actual message is synchronous, then remove extra syncrounous reply call added to fromTaskList
+            if fromTaskList != None and msg.isSync and fromTaskList[-1][-4:] == "_end":
+                fromTaskList = fromTaskList[:-1]
             if fromTaskList != None and toTaskList != None:
                 newmsg = MessagePassed("", "", 0, False)
+                newmsg.modified = True
                 newmsg.fromTask = fromTaskList[len(fromTaskList)-1]
                 first = True
                 for i in range(0, len(toTaskList)):
@@ -716,16 +758,19 @@ def transform(inputSys):
                     newsce.msgSeq.append(copy(newmsg))
                     if i != len(toTaskList)-1:
                         newmsg = MessagePassed("","", 0, first)
+                        newmsg.modified = True
                         newmsg.fromTask = toTaskList[i]
                     first = False
             elif fromTaskList != None:
                 newmsg = MessagePassed("", "", 0, True)
+                newmsg.modified = True
                 newmsg.fromTask = fromTaskList[len(fromTaskList)-1]
                 newmsg.toTask = msg.toTask
                 newmsg.pktSz = msg.pktSz
                 newsce.msgSeq.append(copy(newmsg))
             elif toTaskList != None:
                 newmsg = MessagePassed("", "", 0, False)
+                newmsg.modified = True
                 newmsg.fromTask = msg.fromTask 
                 first = True
                 for i in range(0, len(toTaskList)):
@@ -734,14 +779,17 @@ def transform(inputSys):
                     newsce.msgSeq.append(copy(newmsg))
                     if i != len(toTaskList)-1:
                         newmsg = MessagePassed("", "", 0, first)
+                        newmsg.modified = True
                         newmsg.fromTask = toTaskList[i]
                     first = False
             else:
                 newsce.msgSeq.append(msg)
+        ''' subpart1 ends
+        '''
 
-        #Now add first entry and last exit network tasks
-        print newsce.msgSeq
-        #Handling case where dummy task user is used
+        ''' subpart2 starts
+            Now add first entry and last exit network tasks while handling case where dummy task user is used
+        '''
         if newsce.msgSeq[0].fromTask == "user":
             firstTask = outputSys.taskMap[newsce.msgSeq[0].toTask]
             origFirstTask = inputSys.taskMap[inputSys.scenarioMap[newsce.name].msgSeq[0].toTask]
@@ -749,8 +797,6 @@ def transform(inputSys):
             firstTask = outputSys.taskMap[newsce.msgSeq[0].fromTask]
             origFirstTask = inputSys.taskMap[inputSys.scenarioMap[newsce.name].msgSeq[0].fromTask]
 
-        lastTask = outputSys.taskMap[newsce.msgSeq[len(newsce.msgSeq)-1].toTask]
-        origLastTask = inputSys.taskMap[inputSys.scenarioMap[newsce.name].msgSeq[len(inputSys.scenarioMap[newsce.name].msgSeq)-1].toTask]  #That's pretty dirty, I know :-D
         if inputSys.isDeployedOnVm(origFirstTask.server):
             newFirstTask = Task("receive_req")
             newFirstTask.server = removeBrackets(inputSys.vmMap[inputSys.deployment[origFirstTask.server]].deployedOn) + "_hypervisor"
@@ -763,6 +809,7 @@ def transform(inputSys):
                 newsce.msgSeq[0].fromTask = newFirstTask.name 
             else:
                 newFirstMsg = MessagePassed("", "", 0, False)
+                newFirstMsg.modified = True
                 newFirstMsg.fromTask = newFirstTask.name
                 newFirstMsg.toTask = newsce.msgSeq[0].fromTask
                 newFirstMsg.pktSz = newsce.msgSeq[0].pktSz
@@ -770,41 +817,44 @@ def transform(inputSys):
                 newMsgSeq.append(newFirstMsg)
                 newMsgSeq.extend(newsce.msgSeq)
                 newsce.msgSeq = newMsgSeq
-            outputSys.serverMap[newFirstTask.server].tasks.append(newFirstTask.name)
+            outputSys.serverMap[newFirstTask.server].tasks[newFirstTask.name] = True
 
-
-        if inputSys.isDeployedOnVm(origLastTask.server):
-            newLastTask = Task("send_req")
-            newLastTask.server = removeBrackets(inputSys.vmMap[inputSys.deployment[origLastTask.server]].deployedOn) + "_hypervisor"
-            _devcat = outputSys.getCpuDevCat(outputSys.deployment[newLastTask.server])
-            _servt = 0.02                                                     #FIXED #CHANGE
-            st = SubTaskServiceTime(_devcat, _servt, 2.8)
-            newLastTask.subtasks.append(st)
-            outputSys.taskMap[newLastTask.name] = newLastTask
-            newLastMsg = MessagePassed("", "", 0, False)
-            newLastMsg.fromTask = newsce.msgSeq[len(newsce.msgSeq)-1].toTask
-            newLastMsg.toTask = newLastTask.name
-            newLastMsg.pktSz = newsce.msgSeq[len(newsce.msgSeq)-1].pktSz
-            newsce.msgSeq.append(newLastMsg)
-            outputSys.serverMap[newLastTask.server].tasks.append(newLastTask.name)
+        if newsce.msgSeq[-1].toTask != "user":
+            lastTask = outputSys.taskMap[newsce.msgSeq[-1].toTask]
+            origLastTask = inputSys.taskMap[inputSys.scenarioMap[newsce.name].msgSeq[-1].toTask]  
+            if inputSys.isDeployedOnVm(origLastTask.server):
+                newLastTask = Task("send_req")
+                newLastTask.server = removeBrackets(inputSys.vmMap[inputSys.deployment[origLastTask.server]].deployedOn) + "_hypervisor"
+                _devcat = outputSys.getCpuDevCat(outputSys.deployment[newLastTask.server])
+                _servt = 0.02                                                     #FIXED #CHANGE
+                st = SubTaskServiceTime(_devcat, _servt, 2.8)
+                newLastTask.subtasks.append(st)
+                outputSys.taskMap[newLastTask.name] = newLastTask
+                newLastMsg = MessagePassed("", "", 0, False)
+                newLastMsg.modified = True
+                newLastMsg.fromTask = newsce.msgSeq[len(newsce.msgSeq)-1].toTask
+                newLastMsg.toTask = newLastTask.name
+                newLastMsg.pktSz = newsce.msgSeq[len(newsce.msgSeq)-1].pktSz
+                newsce.msgSeq.append(newLastMsg)
+                outputSys.serverMap[newLastTask.server].tasks[newLastTask.name] = True
         outputSys.scenarioMap[newsce.name] = newsce
+        '''subpart2 ends
+        '''
 
-        ##For each hypervisor, add network call task 
-        for pmname, pm in outputSys.pmMap.iteritems():
-            ssname = removeBrackets(pmname) + "_hypervisor"
-            t = Task("network_call_"  + ssname)
-            st = SubTaskServiceTime(outputSys.getCpuDevCat(pmname), 0.001, 2.8)     #ADD    #CHANGE
-            t.subtasks.append(st)
-            t.server = ssname
-            outputSys.taskMap[t.name] = t
-            outputSys.serverMap[ssname].tasks.append(t.name)
 
-        #For each msg between non-colocated pair of vms, add hypervisor network call in between
-        for scename, scenario in outputSys.scenarioMap.iteritems():
+        ''' subpart3 starts
+            For each msg between non-colocated pair of vms in newly formed scenario, add hypervisor network call in between
+        '''
+        for scename, sce in outputSys.scenarioMap.iteritems():
             newMsgSeq = []
-            print scenario
-            for msg in scenario.msgSeq:
+            for msg in sce.msgSeq:
+                if not msg.modified:
+                    newMsgSeq.append(msg)
+                    continue 
                 fromPm = outputSys.deployment[outputSys.taskMap[msg.fromTask].server]
+                if msg.toTask == "user":
+                    newMsgSeq.append(msg)
+                    continue
                 toPm = outputSys.deployment[outputSys.taskMap[msg.toTask].server]
                 if fromPm != toPm:
                     msg1 = MessagePassed(msg.fromTask, "", msg.pktSz, False)
@@ -818,9 +868,10 @@ def transform(inputSys):
                     newMsgSeq.append(copy(msg3))
                 else:
                     newMsgSeq.append(msg)
-            scenario.msgSeq = newMsgSeq
-        print outputSys.scenarioMap
-        return outputSys
+            sce.msgSeq = newMsgSeq
+        '''subpart3 ends
+        '''
+    return outputSys
       
 
 inConfig = Config()
@@ -832,7 +883,7 @@ if len(sys.argv) <= 1:
     sys.exit(1)
 inputfilename = sys.argv[1]
 if len(sys.argv) == 2:
-    outputfilename = "transformed_" + inputfilename
+    outputfilename = "virt_" + inputfilename
 else:
     outputfilename = sys.argv[2]
 fread = open(inputfilename)
@@ -904,7 +955,7 @@ while i < len(filelines):
             if system.deployment[server.name] in system.vmMap:
                 server.pm = system.pmMap[system.vmMap[system.deployment[server.name]].deployedOn]
             elif system.deployment[server.name] in system.pmMap:
-                server.pm = system.pmMap[server.name]
+                server.pm = system.pmMap[system.deployment[server.name]]
         else: 
             inConfig.statStr += filelines[i]
     i += 1

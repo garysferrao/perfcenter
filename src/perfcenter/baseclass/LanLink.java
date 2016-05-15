@@ -25,7 +25,7 @@ import perfcenter.baseclass.enums.SchedulingPolicy;
  * @author akhila
  */
 public class LanLink {
-	protected String name;
+	public String name;
 	public String srclan;
 	public String destlan;
 

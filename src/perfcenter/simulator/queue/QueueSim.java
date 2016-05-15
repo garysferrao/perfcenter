@@ -21,6 +21,7 @@ import static perfcenter.simulator.DistributedSystemSim.computeConfIvalForMetric
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Stack;
 
 import perfcenter.baseclass.Device;
@@ -168,11 +169,11 @@ public class QueueSim extends Queue {
 		double ramSize = 0.0;
 
 		// List of all software servers on the current host.
-		ArrayList<SoftServer> softServers = currentHost.getSoftServersList();
+		Collection<SoftServer> softServers = currentHost.getSoftServersList();
 
 		// find out the device id for device RAM from the device list of current host.
 		Device ram = null;
-		ArrayList<Device> devices = currentHost.getDevicesList();
+		Collection<Device> devices = currentHost.getDevicesList();
 		for (Device device : devices) {
 			if (device.name.equals("ram")) {
 				ram = device;

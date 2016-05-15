@@ -84,7 +84,7 @@ public class PerfSim {
 	 */
 	private void createObjectReferences() {
 		DistributedSystemSim distributedSystemSim = SimulationParameters.distributedSystemSim;
-		for(SoftServer softServer : distributedSystemSim.softServers) {
+		for(SoftServer softServer : distributedSystemSim.softServers.values()) {
 			SoftServerSim softServerSim = (SoftServerSim) softServer;
 			for(String hostName : softServerSim.machines) {
 				softServerSim.hostObjects.add(distributedSystemSim.getPM(hostName));
@@ -148,7 +148,6 @@ public class PerfSim {
 		while (true) {
 			
 			Event currentEventToBeHandled = SimulationParameters.eventQueue.poll();
-
 			SimulationParameters.currEventBeingHandled = currentEventToBeHandled;
 			if (currentEventToBeHandled == null) {
 				assert false;
@@ -261,7 +260,7 @@ public class PerfSim {
 		ExponentialDistribution exp = new ExponentialDistribution();
 
 		// we will have to generate requests for each scenario
-		for (Scenario sc : SimulationParameters.distributedSystemSim.scenarios) {
+		for (Scenario sc : SimulationParameters.distributedSystemSim.scenarios.values()) {
 			// now we generate request
 			if (sc.getArateToScenario() > 0) {
 				double interArrivalTime = exp.nextExp(1 / sc.getArateToScenario());
@@ -271,9 +270,9 @@ public class PerfSim {
 		}
 
 		// If device type is powermanaged then create events and add then to global eventList: rakesh
-		for (Machine h : SimulationParameters.distributedSystemSim.pms) {
+		for (Machine h : SimulationParameters.distributedSystemSim.pms.values()) {
 			PhysicalMachineSim hs = (PhysicalMachineSim) h;
-			for (Device d : hs.devices) {
+			for (Device d : hs.devices.values()) {
 				DeviceSim ds = (DeviceSim) d;
 				if (ds.isDevicePowerManaged) {
 					generateDeviceAssociatedEvents(hs, ds);
@@ -313,9 +312,9 @@ public class PerfSim {
 		}
 
 		// If device type id powermanaged then create events and add then to global eventList: rakesh
-		for (Machine h : SimulationParameters.distributedSystemSim.pms) {
+		for (Machine h : SimulationParameters.distributedSystemSim.pms.values()) {
 			PhysicalMachineSim hs = (PhysicalMachineSim) h;
-			for (Device d : hs.devices) {
+			for (Device d : hs.devices.values()) {
 				DeviceSim ds = (DeviceSim) d;
 				if (ds.isDevicePowerManaged) {
 					generateDeviceAssociatedEvents(hs, ds);

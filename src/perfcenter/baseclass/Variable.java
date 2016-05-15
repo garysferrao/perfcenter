@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
  */
 public class Variable {
 
-	String name;
+	public String name;
 	public double value = 0;
 	boolean isUsed;
 	Logger logger = Logger.getLogger("Variable");

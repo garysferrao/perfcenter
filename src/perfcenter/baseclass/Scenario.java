@@ -29,7 +29,7 @@ import perfcenter.simulator.SimulationParameters;
  */
 public class Scenario {
 
-	protected String name;
+	public String name;
 
 	public Variable scenarioProb;
 

@@ -70,7 +70,7 @@ public class DistributedSystemSim extends DistributedSystem {
 	public DistributedSystemSim(DistributedSystem ds) {
 		softRes = ds.softRes;
 		
-		devCategories = ds.devCategories;
+		devcats = ds.devcats;
 		pdevices = ds.pdevices;
 		
 		variables = ds.variables;
@@ -81,38 +81,38 @@ public class DistributedSystemSim extends DistributedSystem {
 		// links = ds.links;
 
 		ArrayList<SoftServerSim> softServersTemp = new ArrayList<SoftServerSim>();
-		for(SoftServer softServer : softServers) { //to take care of the "user" server created by parent constructor of DistributedSystem class.
+		for(SoftServer softServer : softServers.values()) { //to take care of the "user" server created by parent constructor of DistributedSystem class.
 			SoftServerSim softServerSim = new SoftServerSim(softServer);
 			softServersTemp.add(softServerSim);
 		}
-		for(SoftServer softServer : ds.softServers) {
+		for(SoftServer softServer : ds.softServers.values()) {
 			SoftServerSim softServerSim = new SoftServerSim(softServer);
 			softServersTemp.add(softServerSim);
 		}
 		softServers.clear();
 		for(SoftServerSim softServerSim : softServersTemp) {
-			softServers.add(softServerSim);
+			softServers.put(softServerSim.getName(), softServerSim);
 			softServerMap.put(softServerSim.getName(), softServerSim);
 		}
 		
-		for (LanLink lk : ds.links) {
-			links.add(new LanLinkSim(lk));
+		for (LanLink lk : ds.links.values()) {
+			links.put(lk.name, new LanLinkSim(lk));
 		}
 
-		for (PhysicalMachine pm : ds.pms) {
+		for (PhysicalMachine pm : ds.pms.values()) {
 			PhysicalMachineSim pmsim = new PhysicalMachineSim(pm, softServerMap);
-			pms.add(pmsim);
+			pms.put(pmsim.getName(), pmsim);
 			machineMap.put(pmsim.getName(), pmsim);
 		}
 		// this need not be done if its use in perfanalytic is fixed
-		for (SoftServer s : softServers) {
+		for (SoftServer s : softServers.values()) {
 			for (Task t : s.simpleTasks) {
 				t.initialize();
 			}
 		}
-		for (Scenario sce : ds.scenarios) {
+		for (Scenario sce : ds.scenarios.values()) {
 			ScenarioSim s = new ScenarioSim(sce);
-			scenarios.add(s);
+			scenarios.put(s.getName(), s);
 			scenarioMap.put(s.getName(), s);
 		}
 
@@ -120,22 +120,22 @@ public class DistributedSystemSim extends DistributedSystem {
 
 	// clear all the variables but keep the confidence interval calculations
 	public void clearValuesButKeepConfIvals() {
-		for (Machine h : pms) {
-			for (SoftServer softServer : h.softServers) {
+		for (Machine m : pms.values()) {
+			for (SoftServer softServer : m.softServers.values()) {
 				((SoftServerSim) softServer).clearValuesButKeepConfIvals();
 //				softServerSim.resourceQueue = QueueSim.loadSchedulingPolicyClass(softServerSim.schedp.toString(), buffSizeTemp, (int) softServerSim.thrdCount.getValue(), softServerSim);
 			}
-			for (Object dev : h.devices) {
+			for (Object dev : m.devices.values()) {
 				((DeviceSim) dev).clearValuesButKeepConfIvals();
 //				deviceSim.resourceQueue = QueueSim.loadSchedulingPolicyClass(deviceSim.schedulingPolicy.toString(), buffSizeTemp, ((QueueSim) deviceSim.resourceQueue).numberOfInstances, /* "hwRes", */deviceSim);
 			}
 		}
-		for (Object lk : links) {
+		for (Object lk : links.values()) {
 			LanLinkSim lnk = (LanLinkSim) lk;
 			((QueueSim) lnk.linkQforward).clearValuesButKeepConfIvals();
 			((QueueSim) lnk.linkQreverse).clearValuesButKeepConfIvals();
 		}
-		for (Object sce : scenarios) {
+		for (Object sce : scenarios.values()) {
 			((ScenarioSim) sce).clearValuesButKeepConfIvals();
 		}
 		
@@ -160,16 +160,16 @@ public class DistributedSystemSim extends DistributedSystem {
 	// calculates confidence interval for each queue and
 	// addes the results to the queue variables
 	public void computeConfIvalsAtEndOfRepl() {
-		for (Machine host : pms) {
-			for (SoftServer softServer : host.softServers) {
+		for (Machine m : pms.values()) {
+			for (SoftServer softServer : m.softServers.values()) {
 				((QueueSim) ((SoftServerSim) softServer).resourceQueue).computeConfIvalsAtEndOfRepl();
 				// so.setThroughput(((QueueSim) so.softQ).giveMeThroughtput());
 			}
-			for (Device device : host.devices) {
+			for (Device device : m.devices.values()) {
 				// calculate RAM utilization for current host if device is RAM.
 				if (device.name.equals("ram")) {
 					//XXX argument passing redundant in next line
-					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsForRAM(ModelParameters.inputDistSys.getPM(host.name));
+					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsForRAM(ModelParameters.inputDistSys.getPM(m.name));
 				} else {
 					((DeviceSim) device).avgFreqSim.computeConfIvalsAtEndOfRepl();
 					DistributedSystemSim.computeConfIvalForMetric(device.averageFrequency, ((DeviceSim) device).avgFreqSim);
@@ -178,12 +178,12 @@ public class DistributedSystemSim extends DistributedSystem {
 				}
 			}
 		}
-		for (LanLink lanLink : links) {
+		for (LanLink lanLink : links.values()) {
 			((QueueSim) ((LanLinkSim) lanLink).linkQforward).computeConfIvalsAtEndOfRepl();
 			((QueueSim) ((LanLinkSim) lanLink).linkQreverse).computeConfIvalsAtEndOfRepl();
 		}
 		
-		for(Scenario scenario : scenarios) {
+		for(Scenario scenario : scenarios.values()) {
 			((ScenarioSim) scenario).computeConfIvalsAtEndOfRepl();
 		}
 		
@@ -217,7 +217,7 @@ public class DistributedSystemSim extends DistributedSystem {
 			totResponseTime = overallGoodput = overallBadput = overallThroughput = 0;
 			overallBuffTimeout = overallDroprate = overallArrivalRate = 0;
 
-			for (Object scenario : SimulationParameters.distributedSystemSim.scenarios) {
+			for (Object scenario : SimulationParameters.distributedSystemSim.scenarios.values()) {
 				ScenarioSim scenarioSim = (ScenarioSim) scenario;
 
 				totResponseTime += scenarioSim.avgRespTimeSim.getTotalValue(slot);
@@ -253,12 +253,12 @@ public class DistributedSystemSim extends DistributedSystem {
 	 * nothing if the device is RAM. Procedure modified by nikhil, for the device RAM.
 	 */
 	public void recordCISampleAtTheEndOfSimulation() {
-		for (Machine host : pms) {
-			for (SoftServer softServer : host.softServers) {
+		for (Machine m : pms.values()) {
+			for (SoftServer softServer : m.softServers.values()) {
 				((SoftServerSim) softServer).recordCISampleAtTheEndOfSimulation();
 			}
 
-			for (Device device : host.devices) {
+			for (Device device : m.devices.values()) {
 				DeviceSim deviceSim = (DeviceSim) device;
 				if (!device.name.equals("ram")) {
 					deviceSim.recordCISampleAtTheEndOfSimulation();
@@ -266,11 +266,11 @@ public class DistributedSystemSim extends DistributedSystem {
 			}
 		}
 
-		for (LanLink lanLink : links) {
+		for (LanLink lanLink : links.values()) {
 			((LanLinkSim) lanLink).recordCISampleAtTheEndOfSimulation();
 		}
 		
-		for(Scenario scenario : scenarios) {
+		for(Scenario scenario : scenarios.values()) {
 			((ScenarioSim) scenario).recordCISampleAtTheEndOfSimulation();
 		}
 		

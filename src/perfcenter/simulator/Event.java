@@ -40,6 +40,7 @@ public class Event implements Comparable<Event> {
 
 	/** the time at which the event is supposed to happen. */
 	double timestamp;
+	boolean debug = false;
 	/** type of the event */
 	EventType type;
 	/** Request object associated with this event. This can be null. */
@@ -96,7 +97,7 @@ public class Event implements Comparable<Event> {
 		// update current time
 		SimulationParameters.currTime = timestamp;
 		SimulationParameters.totalReqArrived++;
-
+		if(debug) System.out.println(" Scenario Arrival ts:"+SimulationParameters.currTime);
 		// get the request object corresponding to this arrival event from request list
 		logger.debug("request: " + reqObj.scenario);
 
@@ -162,6 +163,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void hardwareTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "HT Starts ts:" + SimulationParameters.currTime);
 		reqObj.machineObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
@@ -170,6 +172,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void hardwareTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "HT Ends ts:" + SimulationParameters.currTime);
 		reqObj.machineObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
 	}
 
@@ -180,6 +183,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void softwareTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + ":ST Starts ts:" + SimulationParameters.currTime);
 
 		// get the request object
 		logger.debug("request: ");
@@ -202,6 +206,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void softwareTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "ST Ends ts:" + SimulationParameters.currTime);
 		reqObj.machineObject.getServer(reqObj.softServName).processTaskEndEvent(reqObj, reqObj.threadNum, SimulationParameters.currTime);
 	}
 
@@ -213,12 +218,13 @@ public class Event implements Comparable<Event> {
 	 */
 	public void numberOfUserChanged() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + "Number of Users Changed:" + SimulationParameters.currTime);
 		SimulationParameters.recordIntervalSlotRunTime();
 
-		for (Machine host : SimulationParameters.distributedSystemSim.pms) {
+		for (Machine host : SimulationParameters.distributedSystemSim.pms.values()) {
 
 			// Collect all the device metrics value within a interval
-			for (Object device : host.devices) {
+			for (Object device : host.devices.values()) {
 				DeviceSim deviceSim = (DeviceSim) device;
 				// If the device is busy at the time of collection then find then appropriately update the value of totalBusyTime
 				for (QServerInstance qServerInstance : ((QueueSim) deviceSim.resourceQueue).qServerInstances) {
@@ -231,7 +237,7 @@ public class Event implements Comparable<Event> {
 			}
 
 			// Collect all the software metrics value within a interval
-			for (Object softServer : host.softServers) {
+			for (Object softServer : host.softServers.values()) {
 				SoftServerSim softServerSim = (SoftServerSim) softServer;
 				for (QServerInstance qsi : ((QueueSim) softServerSim.resourceQueue).qServerInstances) {
 					if (qsi.isBusyStatus()) {
@@ -324,11 +330,12 @@ public class Event implements Comparable<Event> {
 	 */
 	public void arrivalRateChanged() {
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + " Arrival Rate Changed:" + SimulationParameters.currTime);
 		SimulationParameters.recordIntervalSlotRunTime();
 
 		// Collect all the device metrics value within a interval
-		for (Machine host : SimulationParameters.distributedSystemSim.pms) {
-			for (Object device : host.devices) {
+		for (Machine host : SimulationParameters.distributedSystemSim.pms.values()) {
+			for (Object device : host.devices.values()) {
 				DeviceSim deviceSim = (DeviceSim) device;
 
 				//check if the instance is busy then update the total busy time
@@ -341,7 +348,7 @@ public class Event implements Comparable<Event> {
 					}
 				}
 			}
-			for (Object softServer : host.softServers) {
+			for (Object softServer : host.softServers.values()) {
 				SoftServerSim softServerSim = (SoftServerSim) softServer;
 				for (QServerInstance qsi : ((QueueSim) softServerSim.resourceQueue).qServerInstances) {
 					if (qsi.isBusyStatus()) {
@@ -362,12 +369,14 @@ public class Event implements Comparable<Event> {
 
 	public void networkTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "Network Task Starts:" + SimulationParameters.currTime);
 		LanLinkSim ln = (LanLinkSim) SimulationParameters.distributedSystemSim.getLink(reqObj.linkName);
 		ln.processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
 	public void networkTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" +  reqObj.currentTaskNode.name + "Network Task Ends:" + SimulationParameters.currTime);
 		LanLinkSim ln = (LanLinkSim) SimulationParameters.distributedSystemSim.getLink(reqObj.linkName);
 		ln.processTaskEndEvent(reqObj, reqObj.nwInstance, SimulationParameters.currTime);
 	}
@@ -382,6 +391,7 @@ public class Event implements Comparable<Event> {
 	public void requestCompleted() throws Exception {
 		// get the request object
 		SimulationParameters.currTime = timestamp;
+		if(debug) System.out.println("Request Completed:" + SimulationParameters.currTime);
 		// Update the scenario Measures
 		reqObj.scenario.updateMeasuresAtTheEndOfRequestCompletion(reqObj);
 

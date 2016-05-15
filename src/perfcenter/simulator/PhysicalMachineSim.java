@@ -64,28 +64,28 @@ public class PhysicalMachineSim extends PhysicalMachine {
 		name = m.name;
 		lan = m.lan;
 
-		for (SoftServer s : m.softServers) {
+		for (SoftServer s : m.softServers.values()) {
 			SoftServerSim softServerSim2 = softServerMap.get(s.name);
-			softServers.add(softServerSim2);
+			softServers.put(softServerSim2.getName(), softServerSim2);
 			this.softServerMap.put(s.getName(), softServerSim2);
 			
 			softServerCreditMap.put(s.getName(), cap);
 			softServerStatusMap.put(s.getName(), cap);
 		}
 
-		for (Device dev : m.devices) {
+		for (Device dev : m.devices.values()) {
 			//System.out.println("In MachineSim constructor:Device Name:" + dev.name + " basespeed:" + dev.basespeed);
 			DeviceSim devs = new DeviceSim(dev);
-			devices.add(devs);
+			devices.put(devs.name, devs);
 			deviceMap.put(devs.getDeviceName(), devs);
 			
 			deviceCreditMap.put(dev.getDeviceName(), cap);
 			deviceStatusMap.put(dev.getDeviceName(), cap);
 		}
 
-		for (SoftResource sr : m.softResources) {
+		for (SoftResource sr : m.softResources.values()) {
 			SoftResSim srcpy = sr.getCopySim();
-			softResources.add(srcpy);
+			softResources.put(srcpy.name, srcpy);
 			virtualResourceMap.put(srcpy.name, srcpy);
 			
 			virtResCreditMap.put(sr.name, cap);
