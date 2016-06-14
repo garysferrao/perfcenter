@@ -17,7 +17,7 @@ public class Metric {
 	/** mean value of the metric, array size equal to cyclic workload's cycle length */
 	private double[] value;
 	/** confidence interval levels of metric, array size equal to cyclic workload's cycle length */
-	private double[] confidenceInterval;
+	public double[] confidenceInterval;
 	/** confidence probability of the computed values, e.g. 95% etc */
 	private double confidenceProbability;
 

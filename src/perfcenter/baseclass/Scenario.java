@@ -19,6 +19,12 @@ package perfcenter.baseclass;
 
 import perfcenter.simulator.SimulationParameters;
 
+import java.util.ArrayList;
+
+import java.util.HashMap;
+
+import org.apache.log4j.Logger;
+
 /**
  * This class holds a Scenario, as defined in the input file.
  * 
@@ -49,11 +55,34 @@ public class Scenario {
 
 	/** Arrival rate during simulation is different than what is specified */
 	public Metric arateToScenarioDuringSimulation = new Metric();
+	
+	/* This is used to warn user when proper synchronous request-response pairs are not used */ 
+	private Logger logger = Logger.getLogger("Scenario");
+	
+	public boolean isValidated = false;
+	/*Following variable will be filled by validate() method. 
+	 *It stores index of tasknodes which are synchronous request-response. 
+	 *Key is request and element of value is response from a different branch */
+	HashMap<Integer, ArrayList<Integer> > syncpairs = new HashMap<Integer, ArrayList<Integer> >();
 
 	public Scenario() {}
 
 	public Scenario(String scename) {
 		name = scename;
+	}
+	
+	public void printFullInfo(){
+       	System.out.println("Scenario Name:" + name);
+       	System.out.println("Scenario Prob:" + getProbability());
+        System.out.println("Tree");
+        rootNode.printFullInfo();
+	}
+	
+	public void print(){
+       	System.out.println("Scenario Name:" + name);
+       	System.out.println("Scenario Prob:" + getProbability());
+        System.out.println("Tree");
+        rootNode.print();
 	}
 
 	public void setAverageResponseTime(double rtime) {
@@ -82,14 +111,6 @@ public class Scenario {
 
 	public void setProbability(Variable val) {
 		scenarioProb = val;
-	}
-
-	/** prints the tree present in scenario */
-	public void printTree(TaskNode node) {
-		node.print();
-		for (TaskNode n : node.children) {
-			printTree(n);
-		}
 	}
 
 	public void modifyProbability(double var1) {
@@ -123,6 +144,91 @@ public class Scenario {
 			initializeTree(n);
 		}
 	}
+	
+	
+	/* This method mainly does synchronous call validation in scenario
+	 * It feels up syncpairs member variable with pairs of tasknodes' indices carrying synchronous responses 
+	 */
+	public void validate() {
+		/*First of all give index to each task node in scenario tree */
+		ArrayList<TaskNode> level = new ArrayList<TaskNode>();
+		int idx = 0;
+		TaskNode root = rootNode;
+		root.index = idx++;
+		level.add(root);
+		/* Synchronous Request Server Pair: To -> From */
+		HashMap<String, String> syncReqServerPair = new HashMap<String, String>();
+		HashMap<String, ArrayList<String> >  list = new HashMap<String, ArrayList<String> >();
+		while(!level.isEmpty()){
+			ArrayList<TaskNode> nextlevel = new ArrayList<TaskNode>();
+			/* Traversing current level */
+			for(int i=0;i<level.size();i++){
+				TaskNode elem = level.get(i);
+				//System.out.println("Tasknode Name:" + elem.name + " server:" + elem.servername + " Idx:" + elem.index);
+				if(elem.issync){
+					syncReqServerPair.put(elem.servername, elem.parent.servername);
+				}
+				/* Processing children of each element in current level and adding them to next level */
+				for(int j=0;j<elem.children.size();j++){
+					TaskNode tempnode = elem.children.get(j);
+					tempnode.index = idx++;
+					nextlevel.add(tempnode);
+					//System.out.println(syncReqServerPair.get(elem.getServerName()) + " tempnode.servername:" + tempnode.servername);
+					if(syncReqServerPair.containsKey(elem.getServerName()) && syncReqServerPair.get(elem.getServerName()) == tempnode.servername){
+						if(list.containsKey(elem.servername)){
+							list.get(elem.servername).add(tempnode.servername);
+							syncpairs.get(elem.index).add(tempnode.index);
+						}else{
+							ArrayList<String> tmplist = new ArrayList<String>();
+							tmplist.add(tempnode.servername);
+							list.put(elem.servername, tmplist); 
+							
+							ArrayList<Integer> itmplist = new ArrayList<Integer>();
+							itmplist.add(tempnode.index);
+							syncpairs.put(elem.index, itmplist);
+						}
+					}
+					
+				}
+			}
+			level = nextlevel;
+		}
+		/* For debugging
+		for(String toServerName : list.keySet()){
+			System.out.print(toServerName + ":");
+			for(String fromServerName: list.get(toServerName)){
+				System.out.print(fromServerName + " ");
+			}
+			System.out.println();
+		} */
+		/*
+		for(Integer toTasknodeIdx : syncpairs.keySet()){
+			System.out.print(toTasknodeIdx + ":");
+			for(Integer fromTasknodeIdx: syncpairs.get(toTasknodeIdx)){
+				System.out.print(fromTasknodeIdx + " ");
+			}
+			System.out.println();
+		}
+		*/
+		/* For debugging
+		for(String toServerName : syncReqServerPair.keySet()){
+			System.out.println(toServerName + ":" + syncReqServerPair.get(toServerName));
+		}
+		*/
+		for(String toServerName : syncReqServerPair.keySet()){
+			if(!list.containsKey(toServerName)){
+				logger.warn("Warning:Scenario: There is no corresponding response to server \"" + toServerName + "\" from server \"" + syncReqServerPair.get(toServerName) + "\"");
+			}
+			/*
+			else{
+				System.out.print(toServerName + ":");
+				for(String fromServerName: list.get(toServerName)){
+					System.out.print(fromServerName + " ");
+				}
+				System.out.println();
+			} */
+		}
+	}
 
 	/**
 	 * Initializes the arrival rate and absolute probability of each node in the tree.<br/>
@@ -140,8 +246,8 @@ public class Scenario {
 			node.arrate = arate;
 			node.prob.value = parentprob;
 		}
-		for (TaskNode n : node.children) {
-			findArrivalRateTree(n, arate, parentprob);
+		for (TaskNode childNode : node.children) {
+			findArrivalRateTree(childNode, arate, parentprob);
 		}
 	}
 }

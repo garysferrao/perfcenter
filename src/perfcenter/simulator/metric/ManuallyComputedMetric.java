@@ -45,7 +45,6 @@ public class ManuallyComputedMetric extends MetricSim {
 		for (int i = 0; i < metricSlots.length; i++) {
 			metricSlots[i] = new _ManuallyComputedMetricSingleSlot(probability);
 		}
-
 	}
 
 	public void recordCISample(int slot, double sampleValue) {

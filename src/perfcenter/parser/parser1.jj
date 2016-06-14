@@ -113,23 +113,21 @@ TOKEN : {
 				<PROB: "prob"> | //prob of scenario
 				<SYNC: "sync"> | //whether message is synchronous or not
 				<SERVT: "servt"> | //service time
-				<AT: "at"> | 		//To specify cpu freq with task service time	//Added by samkit
+				<AT: "at"> | 		//To specify cpu freq with task service time
 				<THREAD: "thread"> |
 				<TASK: "task"> |
 				<BUFFER: "buffer"> |
 				<BASESPEED: "basespeed"> |
-				<SOFTRES: "softres"> | //soft resource		//change made by samkit
+				<SOFTRES: "softres"> | 
 				<SCHEDP: "schedp"> |
 				<SPEEDUP: "speedup"> | //device speedup
 				<TRUE: "true">|
 				<FALSE: "false"> |
 
-				//added by nikhil - memory model
-				<RAM : "ram"> |       // added by nikhil(memory model), machine ram size
-				<STATICSIZE: "staticsize">|       // added by nikhil(memory model), static size of software server
-				<REQUESTSIZE: "requestsize">|      // added by nikhil(memory model), its request size
-				<SIZE: "size">      | // added by nikhil(memory model), its thread size
-				<WARNINGS: "warnings"> |//added by nikhil, you can get rid of warnings if you want
+				<RAM : "ram"> |       
+				<STATICSIZE: "staticsize">|       
+				<SIZE: "size">      | 
+				<WARNINGS: "warnings"> |
 
 				// Keywords for power-management devices are added: Rakesh
 				<POWERMANAGED: "power_managed">|
@@ -186,6 +184,7 @@ TOKEN : {
 				<WAITT: "waitt"> 		|//
 				<UTIL: "util">			|//
 				<QLEN: "qlen">			|//
+				<AVAIL: "avail" >       |//
 				<POWER : "power">             |
 				<EPERR : "eperr">               |
 				<PDP : "pdp">                   |
@@ -255,6 +254,11 @@ TOKEN : {
 				<VIRTUALIZATION : "virtualization" > | //
 				<ON : "ON" > | //
 				<OFF : "OFF" > | //
+				<MIGRATIONPOLICY : "migrationpolicy"> | 
+				<TIMEBASED : "timebased"> |
+				<AFTER : "after"> |
+				<VMNAME : "vmname"> |
+				<DESTPMNAME : "destpmname"> | 
 				<CONSTANT  : "constant">//
 
 		}
@@ -300,6 +304,7 @@ void InputFile() throws DeviceNotFoundException,Exception:
 	 sce=ScenarioDef()	{ModelParameters.inputDistSys.scenarios.put(sce.name.toLowerCase(), sce);}	|
 	 serv=ServerDef()	{ModelParameters.inputDistSys.softServers.put(serv.name.toLowerCase(), serv);}	|
 	 DeployDef()	|
+	 MigrationPolicyDef() |
 	 stmt=StatementDef(){stmt.execute();} |
 	 LoadParamDef()|
 	 ModelParamDef()|
@@ -425,10 +430,9 @@ void PhysicalMachineDef()throws DeviceNotFoundException, Exception:{Token name,n
 void PhysicalMachineDetail(PhysicalMachine pm)throws DeviceNotFoundException, Exception:
 { Token name;  Variable v;	SchedulingPolicy pol; PowerManagementGovernor gov; }	//local variables
 {
-	//predefined addDeviceBuffer method is used for adding the size of ram.
-	<RAM>	v=Variable() 					{pm.addDeviceBuffer("ram", v);}
-	|
-		<VIRTUALIZATION> (<ON> {pm.virtualizationEnabled=true;	   } | <OFF> {pm.virtualizationEnabled=false;} )
+	<VIRTUALIZATION> (<ON> {pm.virtualizationEnabled=true;	   } | <OFF> {pm.virtualizationEnabled=false;} )
+	| 
+	<RAM> <SIZE> v=Variable() {pm.setRamSize(v);}		
 	| 
 		name=ValidPhysicalDeviceName()
 		(      <COUNT>  v=Variable() {pm.addDeviceCount(name.image,v);}
@@ -483,9 +487,10 @@ void VirtualMachineDef()throws DeviceNotFoundException, Exception:{Token name,n;
 void VirtualMachineDetail(VirtualMachine vm)throws DeviceNotFoundException, Exception:
 { Token name;  Variable v;	SchedulingPolicy pol; PowerManagementGovernor gov;}	//local variables
 {
-	//predefined addDeviceBuffer method is used for adding the size of ram.
-	<RAM>	v=Variable() 					{vm.addDeviceBuffer("ram", v);}
+	<RAM> <SIZE> v=Variable() 					{vm.setRamSize(v);}
 	|
+	<VIRTUALIZATION> (<ON> {vm.virtualizationEnabled=true;	   } | <OFF> {vm.virtualizationEnabled=false;} )
+	| 
 		name=ValidVirtualDeviceName()
 		(      <COUNT>  v=Variable() {vm.addDeviceCount(name.image,v);}
 			   |<BUFFER> v=Variable() {vm.addDeviceBuffer(name.image,v);}
@@ -537,15 +542,13 @@ Task TaskDef(): { 	Token name; 	Task task; 	}
 	{return task;}
 }
 
-void TaskDetail(Task t): { 	Token devcatname;	Distribution dist; SoftResource res; Variable basespeed;}
+void TaskDetail(Task t): { 	Token devcatname;Token name;	Distribution dist; SoftResource res; Variable basespeed;}
 {
 	(
 	  LOOKAHEAD(2)
-	 	devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution() <AT> basespeed=Variable()
-		{t.createAndAddSubTaskServiceTime(devcatname.image, dist, basespeed);}
-|  devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution()
-		{t.createAndAddSubTaskServiceTime(devcatname.image,dist);} 
-		
+		devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution() <AT> basespeed=Variable()
+			{t.createAndAddSubTaskServiceTime(devcatname.image, dist, basespeed);}
+		|  name=ValidSoftResName() {t.addSoftRes(name.image);}
 	)	
 }
 
@@ -576,8 +579,6 @@ SoftServer ServerDef(): { 	SoftServer serv; 	Token name; }
 void ServerDetail(SoftServer serv): { Token name;  Variable v; SchedulingPolicy pol; }
 {
 	<STATICSIZE> v=Variable()  {serv.setStaticSize(v);}
-	|
-		<REQUESTSIZE> v=Variable()  {serv.setRequestSize(v);}
 	|
 		<THREAD>
 		(
@@ -652,40 +653,45 @@ TaskNode BranchDef(TaskNode nin):{TaskNode n2;Variable v;}
 		<END>
 		{return t.getRootNode();}
 }
-void DeployDef()throws Exception:{Token name1,name2,n; DeployStmt dply;  String hname="";}
+void DeployDef()throws Exception:{Token name1,name2,n1,n2,id1,id2; DeployStmt dplystmt;  String hname="";}
 {
-	<DEPLOY>
-		(
-		 LOOKAHEAD(2)
-		 	(name1=MachineNameDef()  name2=MachineNameDef())
-		 |
-		 	(name1=<IDENTIFIER> name2=MachineNameDef()) 
-		)
+
+		<DEPLOY>  name1=MachineNameOrIdentifierDef() name2=MachineNameOrIdentifierDef()
 		{
 			try{
-				dply = new DeployStmt(name1.image,name2.image); dply.deploy();
+				dplystmt = new DeployStmt(name1.image,name2.image); dplystmt.deploy();
 			}catch(Error e){
 				throw new Error("Wrong Deployment!  Line no:"+name1.beginLine+e.getMessage());
 			}
 		}
 }
 
-void UnDeployDef()throws Exception:{Token name1,name2,n;UnDeployStmt dply;String hname="";}
+void UnDeployDef()throws Exception:{Token name1,name2,n;UnDeployStmt undplystmt;String hname="";}
 {
-	<UNDEPLOY>
-		(
-		 LOOKAHEAD(2)
-		 (name1=MachineNameDef() name2=<IDENTIFIER>)
-		 |
-		 (name1=<IDENTIFIER> name2=MachineNameDef())
-		)
+	<UNDEPLOY>  name1=MachineNameOrIdentifierDef() name2=MachineNameOrIdentifierDef()
 		{
 			try{
-				dply = new UnDeployStmt(name1.image,name2.image); dply.undef();}
-			catch(Error e)
-			{throw new Error("Wrong UnDeploy!  Line no:"+name1.beginLine+e.getMessage());}
+				undplystmt = new UnDeployStmt(name1.image,name2.image); undplystmt.undeploy();
+			}catch(Error e){
+				throw new Error("Wrong Undeploy!  Line no:"+name1.beginLine+e.getMessage());
+			}
 		}
 }
+
+void MigrationPolicyDef() :{MigrationPolicyType type;Token vmname, destpmname;Variable v;MigrationPolicyInfo policy;}
+{
+	<MIGRATIONPOLICY> type=MigratnPolicyType(){policy = new MigrationPolicyInfo(type); }
+	 <AFTER> v=Variable() {policy.addPolicyArg(v);}
+	 <VMNAME> vmname=ValidVMName() {policy.addVmName(vmname.image);}
+	 <DESTPMNAME> destpmname=ValidPMName() {policy.addDestPmName(destpmname.image);}
+	<END> {ModelParameters.inputDistSys.setMigrationPolicyInfo(policy);}
+}
+
+MigrationPolicyType MigratnPolicyType():{}
+{
+	<TIMEBASED> { return MigrationPolicyType.TIMEBASED;} 
+}
+
 
 Variable Variable():{Token varname;Token t;}
 {
@@ -793,6 +799,25 @@ Token MachineNameDef(): { 	Token t,n;String machinename=""; }
 		t.image = t.image+"["+n.image+"]";
 		return(t);
 	}
+}
+/*This function accepts Identifier or Machine Name
+ *DeployDef() uses this to accommodate deployment of vm on pm
+ *This Non-terminal also allows for (<Deploy> <IDENTIFIER> <IDENTIFIER>) as valid deploy statement. This needs to be prevented in Deploy() function of DeployStmt  
+ */
+Token MachineNameOrIdentifierDef(): { Token t,n; }
+{
+	(
+	LOOKAHEAD(2)
+		t=<IDENTIFIER>"["n=<NUMBER>"]"
+		{
+			t.image = t.image+"["+n.image+"]";
+			return(t);
+		}
+	  | 
+		t=<IDENTIFIER>{
+			return(t);
+		}
+	)
 }
 
 Token PMName(): { 	Token t,n;String pmname=""; }
@@ -1188,7 +1213,7 @@ FunctionDefinition FunctionDef():{Token name1;Token t;}
 	   ("[" t=<NUMBER>{fdef.addSlot(t.image);} "]")?	)
 	  |
 	  (
-	   (t=<RESPT> | t=<TPUT> | t=<BPUT> |t=<GPUT>|t=<BLOCKPROB>|t=<ARATE>|t=<WAITT> |t=<UTIL> |t=<QLEN>|t=<AVGSERVT>|t=<QPARMS> |t=<BUFFTIMEOUT>|t=<DROPRATE>|t=<POWER>|t=<EPERR>| t=<PDP> | t=<PEFF> | t=<FREQ> ){fdef.addFunction(t.image);}
+	   (t=<RESPT> | t=<TPUT> | t=<BPUT> |t=<GPUT>|t=<BLOCKPROB>|t=<ARATE>|t=<WAITT> |t=<UTIL> | t=<AVAIL> |t=<QLEN>|t=<AVGSERVT>|t=<QPARMS> |t=<BUFFTIMEOUT>|t=<DROPRATE>|t=<POWER>|t=<EPERR>| t=<PDP> | t=<PEFF> | t=<FREQ> ){fdef.addFunction(t.image);}
 	   (
 
 

@@ -57,4 +57,39 @@ public class PhysicalDevice extends Device {
 	public PhysicalDevice(String _name, String _catname, double _baselineSpeed){
 		super(_name, _catname, _baselineSpeed);
 	}
+	
+	public PhysicalDevice getCopy(){
+		PhysicalDevice pdcpy = new PhysicalDevice();
+
+		pdcpy.schedulingPolicy = schedulingPolicy;
+		pdcpy.name = name;
+		pdcpy.category = category;
+		if (buffer.getName().compareToIgnoreCase("local") != 0) {
+			pdcpy.buffer = buffer;
+		} else {
+			pdcpy.buffer.value = buffer.value;
+		}
+		if (count.getName().compareToIgnoreCase("local") != 0) {
+			pdcpy.count = count;
+		} else {
+			pdcpy.count.value = count.value;
+		}
+		if (speedUpFactor.getName().compareToIgnoreCase("local") != 0) {
+			pdcpy.speedUpFactor = speedUpFactor;
+		} else {
+			pdcpy.speedUpFactor.value = speedUpFactor.value;
+		}
+		pdcpy.idlePower = idlePower;
+		pdcpy.isDevicePowerManaged = isDevicePowerManaged;
+		System.arraycopy(powerConsumptionsLevels, 0, this.powerConsumptionsLevels, 0, powerConsumptionsLevels.length);
+		System.arraycopy(availableSpeedLevels, 0, this.availableSpeedLevels, 0, availableSpeedLevels.length);
+		pdcpy.avgDeviceSpeedup = avgDeviceSpeedup;
+		pdcpy.downThreshold = downThreshold;
+		pdcpy.upThreshold = upThreshold;
+		pdcpy.deviceProbeInterval = deviceProbeInterval;
+		pdcpy.userspaceSpeedIndex = userspaceSpeedIndex;
+		pdcpy.governor = governor;
+		return pdcpy;
+	}
+	
 }

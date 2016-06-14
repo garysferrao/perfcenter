@@ -1,5 +1,5 @@
 package perfcenter.baseclass.enums;
 
 public enum DeviceType {
-	CPU, NONCPU
+	CPU, NONCPU, RAM
 }

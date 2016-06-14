@@ -26,32 +26,41 @@ import java.util.ArrayList;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.Task;
-import perfcenter.baseclass.Device;
 import perfcenter.baseclass.DeviceCategory;
 import perfcenter.baseclass.exception.DeviceNotFoundException;
+import perfcenter.simulator.metric.TimeAverageMetric;
 import perfcenter.simulator.queue.QueueServer;
 import perfcenter.simulator.queue.QueueSim;
 import perfcenter.simulator.request.Request;
 import perfcenter.simulator.request.SyncRequest;
 import perfcenter.simulator.request.SoftResVector;
 
+import static perfcenter.simulator.DistributedSystemSim.computeConfIvalForMetric;
+
 public class SoftServerSim extends SoftServer implements QueueServer {
 	
 	public ArrayList<PhysicalMachineSim> hostObjects = new ArrayList<PhysicalMachineSim>();
-
+	
+	public double currRamUtil = 0.0;
+	
+	TimeAverageMetric avgRamUtilSim = new TimeAverageMetric(0.95);
 	static int count = 0;
 	public SoftServerSim(SoftServer s) {
 		name = s.name;
+		size = s.size;
+		threadSize = s.threadSize;
 		thrdCount = s.thrdCount;
 		thrdBuffer = s.thrdBuffer;
 		schedp = s.schedp;
-		simpleTasks = s.simpleTasks;
+		tasks = s.tasks;
+		
+		
 		// dynamically load the scheduling policy class
 		resourceQueue = QueueSim.loadSchedulingPolicyClass(schedp.toString(), (int) thrdBuffer.getValue(), (int) thrdCount.getValue(), /* "swRes", */this);
 
 		resourceQueue.initialize();
 		machines = s.machines;
-		for (Task t : simpleTasks) {
+		for (Task t : tasks) {
 			t.initialize();
 		}
 	}
@@ -97,7 +106,8 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 				/**
 				 * chk this for sync request reply softwareArrival time , softwareStart time. bug fixed (params to syncreq changed)- akhila
 				 */
-				SyncRequest sr = new SyncRequest(req.machineObject, req.softServName, req.taskName, req.threadNum, req.id, req.softServArrivalTime,
+				
+				SyncRequest sr = new SyncRequest(req.machineName, req.softServName, req.taskName, req.threadNum, req.id, req.softServArrivalTime,
 						req.softServStartTime);
 				req.synReqVector.add(sr);
 			}
@@ -106,22 +116,55 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		SimulationParameters.offerEvent(ev);
 
 	}
+	
+	/* Here, every time we compute ram utilization for ground up. Only problem is we don't know which different tasknodes 
+	 * are occupying busy instance of resourceQueue which help in correctly computing correct request size based on req.nwDataSize
+	 */
+	private void updateRamUtil(Request req){
+		double ramutil = 0.0;
+		ramutil += size.getValue();
+		/* Add static size of server to ram util */
+		//FIXME: multiplying current nwDataSize(or in its absence, with 200)  with number of busy instances needs to be corrected.
+		/* Add Ram Utilization by scheduled or busy threads */
+		if(req == null){
+			ramutil += ((200 + threadSize.getValue()) * (((QueueSim)resourceQueue).numBusyInstances));
+		}else if(req.currentTaskNode == null){	//FIXME: Find out reasons why a request with no task assigned will be queued
+			return;
+		}else{
+			ramutil += ((req.currentTaskNode.pktsize.getValue() + threadSize.getValue()) * (((QueueSim)resourceQueue).numBusyInstances));
+		}
+		
+		/* Add Ram Utilization by buffered threads */
+		ramutil += (threadSize.getValue() * (((QueueSim)resourceQueue).getBuffersize()));
+		//if(req != null)
+		//System.out.println("Name:" + name + " request.nwDataSize:" + req.currentTaskNode.pktsize.getValue() +" size:" + size.getValue() + " threadSize:" + threadSize.getValue() +" Ram Util:" + ramutil);
+		
+		currRamUtil = ramutil;
+		avgRamUtilSim.recordValue(this.currRamUtil);
+		
+		/* Update host RAM utilization */
+		for(String mname : machines){
+			SimulationParameters.distributedSystemSim.machineMap.get(mname).updateRamUtil(req);
+		}
+	}
 
 	public void enqueue(Request req, double time) throws Exception {
 		((QueueSim) resourceQueue).enqueue(req, time);
+		updateRamUtil(req);
 	}
 
-	public void endService(Request request,int instanceId, double time) throws Exception {
-		((QueueSim) resourceQueue).endService(request, instanceId, time);
+	public void endService(Request req,int instanceId, double time) throws Exception {
+		((QueueSim) resourceQueue).endService(req, instanceId, time);
+		updateRamUtil(req);
 	}
 
 	public void endServiceTimeout(int instanceId, double time) throws Exception {
 		((QueueSim) resourceQueue).endServiceTimeout(instanceId, time);
+		updateRamUtil(null);
 	}
 
-	// not called anytime
-
 	public void dequeue() {
+		
 	}
 
 	/* This method is called only once in the life-line of a request. 
@@ -141,7 +184,8 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 				return -1;
 			
 			// get the next device name
-			String nextDeviceName = req.machineObject.getDeviceName(nextDevCat);
+			
+			String nextDeviceName = SimulationParameters.distributedSystemSim.machineMap.get(req.machineName).getDeviceName(nextDevCat);
 			//String nextDeviceName = getDeviceName(nextDevCat, req.machineObject );
 			if(nextDeviceName == null)
 				return -1;
@@ -154,7 +198,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 			req.fromServer = name;
 			
 			// get to the device queue
-			DeviceSim deviceSim = req.machineObject.getDevice(req.devName);
+			DeviceSim deviceSim = SimulationParameters.distributedSystemSim.machineMap.get(req.machineName).getDevice(req.devName);
 			// set the value for total service demand on hw resource
 			req.serviceTimeRemaining = t.getServiceTimeDist(req.getSubTaskIdx()).nextRandomVal(deviceSim.speedUpFactor.getValue());
 
@@ -174,12 +218,21 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 
 	void recordCISampleAtTheEndOfSimulation() {
 		((QueueSim) resourceQueue).recordCISampleAtTheEndOfSimulation();
+		
+		/* Recoding CI for ramUtilSim */
+		updateRamUtil(null);
+		for (int slot = 0; slot < ModelParameters.intervalSlotCount; slot++) {
+			if ((int) ((QueueSim)resourceQueue).totalNumberOfRequestsServed.getTotalValue(slot) > 0) {
+				avgRamUtilSim.recordCISample(slot);
+			}
+		}
 	}
 
 	// even when the request is dropped it contributes to busy time and
 	// thus utilization.
 	public void abortThread(int threadNum, double time) {
 		((QueueSim) resourceQueue).discard(threadNum, time);
+		updateRamUtil(null);
 	}
 
 	public void processTaskEndEventTimeout(Request rq, int instanceId, double currTime) throws Exception {
@@ -203,7 +256,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		 */
 		if (!rq.isSyncRequest(rq.softServName, rq.taskName, instanceId, rq.id, rq.softServArrivalTime, rq.softServStartTime)) {
 
-			// queue book keeping structures are updated`
+			// queue book keeping structures are updated`and next thread is scheduled
 			endService(rq,instanceId, currTime);
 		} else {
 			//System.err.println("Thread blocked permanently on a request - This usually means wrong configuration of SYNC parameter in the Scenario block of input file. Response from downstream server to upstream server (db to web) should not be SYNC!!");
@@ -263,7 +316,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 	// if request is added to lan link queue returns true
 	public boolean offerRequestToLink(String srcLanName, Request rq) throws Exception {
 		String destLanName;
-		destLanName = rq.machineObject.lan;
+		destLanName = SimulationParameters.distributedSystemSim.machineMap.get(rq.machineName).lan;
 
 		// hosts are not deployed on to any lan
 		if ((destLanName.length() <= 0) || (srcLanName.length() <= 0)) {
@@ -288,7 +341,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 	// request is offered to next node
 	public void offerRequestToNextNode(Request rq) throws Exception {
 		String srcLanName;
-		srcLanName = rq.machineObject.lan;
+		srcLanName = SimulationParameters.distributedSystemSim.machineMap.get(rq.machineName).lan;
 
 		rq.currentTaskNode = rq.nextTaskNode;
 		rq.nextTaskNode = SimulationParameters.distributedSystemSim.findNextTaskNode(rq.currentTaskNode);
@@ -326,12 +379,21 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 
 				// This request is not added to queue, but processing begins
 				// immediately
-				rq.machineObject.getServer(rq.softServName).createStartTaskEvent(rq, rq.threadNum, SimulationParameters.currTime);
+				PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(rq.machineName);
+				machineObject.getServer(rq.softServName).createStartTaskEvent(rq, rq.threadNum, SimulationParameters.currTime);
 			}
 
 		} else {
 			// If soft server is deployed on more than one host then get a random host name
-			rq.machineObject = SimulationParameters.distributedSystemSim.getServer(rq.softServName).getRandomHostObject();
+			String newmname = SimulationParameters.distributedSystemSim.softServerMap.get(rq.softServName).machines.get(0);
+			if(SimulationParameters.migrationHappend){
+				
+				if(newmname.compareTo(rq.machineName) != 0){
+					rq.machineName = newmname;
+					//System.out.println("AFTER:ReqObj.id:" + reqObj.id + " servername:" + reqObj.softServName + " machineName:" + reqObj.machineName);
+				}
+			}
+			rq.machineName = SimulationParameters.distributedSystemSim.getServer(rq.softServName).getRandomHostObject().name;
 			// get soft server
 			// this is not sync reply, but an ordinary request
 			rq.softServArrivalTime = SimulationParameters.currTime;
@@ -340,12 +402,19 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 			boolean isReqOfferedToLink = offerRequestToLink(srcLanName, rq);
 			if (!isReqOfferedToLink) {
 				// link not present. add to software queue for processing
-				rq.machineObject.getServer(rq.softServName).enqueue(rq, SimulationParameters.currTime);
+				PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(rq.machineName);
+				machineObject.getServer(rq.softServName).enqueue(rq, SimulationParameters.currTime);
 			}
 		}
 	}
 	
 	public void clearValuesButKeepConfIvals() {
 		((QueueSim) resourceQueue).clearValuesButKeepConfIvals();
+		avgRamUtilSim.clearValuesButKeepConfInts();
 	}
+	
+	 public void computeConfIvalsAtEndOfRepl() {
+		 ((QueueSim) resourceQueue).computeConfIvalsAtEndOfRepl();
+		computeConfIvalForMetric(ramUtil, avgRamUtilSim);
+	 }
 }

@@ -88,7 +88,9 @@ public class SimulationParameters {
 	 * in the hashmaps inside the metric hierarchy.
 	 */
 	public static boolean warmupEnabled = false;
-
+	
+	public static boolean migrationHappend = false; 
+	
 	/**
 	 * This function is used for closed loop. every scenario has an associated probability.
 	 * This function returns a single scenario from given set of

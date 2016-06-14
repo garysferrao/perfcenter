@@ -64,16 +64,12 @@ public class FunctionDefinition {
 	public String execute() throws Exception {
 		try {
 
-			// error checking for memory model.
-			if (tempname2 != null) {
-				if (tempname3 != null) {
-					if ((tempname2.compareToIgnoreCase("ram") == 0 || tempname3.compareToIgnoreCase("ram") == 0)
-							&& name_.compareToIgnoreCase("util") != 0) {
-						return (" WARNING: '" + name_.toUpperCase() + "' IS AN INVALID OPERATION ON RAM !!!");
-					}
-				} else if (tempname2.compareToIgnoreCase("ram") == 0 && name_.compareToIgnoreCase("util") != 0) {
-					return (" WARNING: '" + name_.toUpperCase() + "' IS AN INVALID OPERATION ON RAM !!!");
-				}
+			// error checking for memory model	
+			if (((tempname2 != null && tempname2.compareToIgnoreCase("ram") == 0) 
+			  || (tempname3 != null && tempname3.compareToIgnoreCase("ram") == 0))
+  			  && name_.compareToIgnoreCase("util") != 0) {
+				
+				return ("ERROR: '" + name_.toUpperCase() + "' is not supported on ram");
 			}
 
 			Output o = new Output();

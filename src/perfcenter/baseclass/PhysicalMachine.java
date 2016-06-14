@@ -17,7 +17,7 @@
  */package perfcenter.baseclass;
 
 import java.util.ArrayList;
-import java.util.Random;
+import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
@@ -27,21 +27,53 @@ import perfcenter.baseclass.exception.DeviceNotFoundException;
 import perfcenter.baseclass.DeviceCategory;
 
 public class PhysicalMachine extends Machine {
-	public boolean virtualizationEnabled = false; 
-	public ArrayList<VirtualMachine> vms = new ArrayList<VirtualMachine>();
+	
+	public boolean virtualizationEnabled ;
+	
+	/* This should be only filled up if virtualizationEnabled is true */
+	public HashMap<String, VirtualMachine> vms;
+	
+	/* Key is vm name and value is list of all the softservers those are equivalent to it 
+	 * This will be initialized and filled up at the time of transformation
+	 */
+	public HashMap<String, ArrayList<SoftServer> > vservers;
+	
+	/* Key is vm name and value is list of all the softservers originally deployed on it 
+	 * This will be initialized and filled up at the time of transformation
+	 */
+	public HashMap<String, ArrayList<SoftServer> > serversDeployedOnVm;
+	
+	/* As there is no actual Simulation entity for virtual machine and virtual device, 
+	 * Ram utilization of vm deployed on particular physical machine will be stored in below variable.
+	 * This will be initialized at the time of transformation  
+	 */
+	public HashMap<String, Metric> avgVmRamUtils;
+	
+	public Metric avgRamUtil = new Metric();
 	
 	public PhysicalMachine() {
 		super();
+		virtualizationEnabled = false; 
+		vms = new HashMap<String, VirtualMachine>();
 	}
 
 	public PhysicalMachine(String pmname, int num) {
 		super(pmname, num);
+		virtualizationEnabled = false; 
+		vms = new HashMap<String, VirtualMachine>();
 	}
 	
 	public void addVM(VirtualMachine vm) {
-		vms.add(vm);
+		vms.put(vm.name,vm);
 	}
 	
+	public void removeVM(VirtualMachine vm) {
+		vms.remove(vm.name);
+	}
+	
+	/* This getCopy is slightly different in a way it is being used.
+	 * For deepcopying, use getCopy() function
+	 */
 	public PhysicalMachine getCopy(String pmname, int num) throws DeviceNotFoundException {
 		PhysicalMachine pmcpy = new PhysicalMachine(pmname, num);
 		for (Device d : devices.values()) {
@@ -53,11 +85,32 @@ public class PhysicalMachine extends Machine {
 			pmcpy.addSoftRes(srcpy);
 		}
 		for (SoftServer ss : softServers.values()) {
-			SoftServer sscpy = ss.getCopy();
-			pmcpy.addSoftServer(sscpy);
+			pmcpy.addServer(ss);
 		}
 		pmcpy.addLan(lan);
 		pmcpy.virtualizationEnabled = virtualizationEnabled;
+		return pmcpy;
+	}
+	
+	/* This function is used for creating deep copy of an physical machine object
+	 * Note that, it doesn't create deepcopy of member array variable 'vms'.
+	 */
+	public PhysicalMachine getCopy(){
+		PhysicalMachine pmcpy = new PhysicalMachine();
+		pmcpy.name = this.name;
+		for (Device d : devices.values()) {
+			Device dcpy = d.getCopy();
+			pmcpy.addDevice(dcpy);
+		}
+		for (SoftResource sr : softResources.values()) {
+			SoftResource srcpy = sr.getCopy();
+			pmcpy.addSoftRes(srcpy);
+		}
+		for (SoftServer ss : softServers.values()) {
+			pmcpy.addServer(ss);
+		}
+		pmcpy.addLan(lan);
+		pmcpy.virtualizationEnabled = this.virtualizationEnabled;
 		return pmcpy;
 	}
 	
@@ -109,5 +162,10 @@ public class PhysicalMachine extends Machine {
 			devices.put(pdev.name, pdev);
 		}
 		getDevice(pdevname).basespeed.value = basespeed.value;
+	}
+	
+	public String getHypervisorName(){
+		String hvname = name.replaceAll("\\[", "").replaceAll("\\]", "") + "_hypervisor";
+		return hvname;
 	}
 }

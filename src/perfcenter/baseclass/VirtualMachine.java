@@ -17,7 +17,7 @@
  */
 package perfcenter.baseclass;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
@@ -33,13 +33,27 @@ import perfcenter.baseclass.DeviceCategory;
  * 
  */
 public class VirtualMachine extends Machine{
-	public PhysicalMachine host;
+	public Machine host = null;
+	public boolean virtualizationEnabled ; 
+	public HashMap<String, VirtualMachine> vms;
 	public VirtualMachine() {
 		super();
+		virtualizationEnabled = false; 
+		vms = new HashMap<String, VirtualMachine>();
 	}
 
 	public VirtualMachine(String hname, int num) {
 		super(hname, num);
+		virtualizationEnabled = false; 
+		vms = new HashMap<String, VirtualMachine>();
+	}
+	
+	public void addVM(VirtualMachine vm) {
+		vms.put(vm.name, vm);
+	}
+	
+	public void removeVM(VirtualMachine vm) {
+		vms.remove(vm.name);
 	}
 	
 	public void addDeviceCount(String vdevname, Variable count) throws DeviceNotFoundException {
@@ -103,8 +117,30 @@ public class VirtualMachine extends Machine{
 			vmcpy.addSoftRes(srcpy);
 		}
 		for (SoftServer ss : softServers.values()) {
-			SoftServer sscpy = ss.getCopy();
-			vmcpy.addSoftServer(sscpy);
+			vmcpy.addServer(ss);
+		}
+		vmcpy.addLan(lan);
+		vmcpy.host = host;
+		vmcpy.virtualizationEnabled = virtualizationEnabled;
+		return vmcpy;
+	}
+	
+	/* This function is used for creating deep copy of an physical machine object
+	 * Note that, it doesn't create deepcopy of member array variable 'vms'.
+	 */
+	public VirtualMachine getCopy() throws DeviceNotFoundException {
+		VirtualMachine vmcpy = new VirtualMachine();
+		vmcpy.name = name;
+		for (Device d : devices.values()) {
+			Device dcpy = d.getCopy();
+			vmcpy.addDevice(dcpy);
+		}
+		for (SoftResource sr : softResources.values()) {
+			SoftResource srcpy = sr.getCopy();
+			vmcpy.addSoftRes(srcpy);
+		}
+		for (SoftServer ss : softServers.values()) {
+			vmcpy.addServer(ss);
 		}
 		vmcpy.addLan(lan);
 		vmcpy.host = host;

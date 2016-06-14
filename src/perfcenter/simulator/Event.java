@@ -86,6 +86,17 @@ public class Event implements Comparable<Event> {
 			return 0;
 		}
 	}
+	
+	public void updateReqAfterMigration(){
+		//SimulationParameters.distributedSystemSim.print();
+		if(reqObj.softServName != null && reqObj.softServName.compareTo("") != 0 && SimulationParameters.distributedSystemSim.serverMigrated(reqObj.softServName)){
+			String newmname = SimulationParameters.distributedSystemSim.softServerMap.get(reqObj.softServName).machines.get(0);
+			if(newmname.compareTo(reqObj.machineName) != 0){
+				reqObj.machineName = newmname;
+				//System.out.println("AFTER:ReqObj.id:" + reqObj.id + " servername:" + reqObj.softServName + " machineName:" + reqObj.machineName);
+			}
+		}
+	}
 
 	/**
 	 * Function: external arrival. Handles the event when an external arrives in the system.
@@ -141,18 +152,21 @@ public class Event implements Comparable<Event> {
 		reqObj.nextTaskNode = SimulationParameters.distributedSystemSim.findNextTaskNode(currentNode);
 		reqObj.taskName = currentNode.name;
 		reqObj.softServName = currentNode.servername;
-		reqObj.machineObject = ((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)).getRandomHostObject();
-		if(reqObj.machineObject == null) {
+		
+		reqObj.machineName = ((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)).getRandomHostObject().name;
+
+		if(reqObj.machineName == null) {
 			System.out.println(((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)));
 		}
 		reqObj.softServArrivalTime = SimulationParameters.currTime;
 
 		// get the soft server object to which this request will be offered
-		SoftServerSim sserver = reqObj.machineObject.getServer(reqObj.softServName);
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
+		SoftServerSim sserver = machineObject.getServer(reqObj.softServName);
 
 		logger.debug("Task_Name: " + reqObj.taskName);
 		logger.debug("Server_Name: " + reqObj.softServName);
-		logger.debug("Host_Name: " + reqObj.machineObject.getName());
+		logger.debug("Host_Name: " + reqObj.machineName);
 		sserver.enqueue(reqObj, SimulationParameters.currTime);
 	}
 
@@ -163,8 +177,9 @@ public class Event implements Comparable<Event> {
 	 */
 	public void hardwareTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
 		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "HT Starts ts:" + SimulationParameters.currTime);
-		reqObj.machineObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
+		machineObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
 	/**
@@ -172,8 +187,9 @@ public class Event implements Comparable<Event> {
 	 */
 	public void hardwareTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
 		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "HT Ends ts:" + SimulationParameters.currTime);
-		reqObj.machineObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
+		machineObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
 	}
 
 	/**
@@ -183,6 +199,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void softwareTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
 		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + ":ST Starts ts:" + SimulationParameters.currTime);
 
 		// get the request object
@@ -196,7 +213,7 @@ public class Event implements Comparable<Event> {
 		if ((ModelParameters.timeoutEnabled == true) && (reqObj.scenarioTimeout < SimulationParameters.currTime)) {
 			timeoutInBuffer();
 		} else {
-			SoftServerSim softServerSim = reqObj.machineObject.getServer(reqObj.softServName);
+			SoftServerSim softServerSim = machineObject.getServer(reqObj.softServName);
 			softServerSim.processTaskStartEvent(reqObj, SimulationParameters.currTime);
 		}
 	}
@@ -206,8 +223,9 @@ public class Event implements Comparable<Event> {
 	 */
 	public void softwareTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
 		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "ST Ends ts:" + SimulationParameters.currTime);
-		reqObj.machineObject.getServer(reqObj.softServName).processTaskEndEvent(reqObj, reqObj.threadNum, SimulationParameters.currTime);
+		machineObject.getServer(reqObj.softServName).processTaskEndEvent(reqObj, reqObj.threadNum, SimulationParameters.currTime);
 	}
 
 	/**
@@ -407,6 +425,9 @@ public class Event implements Comparable<Event> {
 		}
 
 		// if end of simulation condition is satisfied, new simulation complete event is generated.
+		if(SimulationParameters.distributedSystemSim.migrationPolicy != null && SimulationParameters.distributedSystemSim.migrationPolicy.migrationRequired()){
+			doMigration();
+		}
 		checkForSimulationCompletionCriteria();
 	}
 
@@ -437,12 +458,14 @@ public class Event implements Comparable<Event> {
 
 	public void softResourceTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		reqObj.machineObject.getSoftRes(reqObj.softResName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
+		machineObject.getSoftRes(reqObj.softResName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
 	public void softResourceTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		reqObj.machineObject.getSoftRes(reqObj.softResName).processTaskEndEvent(reqObj, reqObj.softResInstance, SimulationParameters.currTime);
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
+		machineObject.getSoftRes(reqObj.softResName).processTaskEndEvent(reqObj, reqObj.softResInstance, SimulationParameters.currTime);
 	}
 
 	/** This function is called when request is timed out in buffer */
@@ -454,7 +477,8 @@ public class Event implements Comparable<Event> {
 		reqObj.scenario.noOfReqTimedoutInBuffer.recordValue(1);
 
 		// Reduce the number of busy instances of softserver queue.
-		QueueSim resourceQueue = (QueueSim) reqObj.machineObject.getServer(reqObj.softServName).resourceQueue;
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
+		QueueSim resourceQueue = (QueueSim) machineObject.getServer(reqObj.softServName).resourceQueue;
 		resourceQueue.numBusyInstances--;
 
 		// Reset the queue server instance parameters.
@@ -473,6 +497,16 @@ public class Event implements Comparable<Event> {
 	public void deviceProbe() throws Exception {
 		SimulationParameters.currTime = timestamp;
 		devObj.deviceProbeHandler(SimulationParameters.currTime, hostObj);
+	}
+	
+	public void doMigration() throws Exception {
+		System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$8Handling Migration");
+		String vmname = SimulationParameters.distributedSystemSim.migrationPolicy.getVmName();
+		String destpmname = SimulationParameters.distributedSystemSim.migrationPolicy.getTargetPmName();
+		if(SimulationParameters.distributedSystemSim.checkFeasibilityOfMigration(vmname, destpmname)){
+			SimulationParameters.distributedSystemSim.migrate(vmname, destpmname);
+			SimulationParameters.migrationHappend = true;
+		}
 	}
 
 	public String toString() {

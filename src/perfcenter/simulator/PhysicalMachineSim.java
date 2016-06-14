@@ -18,11 +18,14 @@
 
 package perfcenter.simulator;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
+import static perfcenter.simulator.DistributedSystemSim.computeConfIvalForMetric;
+
+import java.util.ArrayList;
+
 import perfcenter.baseclass.Device;
-import perfcenter.baseclass.DeviceCategory;
+import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.PhysicalMachine;
 import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.Task;
@@ -30,6 +33,8 @@ import perfcenter.baseclass.Task;
 import perfcenter.baseclass.SoftResource;
 import perfcenter.baseclass.exception.DeviceNotFoundException;
 import perfcenter.simulator.request.Request;
+import perfcenter.simulator.metric.TimeAverageMetric;
+import perfcenter.simulator.queue.QueueSim;
 
 /**
  * Inherits from Machine. Has some more functions for Simulation.
@@ -44,33 +49,29 @@ public class PhysicalMachineSim extends PhysicalMachine {
 	//Below data structures are used for Xen's Credit Scheduling Policy
 	public int cap = 16000; //FIXME: No hard coding please
 	public int deduction = 100; //FIXME: No hard coding please
-	//Device name and their credits
-	public HashMap<String, Integer> deviceCreditMap = new HashMap<String, Integer>(); 
-	//Soft Server name and their status. 1 for "under" and 0 for "over"
-	public HashMap<String, Integer> softServerCreditMap = new HashMap<String, Integer>(); 
-	//Virtual Resource name and their credits
-	public HashMap<String, Integer> virtResCreditMap = new HashMap<String, Integer>(); 
 	
-	//Device name and their status:1 for "under" and 0 for "over"
-	public HashMap<String, Integer> deviceStatusMap = new HashMap<String, Integer>(); 
-	//Softservername and their status. 1 for "under" and 0 for "over"
-	public HashMap<String, Integer> softServerStatusMap = new HashMap<String, Integer>(); 
-	//Virtual Resource name and their status:1 for "under" and 0 for "over"
-	public HashMap<String, Integer> virtResStatusMap = new HashMap<String, Integer>();
+	/* This stores overall ram utilization of host machine 
+	 * Ram Utilization of host = Sum of ram utilization of all softservers deployed on it
+	 */
+	public TimeAverageMetric ramUtilSim;
 	
-
+	/* See vmRamUtil in PhysicalMachine
+	 */
+	public HashMap<String, TimeAverageMetric> vmRamUtilSim;
+	
+	public double currRamUtil;
+	
+	public HashMap<String, Double> currVmRamUtil;
+	
 	// constructor
 	public PhysicalMachineSim(PhysicalMachine m, HashMap<String, SoftServerSim> softServerMap) {
 		name = m.name;
 		lan = m.lan;
-
 		for (SoftServer s : m.softServers.values()) {
 			SoftServerSim softServerSim2 = softServerMap.get(s.name);
 			softServers.put(softServerSim2.getName(), softServerSim2);
 			this.softServerMap.put(s.getName(), softServerSim2);
 			
-			softServerCreditMap.put(s.getName(), cap);
-			softServerStatusMap.put(s.getName(), cap);
 		}
 
 		for (Device dev : m.devices.values()) {
@@ -78,20 +79,46 @@ public class PhysicalMachineSim extends PhysicalMachine {
 			DeviceSim devs = new DeviceSim(dev);
 			devices.put(devs.name, devs);
 			deviceMap.put(devs.getDeviceName(), devs);
-			
-			deviceCreditMap.put(dev.getDeviceName(), cap);
-			deviceStatusMap.put(dev.getDeviceName(), cap);
 		}
 
 		for (SoftResource sr : m.softResources.values()) {
 			SoftResSim srcpy = sr.getCopySim();
 			softResources.put(srcpy.name, srcpy);
 			virtualResourceMap.put(srcpy.name, srcpy);
-			
-			virtResCreditMap.put(sr.name, cap);
-			virtResStatusMap.put(sr.name, cap);
 		}
 		arrivalRate = 0;
+		
+		if(m.vservers != null){
+			vservers = new HashMap<String, ArrayList<SoftServer> >();
+			for(String vmname : m.vservers.keySet()){
+				ArrayList<SoftServer> temp = new ArrayList<SoftServer>();
+				for(SoftServer srvr : m.vservers.get(vmname)){
+					temp.add((SoftServer)softServerMap.get(srvr.name));
+				}
+				vservers.put(vmname, temp);
+			}
+		}
+		if(m.serversDeployedOnVm != null){
+			serversDeployedOnVm = new HashMap<String, ArrayList<SoftServer> >();
+			for(String vmname : m.serversDeployedOnVm.keySet()){
+				ArrayList<SoftServer> temp = new ArrayList<SoftServer>();
+				for(SoftServer srvr : m.serversDeployedOnVm.get(vmname)){
+					temp.add((SoftServer)softServerMap.get(srvr.name));
+				}
+				serversDeployedOnVm.put(vmname, temp);
+			}
+		}
+		ramUtilSim = new TimeAverageMetric(0.95); 
+		
+		if(m.avgVmRamUtils != null){
+			avgVmRamUtils = m.avgVmRamUtils;
+			vmRamUtilSim  = new HashMap<String, TimeAverageMetric>();
+			for(String vmname : m.avgVmRamUtils.keySet()){
+				vmRamUtilSim.put(vmname, new TimeAverageMetric(0.95));
+			}
+			
+			currVmRamUtil = new HashMap<String, Double>();
+		}
 	}
 	
 	/**
@@ -210,7 +237,8 @@ public class PhysicalMachineSim extends PhysicalMachine {
 		req.setSubTaskIdx(0, "MachineSim:offeredRequestToVirtualRes");
 
 		// get machine and virtual resource and enqueue request to that virtual res
-		req.machineObject.getSoftRes(req.softResName).enqueue(req, currTime);
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(req.machineName);
+		machineObject.getSoftRes(req.softResName).enqueue(req, currTime);
 		return true;
 	}
 
@@ -224,7 +252,7 @@ public class PhysicalMachineSim extends PhysicalMachine {
 			req.devName = devName;
 
 			// get machine and device
-			DeviceSim dev = req.machineObject.getDevice(req.devName);
+			DeviceSim dev = SimulationParameters.distributedSystemSim.machineMap.get(req.machineName).getDevice(req.devName);
 			// get the service time for the device
 			if (req.isRequestFromTask()) {
 				Task t = ((SoftServerSim) getServer(req.softServName)).getTaskObject(req.taskName);
@@ -247,4 +275,56 @@ public class PhysicalMachineSim extends PhysicalMachine {
 		}
 	}
 	
+	public void updateRamUtil(Request req){
+		double ramutil = 0.0;
+		for(SoftServerSim srvrsim : softServerMap.values()){
+			ramutil += srvrsim.currRamUtil;
+		}
+		currRamUtil = ramutil;
+		ramUtilSim.recordValue(req, ramutil);
+		if(vservers != null){
+			for(String vmname : vservers.keySet()){
+				double temp = 0.0;
+				for(SoftServer server : vservers.get(vmname)){
+					temp += softServerMap.get(server.name).currRamUtil;
+				}
+				for(SoftServer server : serversDeployedOnVm.get(vmname)){
+					temp += softServerMap.get(server.name).currRamUtil;
+				}
+				currVmRamUtil.put(vmname, temp);
+				vmRamUtilSim.get(vmname).recordValue(req, temp);
+			}
+		}
+	}
+	
+	public void clearValuesButKeepConfIvals(){
+		ramUtilSim.clearValuesButKeepConfInts();
+		if(vmRamUtilSim != null){
+			for(String vmname : vmRamUtilSim.keySet()){
+				vmRamUtilSim.get(vmname).clearValuesButKeepConfInts();
+			}
+		}
+	}
+	
+	public void computeConfIvalsAtEndOfRepl() {
+		computeConfIvalForMetric(avgRamUtil, ramUtilSim);
+		if(vmRamUtilSim != null){
+			for(String vmname : vmRamUtilSim.keySet()){
+				System.out.println("Vmname:" + vmname + " utils.size:" + avgVmRamUtils.size() );//+ " utilsim.size:" + vmRamUtilSim.size());
+				computeConfIvalForMetric(avgVmRamUtils.get(vmname), vmRamUtilSim.get(vmname));
+			}
+		}
+	 }
+	
+	void recordCISampleAtTheEndOfSimulation() {
+		updateRamUtil(null);
+		for (int slot = 0; slot < ModelParameters.intervalSlotCount; slot++) {
+			ramUtilSim.recordCISample(slot);
+			if(vmRamUtilSim != null){
+				for(String vmname : vmRamUtilSim.keySet()){
+					vmRamUtilSim.get(vmname).recordCISample(slot);
+				}
+			}
+		}
+	}
 }

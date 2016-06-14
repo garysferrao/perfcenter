@@ -29,7 +29,7 @@ public class SyncRequest {
 
 	String taskName;
 
-	private PhysicalMachineSim machineObject;
+	private String machineName;
 
 	int threadNum;
 
@@ -37,22 +37,22 @@ public class SyncRequest {
 
 	double swServerStartTime;
 
-	public SyncRequest(PhysicalMachineSim h, String swID, String tskID, int thrdNum, int rqID, double servArrTime, double servStartTime) {
+	public SyncRequest(String mname, String swID, String tskID, int thrdNum, int rqID, double servArrTime, double servStartTime) {
 		softServerName = swID;
 		taskName = tskID;
 		threadNum = thrdNum;
 		reqID = rqID;
 		swServerArrivalTime = servArrTime;
 		swServerStartTime = servStartTime;
-		setMachineObject(h);
+		setMachineName(mname);
 	}
 
-	PhysicalMachineSim getMachineObject() {
-		return machineObject;
+	String getMachineName() {
+		return machineName;
 	}
 
-	void setMachineObject(PhysicalMachineSim machineObject) {
-		this.machineObject = machineObject;
+	void setMachineName(String mname) {
+		this.machineName = mname;
 	}
 
 }

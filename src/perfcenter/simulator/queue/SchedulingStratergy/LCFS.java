@@ -56,7 +56,7 @@ public class LCFS extends QueueSim {
 			// so now we schedule the request
 			createStartTaskEvent(req, idleDeviceId, currTime);
 			// update the average waiting time for this resource
-			averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
+			waitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
 		}
 	}
 
@@ -77,6 +77,6 @@ public class LCFS extends QueueSim {
 		// nadeesh commented because now totalWaitingTime is not used to find the averageWaitingTime
 		//	totalWaitingTime.recordValue(req,qServerInstances.get(instanceId).reqStartTime - qServerInstances.get(instanceId).reqArrivalTime);
 		// update the average waiting time for this resource
-		averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
+		waitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
 	}
 }

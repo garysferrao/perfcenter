@@ -23,6 +23,7 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
+import perfcenter.baseclass.enums.DeviceType;
 import perfcenter.baseclass.enums.PowerManagementGovernor;
 import perfcenter.baseclass.enums.SchedulingPolicy;
 import perfcenter.baseclass.exception.DeviceNotFoundException;
@@ -54,6 +55,8 @@ public class Machine {
 	/** lan onto which machine will be deployed */
 	public String lan = "";
 	private Logger logger = Logger.getLogger("Machine");
+	
+	private double ramsize;
 	
 	public Random r;
 	public Machine() {
@@ -137,10 +140,6 @@ public class Machine {
 		softResources.put(sr.name, sr);
 	}
 
-	protected void addSoftServer(SoftServer ss) {
-		softServers.put(ss.name, ss);
-	}
-	
 	public void modifyDeviceCount(String dname, double count) throws DeviceNotFoundException {
 		Object dev = getDevice(dname);
 		if (((Device) dev).count.name.compareToIgnoreCase("local") == 0) {
@@ -249,6 +248,24 @@ public class Machine {
 	public Collection<Device> getDevicesList() {
 		return devices.values();
 	}
+	
+	public DeviceCategory getCpuDevCategory(){
+		for (Device dev : devices.values()) {
+			if (dev.category.type == DeviceType.CPU) {
+				return dev.category;
+			}
+		}
+		throw new Error("ERROR:PhysicalMachine " + name + " has no device of type CPU");
+	}
+	
+	public double getDeviceBaseSpeed(DeviceCategory devcat){
+		for (Device dev : devices.values()) {
+			if (dev.category.type == DeviceType.CPU) {
+				return dev.basespeed.value;
+			}
+		}
+		throw new Error("ERROR:PhysicalMachine " + name + " has no device of type CPU");
+	}
 
 	public void setDeviceAsPowerManaged(String pdevname) throws DeviceNotFoundException {
 		if (isDeviceDeployed(pdevname) == false) {
@@ -353,5 +370,11 @@ public class Machine {
 				+ " should be modified");
 	}
 	
+	public double getRamSize(){
+		return ramsize;
+	}
 
+	public void setRamSize(Variable _ramsize){
+		ramsize = _ramsize.value;
+	}
 }

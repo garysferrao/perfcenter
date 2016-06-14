@@ -28,16 +28,20 @@ import org.apache.log4j.Logger;
 //import perfcenter.analytical.PerfAnalytic; //ANALYTICAL
 import perfcenter.baseclass.Device;
 import perfcenter.baseclass.Machine;
+import perfcenter.baseclass.PhysicalMachine;
+import perfcenter.baseclass.VirtualMachine;
 import perfcenter.baseclass.LanLink;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.SoftResource;
+import perfcenter.baseclass.enums.DeviceType;
 import perfcenter.baseclass.enums.SolutionMethod;
 import perfcenter.baseclass.enums.SystemType;
 import perfcenter.baseclass.enums.Warnings;
 import perfcenter.baseclass.exception.DeviceNotFoundException;
 import perfcenter.simulator.PerfSim;
 import perfcenter.simulator.SimulationParameters;
+import perfcenter.simulator.PhysicalMachineSim;
 import perfcenter.simulator.queue.QServerInstance;
 import perfcenter.simulator.queue.QueueSim;
 import static perfcenter.baseclass.ModelParameters.resultantDistSys;
@@ -71,12 +75,21 @@ public class Output {
 				ModelParameters.inputDistSys.validate();
 				ModelParameters.isValidated = true;
 			}
-
+		
 			// get type of analysis
 			if (ModelParameters.getSolutionMethod() == SolutionMethod.SIMULATION) {
 				// analysis for simulation
-				PerfSim ps = new PerfSim(ModelParameters.inputDistSys);
+				ModelParameters.transformedInputDistSys = ModelParameters.inputDistSys.transform();
+				System.out.println("========Input Distributed System=======");
+				ModelParameters.transformedInputDistSys.print();
+				PerfSim ps = new PerfSim(ModelParameters.transformedInputDistSys);
+				if (!(ModelParameters.getWarnings() == Warnings.DISABLE)) {
+					ModelParameters.transformedInputDistSys.validate();
+				}
+				//ModelParameters.transformedInputDistSys.validate();
 				resultantDistSys = ps.performSimulation();
+				System.out.println("========output Distributed System=======");
+				resultantDistSys.print();
 			} else {
 				// analysis for analytical
 				/*ANALYTICAL
@@ -150,6 +163,10 @@ public class Output {
 		} else {
 			return resultantDistSys.getScenario(scenarioname).blockingProb.toString(slot);
 		}
+	}
+	
+	public String findAvailability(int slot, String servername){
+		return resultantDistSys.softServers.get(servername).availability.toString();
 	}
 
 	/** finds respt of device/ link or soft server or virtual resource */
@@ -405,28 +422,31 @@ public class Output {
 
 	/** finds util of device/ link or softserver or virtual resource */
 	public String findUtilization(int slot, String name1, String name2, String name3) throws DeviceNotFoundException, Exception {
+		//System.out.println("findUtilization-name1:" + name1 + " name2:" + name2 + " name3:" + name3);
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgUtil.toString(slot);
 		} else if (resultantDistSys.isPM(name1) == true) {
-			Machine host = resultantDistSys.getPM(name1);
+			PhysicalMachine pm = resultantDistSys.getPM(name1);
 			if (name3 == ")") {// third parameter is not specified in utilization function
-				if (host.isServerDeployed(name2)) {
-					return host.getServer(name2).resourceQueue.avgUtil.toString(slot);
-				} else if (host.isDeviceDeployed(name2)) {
-					return host.getDevice(name2).resourceQueue.avgUtil.toString(slot);
-				} else if (host.isSoftResourceDeployed(name2)) {
-					return host.getSoftRes(name2).resourceQueue.avgUtil.toString(slot);
+				if (pm.isServerDeployed(name2)) {
+					return pm.getServer(name2).resourceQueue.avgUtil.toString(slot);
+				} else if (pm.isDeviceDeployed(name2)) {
+					System.out.println(pm.getDevice(name2).resourceQueue.avgUtil.getValue());
+					return pm.getDevice(name2).resourceQueue.avgUtil.toString(slot);
+				} else if (pm.isSoftResourceDeployed(name2)) {
+					return pm.getSoftRes(name2).resourceQueue.avgUtil.toString(slot);
+				}else if (name2.compareTo("ram") == 0){
+					return pm.avgRamUtil.toString(slot);
 				} else {
 					throw new Error("second parameter to util \"" + name2 + "\" is not deployed on server");
 				}
-
 			} else {// third parameter is specified in utilzation function
-
-				if (host.isServerDeployed(name2)) {
-
-					if (host.isDeviceDeployed(name3)) {
-						String util = host.getDevice(name3).resourceQueue.avgUtil.toString(name2);// nadeesh
-																												// addded
+				if (pm.isServerDeployed(name2)) {
+					if(name3.equals("ram")){
+						//System.out.println(host.getServer(name2).ramUtil.getConfidenceInterval(0));
+						return pm.getServer(name2).ramUtil.toString(slot);
+					}else if (pm.isDeviceDeployed(name3)) {
+						String util = pm.getDevice(name3).resourceQueue.avgUtil.toString(name2);// nadeesh
 						return util;
 					} else {
 						throw new Error("Third parameter to util \"" + name3 + "\" is either not Device or not deployed on " + name1);
@@ -434,6 +454,31 @@ public class Output {
 				} else {
 					throw new Error("Second parameter to util \"" + name2 + "\" is either not a server or not deployed on " + name1);
 				}
+			}
+		}else if (ModelParameters.transformedInputDistSys.isVM(name1) == true) {
+			PhysicalMachine pm = resultantDistSys.getPM(ModelParameters.inputDistSys.getActualHostName(name1));
+			VirtualMachine vm = ModelParameters.inputDistSys.getVM(name1);
+			if (name3 == ")") {// third parameter is not specified in utilization function
+				if (pm.isServerDeployed(name2)) {
+					return pm.getServer(name2).resourceQueue.avgUtil.toString(slot);
+				} else if (vm.isDeviceDeployed(name2)) {
+					if(vm.devices.get(name2).category.type == DeviceType.NONCPU){
+						throw new Error("Utilization of NonCpu type device on virtual machine is not supported yet. second parameter to util \"" + name2 + "\" is invalid");
+					}
+					ArrayList<SoftServer> vservlist = ModelParameters.transformedInputDistSys.vservers.get(name1);
+					for(SoftServer vserv : vservlist){
+						if(vserv.name.indexOf(name2) != -1){
+							return pm.getServer(vserv.name).resourceQueue.avgUtil.toString(slot);
+						}
+					}
+					throw new Error("Sorry there is something wrong");
+				} else if(name2.compareTo("ram") == 0){ 
+					return pm.avgVmRamUtils.get(name1).toString(slot);
+				} else {
+					throw new Error("second parameter to util \"" + name2 + "\" is not deployed on server");
+				}
+			}else {
+				throw new Error("For virtual machine, three parameter util function is not supported yet.");
 			}
 		} else {
 			throw new Error("first parameter to util \"" + name1 + "\" is not lan or host");

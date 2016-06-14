@@ -19,6 +19,7 @@ package perfcenter.simulator;
 
 import java.util.HashMap;
 import java.util.PriorityQueue;
+import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
@@ -43,7 +44,7 @@ public class PerfSim {
 	// length of interval after which sample will be taken
 	Logger logger = Logger.getLogger("PerfSim");
 
-	public PerfSim(DistributedSystem perfc) {
+	public PerfSim(DistributedSystem perfc) throws IOException {
 		SimulationParameters.distributedSystemSim = new DistributedSystemSim(perfc);
 		SimulationParameters.requestMap = new HashMap<Integer, Request>();
 		SimulationParameters.eventQueue = new PriorityQueue<Event>();
@@ -154,80 +155,72 @@ public class PerfSim {
 				throw new Error("No event in event list. It should NEVER happen. This is a bug.");
 			}
 			
+			if(currentEventToBeHandled.type != EventType.SCENARIO_ARRIVAL && currentEventToBeHandled.type != EventType.SIMULATION_COMPLETE 
+					&& SimulationParameters.migrationHappend){
+				currentEventToBeHandled.updateReqAfterMigration();
+			}
 			logger.debug("Event: " + currentEventToBeHandled.type + "\t\ttime: " + currentEventToBeHandled.timestamp);
 			switch (currentEventToBeHandled.type) {
 			case NO_OF_USERS_CHANGES:
-				//System.out.println("No of User event is being handled");
 				currentEventToBeHandled.numberOfUserChanged();
 				break;
 			case ARRIVAL_RATE_CHANGES:
-				//System.out.println("Arrival Rate event is being handled");
 				currentEventToBeHandled.arrivalRateChanged();
 				break;
 			case DEVICE_PROBE:
-				//System.out.println("Device Probe event is being handled");
 				currentEventToBeHandled.deviceProbe();
 				break;
 			case SCENARIO_ARRIVAL:
-				//System.out.println("Scenario Arrival event is being handled");
 				currentEventToBeHandled.scenarioArrival();
 				break;
 
 			case SOFTWARE_TASK_STARTS:
-				//System.out.println("Software Task Starts event is being handled");
 				currentEventToBeHandled.softwareTaskStarts();
 				break;
 
 			case SOFTWARE_TASK_ENDS:
-				//System.out.println("Software Task Ends event is being handled");
 				currentEventToBeHandled.softwareTaskEnds();
 				break;
 
 			case HARDWARE_TASK_STARTS:
-				//System.out.println("Hardware Task Starts event is being handled");
 				currentEventToBeHandled.hardwareTaskStarts();
 				break;
 
 			case HARDWARE_TASK_ENDS:
-				//System.out.println("Hardware Task Starts event is being handled");
 				currentEventToBeHandled.hardwareTaskEnds();
 				break;
 
 			case NETWORK_TASK_STARTS:
-				//System.out.println("Network Task Starts event is being handled");
 				currentEventToBeHandled.networkTaskStarts();
 				break;
 
 			case NETWORK_TASK_ENDS:
-				//System.out.println("Network Task Ends event is being handled");
 				currentEventToBeHandled.networkTaskEnds();
 				break;
 
 			case SOFTRES_TASK_STARTS:
-				//System.out.println("Softwre Resource Starts event is being handled");
 				currentEventToBeHandled.softResourceTaskStarts();
 				break;
 
 			case SOFTRES_TASK_ENDS:
-				//System.out.println("Software Resource Task Starts event is being handled");
 				currentEventToBeHandled.softResourceTaskEnds();
 				break;
 
 			case REQUEST_DONE:
-				//System.out.println("Request Done event is being handled");
 				currentEventToBeHandled.requestCompleted();
+				break;
+				
+			case MIGRATE:
+				currentEventToBeHandled.doMigration();
 				break;
 
 			case WARMUP_ENDS:
-				//SimulationParameters.warmupEnabled = false;
 				break;
 
 			case COOLDOWN_STARTS:
-			//	SimulationParameters.warmupEnabled = true;
 				break;
 
 			case SIMULATION_COMPLETE:
-				//System.out.println("Simulation Complete event is being handled");
 				SimulationParameters.recordIntervalSlotRunTime();
 				SimulationParameters.distributedSystemSim.recordCISampleAtTheEndOfSimulation();
 				logger.debug("Sim end at : " + SimulationParameters.currTime);

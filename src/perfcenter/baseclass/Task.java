@@ -81,6 +81,7 @@ public class Task {
 	}
 
 	public void print() {
+		System.out.println("Task " + name);
 		for (ServiceTime servt : subtaskServiceTimes) {
 			servt.print();
 		}

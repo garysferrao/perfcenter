@@ -17,20 +17,25 @@ ver * Copyright (C) 2011-12  by Varsha Apte - <varsha@cse.iitb.ac.in>, et al.
  */
 package perfcenter.simulator;
 
+import static perfcenter.simulator.DistributedSystemSim.computeConfIvalForMetric;
+
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import perfcenter.baseclass.enums.MigrationPolicyType;
 import perfcenter.baseclass.Device;
 import perfcenter.baseclass.DistributedSystem;
 import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.PhysicalMachine;
-import perfcenter.baseclass.VirtualMachine;
 import perfcenter.baseclass.LanLink;
 import perfcenter.baseclass.Metric;
+import perfcenter.baseclass.MigrationPolicyInfo;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.TaskNode;
 import perfcenter.baseclass.Scenario;
@@ -38,7 +43,11 @@ import perfcenter.baseclass.SoftServer;
 import perfcenter.baseclass.Task;
 import perfcenter.simulator.metric.ManuallyComputedMetric;
 import perfcenter.simulator.metric.MetricSim;
+import perfcenter.simulator.metric.TimeAverageMetric;
 import perfcenter.simulator.queue.QueueSim;
+import perfcenter.simulator.migrationpolicy.MigrationPolicy;
+import perfcenter.simulator.migrationpolicy.TIMEBASED;
+import umontreal.iro.lecuyer.randvarmulti.RandomMultiVariateGen;
 
 /**
  * This has all the distributed system parameters as given in input file. It uses inherited class HostAna for Host and ServerAna for server.
@@ -54,6 +63,18 @@ public class DistributedSystemSim extends DistributedSystem {
 	public HashMap<String, ScenarioSim> scenarioMap = new HashMap<String, ScenarioSim>();
 	public HashMap<String, PhysicalMachineSim> machineMap = new HashMap<String, PhysicalMachineSim>();
 	public HashMap<String, SoftServerSim> softServerMap = new HashMap<String, SoftServerSim>();
+	
+	public MigrationPolicy migrationPolicy;
+	
+	public HashMap<String, Boolean> migratedServers = new HashMap<String, Boolean>();
+		
+	public boolean serverMigrated(String servername){
+		if(migratedServers == null){
+			return false;
+		}
+		return migratedServers.containsKey(servername);
+	}
+
 	
 	public ManuallyComputedMetric overallGoodputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 	public ManuallyComputedMetric overallBadputSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
@@ -106,7 +127,7 @@ public class DistributedSystemSim extends DistributedSystem {
 		}
 		// this need not be done if its use in perfanalytic is fixed
 		for (SoftServer s : softServers.values()) {
-			for (Task t : s.simpleTasks) {
+			for (Task t : s.tasks) {
 				t.initialize();
 			}
 		}
@@ -115,12 +136,43 @@ public class DistributedSystemSim extends DistributedSystem {
 			scenarios.put(s.getName(), s);
 			scenarioMap.put(s.getName(), s);
 		}
+		
+		if(ds.migrationPolicyInfo != null){
+			migrationPolicy = loadMigrationPolicyClass(ds.migrationPolicyInfo);
+		}
 
 	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public MigrationPolicy loadMigrationPolicyClass(MigrationPolicyInfo policyinfo) {
+		MigrationPolicy policy = null;
+		policyinfo.print();
+		try {
+			Class c = Class.forName("perfcenter.simulator.migrationpolicy." + policyinfo.type.toString());
+
+			Class[] proto = new Class[3];
+			proto[0] = Double.class;
+			proto[1] = String.class;
+			proto[2] = String.class;
+
+			Object[] params = new Object[3];
+			params[0] = policyinfo.policyarg;
+			params[1] = policyinfo.vmname;
+			params[2] = policyinfo.destpmname;
+
+			Constructor cons = c.getConstructor(proto);
+			policy = (MigrationPolicy) cons.newInstance(params);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return policy;
+	}
+
 
 	// clear all the variables but keep the confidence interval calculations
 	public void clearValuesButKeepConfIvals() {
 		for (Machine m : pms.values()) {
+			((PhysicalMachineSim)m).clearValuesButKeepConfIvals();
 			for (SoftServer softServer : m.softServers.values()) {
 				((SoftServerSim) softServer).clearValuesButKeepConfIvals();
 //				softServerSim.resourceQueue = QueueSim.loadSchedulingPolicyClass(softServerSim.schedp.toString(), buffSizeTemp, (int) softServerSim.thrdCount.getValue(), softServerSim);
@@ -129,6 +181,7 @@ public class DistributedSystemSim extends DistributedSystem {
 				((DeviceSim) dev).clearValuesButKeepConfIvals();
 //				deviceSim.resourceQueue = QueueSim.loadSchedulingPolicyClass(deviceSim.schedulingPolicy.toString(), buffSizeTemp, ((QueueSim) deviceSim.resourceQueue).numberOfInstances, /* "hwRes", */deviceSim);
 			}
+			
 		}
 		for (Object lk : links.values()) {
 			LanLinkSim lnk = (LanLinkSim) lk;
@@ -146,6 +199,7 @@ public class DistributedSystemSim extends DistributedSystem {
 		overallDroprateSim.clearValuesButKeepConfIvals();
 		overallBuffTimeoutSim.clearValuesButKeepConfIvals();
 		overallRespTimeSim.clearValuesButKeepConfIvals();
+		
 	}
 	
 	/**
@@ -162,21 +216,19 @@ public class DistributedSystemSim extends DistributedSystem {
 	public void computeConfIvalsAtEndOfRepl() {
 		for (Machine m : pms.values()) {
 			for (SoftServer softServer : m.softServers.values()) {
-				((QueueSim) ((SoftServerSim) softServer).resourceQueue).computeConfIvalsAtEndOfRepl();
-				// so.setThroughput(((QueueSim) so.softQ).giveMeThroughtput());
+				((SoftServerSim)softServer).computeConfIvalsAtEndOfRepl();
 			}
 			for (Device device : m.devices.values()) {
-				// calculate RAM utilization for current host if device is RAM.
+				/* RAM device won't have actual contention, no point of computing usual performance measures */
 				if (device.name.equals("ram")) {
-					//XXX argument passing redundant in next line
-					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsForRAM(ModelParameters.inputDistSys.getPM(m.name));
-				} else {
-					((DeviceSim) device).avgFreqSim.computeConfIvalsAtEndOfRepl();
-					DistributedSystemSim.computeConfIvalForMetric(device.averageFrequency, ((DeviceSim) device).avgFreqSim);
-					
-					((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsAtEndOfRepl();
+					continue;
 				}
+				((DeviceSim) device).avgFreqSim.computeConfIvalsAtEndOfRepl();
+				DistributedSystemSim.computeConfIvalForMetric(device.averageFrequency, ((DeviceSim) device).avgFreqSim);
+				
+				((QueueSim) ((DeviceSim) device).resourceQueue).computeConfIvalsAtEndOfRepl();
 			}
+			((PhysicalMachineSim)m).computeConfIvalsAtEndOfRepl();
 		}
 		for (LanLink lanLink : links.values()) {
 			((QueueSim) ((LanLinkSim) lanLink).linkQforward).computeConfIvalsAtEndOfRepl();
@@ -189,7 +241,7 @@ public class DistributedSystemSim extends DistributedSystem {
 		
 		computeScenarioEndToEndValuesAtTheEndOfRepl();
 	}
-	
+		
 	/**
 	 * Calculates avg response time, tput and arrival rate of all scenarios function added by akhila modified by nikhil: Gput, Bput, Tput,
 	 * BuffTimeout.
@@ -264,6 +316,7 @@ public class DistributedSystemSim extends DistributedSystem {
 					deviceSim.recordCISampleAtTheEndOfSimulation();
 				}
 			}
+			((PhysicalMachineSim)m).recordCISampleAtTheEndOfSimulation();
 		}
 
 		for (LanLink lanLink : links.values()) {
@@ -305,8 +358,8 @@ public class DistributedSystemSim extends DistributedSystem {
 			//nadeesh Store the Slot level Metric value
 			metric.setValue(slot, metricSim.getMean(slot));
 			metric.setConfidenceInterval(slot, metricSim.getCI(slot));
-			
-		if (metricSim.getServerList(slot) != null) {
+			//System.out.println(slot + " : " + metric.getConfidenceInterval(slot)  + " : " + metricSim.getCI(slot));
+			if (metricSim.getServerList(slot) != null) {
 				Set<String> srvList=metricSim.getServerList(slot);
 				for(String srvName:srvList){
 					//nadeesh Store the server level Metric value
@@ -352,5 +405,157 @@ public class DistributedSystemSim extends DistributedSystem {
 
 	public boolean isServer(String name) {
 		return softServerMap.containsKey(name);
+	}
+	public double migrate1(String vmname, String destpmname){
+		return 0.0;
+	}
+	
+	public boolean checkFeasibilityOfMigration(String vmname, String destpmname){
+		String srcpmname = ModelParameters.inputDistSys.getActualHostName(vmname);
+		PhysicalMachineSim srcpm = SimulationParameters.distributedSystemSim.machineMap.get(srcpmname);
+		PhysicalMachineSim destpm = SimulationParameters.distributedSystemSim.machineMap.get(destpmname);
+		if(destpm.vservers.containsKey(vmname)){
+			System.err.println("No need to migrate. \"" + vmname + "\" is already deployed on \"" + destpmname + "\"");
+			return false;
+		}
+		HashSet<String> srcdevcats = new HashSet<String>();
+		HashSet<String> destdevcats = new HashSet<String>();
+		for(Device device : ModelParameters.inputDistSys.vms.get(vmname).devices.values()){
+			srcdevcats.add(device.category.name);
+		}
+		for(Device device : destpm.deviceMap.values()){
+			destdevcats.add(device.category.name);
+		}
+		for(String srcdevcat : srcdevcats){
+			if(!destdevcats.contains(srcdevcat)){
+				System.err.println("Migration Feasibility failed. VM's devicecagory \"" + srcdevcat + "\" can't be accmmodated on \"" + destpmname);
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public double migrate(String vmname, String destpmname){
+		String srcpmname = ModelParameters.inputDistSys.getActualHostName(vmname);
+		PhysicalMachineSim srcpm = SimulationParameters.distributedSystemSim.machineMap.get(srcpmname);
+		PhysicalMachineSim destpm = SimulationParameters.distributedSystemSim.machineMap.get(destpmname);
+		double downtime = 0.0;
+		ArrayList<String> origTasks = new ArrayList<String>();
+		for(SoftServer srvr : srcpm.vservers.get(vmname)){
+			downtime += migrateServer((SoftServerSim)srvr, srcpm, destpm);
+			migratedServers.put(srvr.name, true);
+		}
+		for(SoftServer srvr : srcpm.serversDeployedOnVm.get(vmname)){
+			downtime += migrateServer((SoftServerSim)srvr, srcpm, destpm);
+			migratedServers.put(srvr.name, true);
+			for(Task task : ModelParameters.inputDistSys.softServers.get(srvr.name).tasks){
+				origTasks.add(task.name);
+			}
+		}
+		
+		if(destpm.vservers == null){
+			destpm.vservers = new HashMap<String, ArrayList<SoftServer> >();
+		}
+		ArrayList<SoftServer> tmp = srcpm.vservers.get(vmname);
+		srcpm.vservers.remove(vmname);
+		destpm.vservers.put(vmname, tmp);
+		
+		if(destpm.serversDeployedOnVm == null){
+			destpm.serversDeployedOnVm = new HashMap<String, ArrayList<SoftServer> >();
+		}
+		tmp = srcpm.serversDeployedOnVm.get(vmname);
+		srcpm.serversDeployedOnVm.remove(vmname);
+		destpm.serversDeployedOnVm.put(vmname, tmp);
+		
+		if(destpm.ramUtilSim == null){
+			destpm.ramUtilSim = new TimeAverageMetric(0.95);
+		}
+		if(destpm.vmRamUtilSim == null){
+			destpm.vmRamUtilSim = new HashMap<String, TimeAverageMetric>();
+		}
+		if(destpm.currVmRamUtil == null){
+			destpm.currVmRamUtil = new HashMap<String, Double>();
+		}
+		destpm.vmRamUtilSim.put(vmname, srcpm.vmRamUtilSim.get(vmname));
+		srcpm.vmRamUtilSim.remove(vmname);
+		
+		if(destpm.avgRamUtil == null){
+			destpm.avgRamUtil = new Metric();
+		}
+		if(destpm.avgVmRamUtils == null){
+			destpm.avgVmRamUtils = new HashMap<String, Metric>();
+		}
+		destpm.avgVmRamUtils.put(vmname, srcpm.avgVmRamUtils.get(vmname));
+		srcpm.avgVmRamUtils.remove(vmname);
+		
+		HashMap<String, Task> hvTasksToBeModified = new HashMap<String, Task>();
+		SoftServer fromHypervisor = SimulationParameters.distributedSystemSim.softServerMap.get(srcpm.getHypervisorName());
+		SoftServer toHypervisor = SimulationParameters.distributedSystemSim.softServerMap.get(destpm.getHypervisorName());
+		
+		ArrayList<Integer> toBeDeletedTasksFromOrigHv = new ArrayList<Integer>();
+		for(int i=0;i<fromHypervisor.tasks.size();i++){
+			Task hvTask = fromHypervisor.tasks.get(i);
+			for(String origtaskname : origTasks){
+				if(hvTask.name.contains(origtaskname)){
+					hvTasksToBeModified.put(hvTask.name, hvTask);
+					toBeDeletedTasksFromOrigHv.add(i);
+					break;
+				}
+			}
+		}
+		for(Integer i : toBeDeletedTasksFromOrigHv){
+			fromHypervisor.tasks.remove(i);
+		}
+		
+		for(Task task : hvTasksToBeModified.values()){
+			task.softServerName = toHypervisor.name;
+			toHypervisor.tasks.add(task);
+		}
+		
+		for(Scenario scenario : SimulationParameters.distributedSystemSim.scenarioMap.values()){
+			ArrayList<TaskNode> level = new ArrayList<TaskNode>();
+			level.add(scenario.rootNode);
+			/* Level traversal  */
+			while(!level.isEmpty()){
+				ArrayList<TaskNode> nxtlevel = new ArrayList<TaskNode>();
+				for(int i=0;i<level.size();i++){
+					TaskNode node = level.get(i);
+					if(hvTasksToBeModified.containsKey(node.name)){
+						node.servername = toHypervisor.name;
+					}
+					for(TaskNode child : node.children){
+						nxtlevel.add(child);
+					}
+				}
+				level = nxtlevel;
+			}
+		}
+		return downtime;
+	}
+	
+	public double migrateServer(SoftServerSim srvr, PhysicalMachineSim srcpm, PhysicalMachineSim destpm){
+		srcpm.softServerMap.remove(srvr.name);
+		destpm.softServerMap.put(srvr.name, srvr);
+		
+		srcpm.softServers.remove(srvr.name);
+		destpm.softServers.put(srvr.name, (SoftServer)srvr);
+		
+		for(int i=0;i<srvr.machines.size();i++){
+			if(srvr.machines.get(i).compareTo(srcpm.name) == 0){
+				srvr.machines.remove(i);
+				break;
+			}
+		}
+		srvr.machines.add(destpm.name);
+		
+		for(int i=0;i<srvr.hostObjects.size();i++){
+			if(srvr.hostObjects.get(i).name.compareTo(srcpm.name) == 0){
+				srvr.hostObjects.remove(i);
+				break;
+			}
+		}
+		srvr.hostObjects.add(destpm);
+		
+		return 0.0;
 	}
 }

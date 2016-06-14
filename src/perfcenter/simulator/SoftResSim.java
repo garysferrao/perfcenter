@@ -87,7 +87,8 @@ public class SoftResSim extends SoftResource implements QueueServer {
 		rq.softResIdx = rq.softResIdx + 1;
 
 		// Offer request to next virtual resource
-		nextSoftResFound2 = rq.machineObject.offerRequestToSoftRes(rq, SimulationParameters.currTime);
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(rq.machineName);
+		nextSoftResFound2 = machineObject.offerRequestToSoftRes(rq, SimulationParameters.currTime);
 		if (nextSoftResFound2 == true) {
 			return;
 		}
@@ -109,7 +110,7 @@ public class SoftResSim extends SoftResource implements QueueServer {
 	public void processTaskStartEvent(Request r, double currTime) throws Exception {
 		// offer the request to virtual resource device. before offering
 		// put the virtual res into the stack
-		PhysicalMachineSim hs = r.machineObject;
+		PhysicalMachineSim hs = SimulationParameters.distributedSystemSim.machineMap.get(r.machineName);
 		r.setRequestFromVirtRes();
 		r.setSubTaskIdx(0, "VirtualResSim:processTaskStartEvent");
 		SoftResVector vr = new SoftResVector(r.softResInstance, r.softResIdx, r.softResName, hs);
@@ -120,7 +121,8 @@ public class SoftResSim extends SoftResource implements QueueServer {
 
 	// this is called by the queue and also from deviceSim
 	public void dropRequest(Request r, double currTime) throws Exception {
-		r.machineObject.getServer(r.softServName).abortThread(r.threadNum, SimulationParameters.currTime);
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(r.machineName);
+		machineObject.getServer(r.softServName).abortThread(r.threadNum, SimulationParameters.currTime);
 		r.drop();
 	}
 

@@ -70,9 +70,8 @@ public class Request {
 	public String fromServer;
 
 	/** Name of current host to which request belongs, added by nikhil */
-	public PhysicalMachineSim machineObject;
+	public String machineName;
 	public String devName; //this is always from the current host // comes from Task and VirtualResSim class
-	public DeviceSim deviceObject;
 	public String taskName; // comes from Node
 
 	/** to track the number of softResources required by a single task */
@@ -142,7 +141,7 @@ public class Request {
 		this.requestFromTask = another.requestFromTask;
 		this.requestFromSoftRes = another.requestFromSoftRes;
 		this.devName = another.devName;
-		machineObject = another.machineObject;
+		machineName = another.machineName;
 		linkName = another.linkName;
 		scenario = another.scenario;
 		nextTaskNode = another.nextTaskNode;
@@ -183,7 +182,7 @@ public class Request {
 		System.out.println("Is request from task: " + requestFromTask );
 		System.out.println("Is request from virtual resource: " + requestFromSoftRes) ;
 		System.out.println("Device Name: " + devName );
-		System.out.println("Host Object: " + machineObject.name);
+		System.out.println("Host Object: " + machineName);
 		System.out.println("Scenario Name: " + scenario.getName() );
 		System.out.println("Thread Number: " + threadNum );
 		System.out.println("Scenario Arrival Time: " + scenarioArrivalTime + " Scenario Timeout: " + scenarioTimeout);
@@ -306,7 +305,10 @@ public class Request {
 			SyncRequest sr = synReqVector.get(i);
 			if ((sr.softServerName.compareToIgnoreCase(ss_name) == 0) && sr.reqID == rqID) {
 				flag = 1;
-				return sr.getMachineObject().getName();
+				if(SimulationParameters.distributedSystemSim.serverMigrated(ss_name)){
+					sr.setMachineName(SimulationParameters.distributedSystemSim.softServerMap.get(ss_name).machines.get(0));
+				}
+				return sr.getMachineName();
 
 			}
 			i--;
@@ -359,7 +361,8 @@ public class Request {
 		try {
 			while (synReqVector.size() > 0) {
 				SyncRequest sr = synReqVector.get(synReqVector.size() - 1);
-				sr.getMachineObject().getServer(sr.softServerName).abortThread(sr.threadNum, SimulationParameters.currTime);
+				PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(sr.getMachineName());
+				machineObject.getServer(sr.softServerName).abortThread(sr.threadNum, SimulationParameters.currTime);
 				synReqVector.remove(synReqVector.size() - 1);
 			}
 		} catch (Exception e) {
@@ -380,7 +383,7 @@ public class Request {
 		softServArrivalTime = 0;
 		softServStartTime = 0;
 		this.softServName = "";
-		machineObject = null;
+		machineName = null;
 		this.devName = "";
 		this.taskName = "";
 		softResName = null;
@@ -428,6 +431,7 @@ public class Request {
 
 	/** get next virtual resource name from virtual res */
 	public String getVirtualResourceNameFromVirRes() throws Exception {
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(machineName);
 		String vres = null;
 		try {
 			vres = ((SoftResSim) machineObject.getSoftRes(softResName)).getNextSoftResName(softResIdx);
@@ -440,6 +444,7 @@ public class Request {
 
 	/** get next virtual resource name from task */
 	public String getVirtualResourceNameFromTask() {
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(machineName);
 		return machineObject.getServer(softServName).getTaskObject(taskName).getNextSoftResName(softResIdx);
 	}
 
@@ -449,6 +454,7 @@ public class Request {
 	 */
 	public String getNextDeviceName() throws Exception {  //MAKECHANGE 
 		DeviceCategory nextDevCat = null;
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(machineName);
 		String nextDev = null;
 		if (this.requestFromTask) {
 			Task t = machineObject.getServer(softServName).getTaskObject(currentTaskNode.name);
@@ -466,13 +472,13 @@ public class Request {
 			return nextDev;
 
 		nextDev = machineObject.getDeviceName(nextDevCat);
-		//System.out.println(nextDevCat.name +" Next Device Category Name: " + nextDev);
 		return nextDev;
 	}
 
 	/** get virtual res name from next layer */
 	public String getNextLayerVRName() throws Exception {
 		String dev = null;
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(machineName);
 		if (this.isRequestFromSoftRes()) {
 			dev = machineObject.getSoftRes(softResName).getNextSoftResName(0);
 		}
@@ -539,8 +545,8 @@ public class Request {
 				if (previous.timeoutFlagInBuffer) { //XXX requests timed out during service should also be counted as blocked requests
 					SimulationParameters.currTime = time;
 					Request temprq = new Request(previous);
-
-					temprq.machineObject.getServer(temprq.softServName).processTaskEndEventTimeout(
+					PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(temprq.machineName);
+					machineObject.getServer(temprq.softServName).processTaskEndEventTimeout(
 							temprq, temprq.threadNum, SimulationParameters.currTime);
 				}
 			}
@@ -573,13 +579,14 @@ public class Request {
 					Request temprq = new Request(previousRequest);
 
 					// get the host and server object
-					temprq.machineObject.getServer(temprq.softServName).processTaskEndEventTimeout(
+					PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(temprq.machineName);
+					machineObject.getServer(temprq.softServName).processTaskEndEventTimeout(
 							temprq, temprq.threadNum, SimulationParameters.currTime);
 				}
 			} else if (timeoutFlagInBuffer) {
 				// when the request gets timeout at buffer we have to deque next requests by generating START_SOFTWARE_TASK event for that request
 				SimulationParameters.currTime = time;
-
+				PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(machineName);
 				machineObject.getServer(softServName).processTaskEndEventTimeout(this, threadNum, SimulationParameters.currTime);
 				SimulationParameters.removeRequest(id);
 			} else {
@@ -590,7 +597,7 @@ public class Request {
 	}
 
 	public void setHost(String hostName) {
-		this.machineObject = SimulationParameters.distributedSystemSim.getPM(hostName);
+		this.machineName = hostName;
 	}
 
 	public boolean isRequestFromTask() {

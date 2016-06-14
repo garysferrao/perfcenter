@@ -218,7 +218,7 @@ class _TimeAverageMetricSlotLevel extends _MetricSimSlotLevel {
 	public double getMean() {
 		return perServerMetric.get("_total") != null ? perServerMetric.get("_total").getMean() : 0;
 	}
-
+	
 	public boolean isValuesCapturedSinceLastCI(String serverName) {
 		return perServerMetric.get(serverName).isValuesCapturedSinceLastCI();
 	}
@@ -300,7 +300,6 @@ class _TimeAverageMetricLowestLevel extends _MetricSimLowestLevel {
 		if(SimulationParameters.warmupEnabled) {
 			return;
 		}
-		
 		if (!Double.isNaN(sampleValue) && !Double.isNaN(timeElapsedForCurrentSample)) {
 			totalValue += sampleValue * timeElapsedForCurrentSample;
 		}

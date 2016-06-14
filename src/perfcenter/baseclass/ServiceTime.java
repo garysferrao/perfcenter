@@ -88,8 +88,7 @@ public class ServiceTime {
 	}
 
 	public void print() {
-		System.out.println(" Device Category" + devCategory.name + " ");
-		System.out.println(" Distribution " + dist.name_ + "(" + dist.value1_.getName() + ":" + dist.value1_.getValue() + ")");
+		System.out.println(devCategory.name + " servt " + dist.name_ + "(" + dist.value1_.getName() + ":" + dist.value1_.getValue() + ") at " + basespeed);
 	}
 
 	// makes a copy of self

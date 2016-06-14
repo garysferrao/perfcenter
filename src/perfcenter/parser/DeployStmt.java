@@ -1,6 +1,5 @@
 package perfcenter.parser;
 
-import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.Lan;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.PhysicalMachine;
@@ -31,8 +30,7 @@ public class DeployStmt {
 					srv.addMachine(name2);
 					pm.addServer(srv);
 					srv.deploySoftResOnHost(pm);
-				}
-				else if (ModelParameters.inputDistSys.isVM(name2)) {
+				} else if (ModelParameters.inputDistSys.isVM(name2)) {
 					SoftServer srv = ModelParameters.inputDistSys.getServer(name1);
 					VirtualMachine vmachine = ModelParameters.inputDistSys.getVM(name2);
 					srv.addMachine(name2);
@@ -53,16 +51,26 @@ public class DeployStmt {
 				ln.addMachine(name1);
 				return;
 			} else if (ModelParameters.inputDistSys.isVM(name1)){ //First Parameter is vmachine name, then second needs to be machine name
-				if (ModelParameters.inputDistSys.isPM(name2) == false) {
-					throw new Error(" \"" + name2 + "\" is not machine. "+ name1 + "," + name2);
+				if (ModelParameters.inputDistSys.isPM(name2)) {
+					pm = ModelParameters.inputDistSys.getPM(name2);
+					if(!pm.virtualizationEnabled){
+						throw new Error("virtualization is not supported on " + "\"" + name2 + "\"");
+					}
+					VirtualMachine vmachine = ModelParameters.inputDistSys.getVM(name1);
+					vmachine.host = pm;
+					pm.addVM(vmachine);
+				}else if(ModelParameters.inputDistSys.isVM(name2)){
+					VirtualMachine hostvm = ModelParameters.inputDistSys.getVM(name2);
+					if(!hostvm.virtualizationEnabled){
+						throw new Error("virtualization is not supported on virtual machine " + "\"" + name2 + "\"");
+					}
+					VirtualMachine guestvm = ModelParameters.inputDistSys.getVM(name1);
+					guestvm.host = hostvm;
+					hostvm.addVM(guestvm);
+					//System.out.println("DeployStmt::" + "vm.name:" + guestvm.name + " hostvm.name:" + hostvm.name);
+				}else{
+					throw new Error(" \"" + name2 + "\" is neither pm nor vm. ");
 				}
-				pm = ModelParameters.inputDistSys.getPM(name2);
-				if(!pm.virtualizationEnabled){
-					throw new Error("virtualization is not supported on " + "\"" + name2 + "\"");
-				}
-				VirtualMachine vmachine = ModelParameters.inputDistSys.getVM(name1);
-				vmachine.host = pm;
-				
 			}else {
 				throw new Error(" \"" + name1 + "\" is neither machine nor server");
 			}

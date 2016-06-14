@@ -1,0 +1,123 @@
+variable
+	nusers 5
+end
+
+devicecategory
+	cpu intel
+	noncpu disk
+end
+
+pdevice 
+	intel cpu1
+	disk disk1
+end
+
+vdevice
+	intel vcpu1
+	disk vdisk1
+end
+
+task wt1 
+	intel servt 0.04 at 2.8
+end
+
+task wt2 
+	intel servt 0.04 at 2.8
+end
+
+task dt1 
+	intel servt 0.08 at 2.8
+	disk servt 0.20 at 300
+end
+
+physicalmachine pm[2]
+	cpu1 count 12
+	cpu1 buffer 999999
+	cpu1 schedP fcfs
+	cpu1 basespeed 2.8
+	disk1 count 1
+	disk1 buffer 10
+	disk1 schedP fcfs
+	virtualization on
+end
+
+virtualmachine vm[2]
+	vcpu1 count 1
+	vcpu1 buffer 999999
+	vcpu1  schedP fcfs
+	vdisk1 count 1
+	vdisk1 buffer 999999
+	vdisk1 schedP fcfs
+end
+
+server web
+	thread count 20
+	thread buffer 100
+	thread schedP fcfs
+	task wt1
+	task wt2
+end
+
+server db
+	thread count 20
+	thread buffer 100
+	thread schedP fcfs
+	task dt1
+end
+
+scenario sc1 prob 1.0
+	wt1 dt1 300 sync
+	dt1 wt2 400
+end
+
+lan 
+    lan1
+end
+
+deploy web vm[1]
+deploy db vm[2]
+deploy vm[1] pm[1]
+deploy vm[2] pm[2]
+deploy pm[1] lan1
+deploy pm[2] lan1
+
+loadparams
+	noofusers nusers
+	thinktime 1
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 1
+    noofrequests 2000
+	warnings disable
+end
+
+migrationpolicy timebased
+	after 8
+	vmname vm[1]
+	destpmname pm[2]
+end
+
+print "Number of Users:" + nusers
+print "Response Time:" + respt()
+print "Throughput:" + tput()
+print "Utilization(vm[1]:web):" + util(vm[1]:web)
+print "Utilization(vm[2]:db):" + util(vm[2]:db)
+print "Utilization(vm[1]:vm1_vcpu1_server):" + util(vm[1]:vm1_vcpu1_server)
+print "Utilization(vm[2]:vm2_vcpu1_server):" + util(vm[2]:vm2_vcpu1_server)
+
+print "Utilization(vm[2]:db):" + util(vm[2]:db)
+print "Utilization(pm[1]:cpu1): " + util(pm[1]:cpu1)
+print "Utilization(pm[2]:cpu1): " + util(pm[2]:cpu1)
+print "Utilization(pm[1]:ram): " + util(pm[1]:ram)
+print "Utilization(pm[1]:pm1_hypervisor:ram):" + util(pm[1]:pm1_hypervisor:ram)
+print "Utilization(vm[1]:ram): " + util(vm[1]:ram)
+print "Utilization(pm[1]:vm1_vcpu1_server:ram):" + util(pm[1]:vm1_vcpu1_server:ram)
+print "Utilization(pm[1]:web:ram): " + util(pm[1]:web:ram)
+print "Utilization(pm[2]:ram): " + util(pm[2]:ram)
+print "Utilization(pm[2]:pm2_hypervisor:ram):" + util(pm[2]:pm2_hypervisor:ram)
+print "Utilization(vm[2]:ram): " + util(vm[2]:ram)
+print "Utilization(pm[2]:vm2_vcpu1_server:ram):" + util(pm[2]:vm2_vcpu1_server:ram)
+print "Utilization(pm[2]:db:ram): " + util(pm[2]:db:ram)

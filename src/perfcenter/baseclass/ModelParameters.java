@@ -192,6 +192,13 @@ public class ModelParameters {
 	
 	/** All the values read from input file is stored into this variable */
 	public static DistributedSystem inputDistSys;
+	public static boolean isTransformed = false;
+	
+	/*
+	 * Next few member variables are used for virtualization support
+	 */
+	/* Input (Non)Virtual distributed system is transformed to its equivalent PerfCenter non-virtual distributed system */
+	public static DistributedSystem transformedInputDistSys;
 	
 	/**
 	 * The results are stored in this variable. Output uses this variable to read and print the results.
@@ -248,7 +255,6 @@ public class ModelParameters {
 		warnings = w;
 	}
 	
-
 	
 	public static void setSystemType(SystemType t) {
 		sysType = t;

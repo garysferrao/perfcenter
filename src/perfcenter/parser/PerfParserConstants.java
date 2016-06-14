@@ -81,97 +81,97 @@ public interface PerfParserConstants {
   /** RegularExpression Id. */
   int STATICSIZE = 41;
   /** RegularExpression Id. */
-  int REQUESTSIZE = 42;
+  int SIZE = 42;
   /** RegularExpression Id. */
-  int SIZE = 43;
+  int WARNINGS = 43;
   /** RegularExpression Id. */
-  int WARNINGS = 44;
+  int POWERMANAGED = 44;
   /** RegularExpression Id. */
-  int POWERMANAGED = 45;
+  int GOVERNOR = 45;
   /** RegularExpression Id. */
-  int GOVERNOR = 46;
+  int CONSERVATIVE = 46;
   /** RegularExpression Id. */
-  int CONSERVATIVE = 47;
+  int ONDEMAND = 47;
   /** RegularExpression Id. */
-  int ONDEMAND = 48;
+  int PERFORMANCE = 48;
   /** RegularExpression Id. */
-  int PERFORMANCE = 49;
+  int POWERSAVE = 49;
   /** RegularExpression Id. */
-  int POWERSAVE = 50;
+  int USERSPACE = 50;
   /** RegularExpression Id. */
-  int USERSPACE = 51;
+  int POWERMANAGEMENT = 51;
   /** RegularExpression Id. */
-  int POWERMANAGEMENT = 52;
+  int SPEEDLEVELS = 52;
   /** RegularExpression Id. */
-  int SPEEDLEVELS = 53;
+  int POWERCONSUMEDLEVELS = 53;
   /** RegularExpression Id. */
-  int POWERCONSUMEDLEVELS = 54;
+  int IDLEPOWER = 54;
   /** RegularExpression Id. */
-  int IDLEPOWER = 55;
+  int SETSPEEDLEVELINDEX = 55;
   /** RegularExpression Id. */
-  int SETSPEEDLEVELINDEX = 56;
+  int PROBEINTERVAL = 56;
   /** RegularExpression Id. */
-  int PROBEINTERVAL = 57;
+  int PROBEINTERVALDOWNFACTOR = 57;
   /** RegularExpression Id. */
-  int PROBEINTERVALDOWNFACTOR = 58;
+  int GOVERNOR_UP_THRESHOLD = 58;
   /** RegularExpression Id. */
-  int GOVERNOR_UP_THRESHOLD = 59;
+  int GOVERNOR_DOWN_THRESHOLD = 59;
   /** RegularExpression Id. */
-  int GOVERNOR_DOWN_THRESHOLD = 60;
+  int LAN = 60;
   /** RegularExpression Id. */
-  int LAN = 61;
+  int LINK = 61;
   /** RegularExpression Id. */
-  int LINK = 62;
+  int PROP = 62;
   /** RegularExpression Id. */
-  int PROP = 63;
+  int TRANS = 63;
   /** RegularExpression Id. */
-  int TRANS = 64;
+  int HEADERSIZE = 64;
   /** RegularExpression Id. */
-  int HEADERSIZE = 65;
+  int BYTES = 65;
   /** RegularExpression Id. */
-  int BYTES = 66;
+  int MS = 66;
   /** RegularExpression Id. */
-  int MS = 67;
+  int US = 67;
   /** RegularExpression Id. */
-  int US = 68;
+  int NS = 68;
   /** RegularExpression Id. */
-  int NS = 69;
+  int KBPS = 69;
   /** RegularExpression Id. */
-  int KBPS = 70;
+  int BPS = 70;
   /** RegularExpression Id. */
-  int BPS = 71;
+  int MBPS = 71;
   /** RegularExpression Id. */
-  int MBPS = 72;
+  int GBPS = 72;
   /** RegularExpression Id. */
-  int GBPS = 73;
+  int MTU = 73;
   /** RegularExpression Id. */
-  int MTU = 74;
+  int EXP = 74;
   /** RegularExpression Id. */
-  int EXP = 75;
+  int NOR = 75;
   /** RegularExpression Id. */
-  int NOR = 76;
+  int POI = 76;
   /** RegularExpression Id. */
-  int POI = 77;
+  int UNI = 77;
   /** RegularExpression Id. */
-  int UNI = 78;
+  int BETA = 78;
   /** RegularExpression Id. */
-  int BETA = 79;
+  int BINOM = 79;
   /** RegularExpression Id. */
-  int BINOM = 80;
+  int CHISQR = 80;
   /** RegularExpression Id. */
-  int CHISQR = 81;
+  int GAMMA = 81;
   /** RegularExpression Id. */
-  int GAMMA = 82;
+  int CONST = 82;
   /** RegularExpression Id. */
-  int CONST = 83;
+  int RESPT = 83;
   /** RegularExpression Id. */
-  int RESPT = 84;
+  int WAITT = 84;
   /** RegularExpression Id. */
-  int WAITT = 85;
+  int UTIL = 85;
   /** RegularExpression Id. */
-  int UTIL = 86;
+  int QLEN = 86;
   /** RegularExpression Id. */
-  int QLEN = 87;
+  int AVAIL = 87;
   /** RegularExpression Id. */
   int POWER = 88;
   /** RegularExpression Id. */
@@ -293,21 +293,31 @@ public interface PerfParserConstants {
   /** RegularExpression Id. */
   int OFF = 147;
   /** RegularExpression Id. */
-  int CONSTANT = 148;
+  int MIGRATIONPOLICY = 148;
   /** RegularExpression Id. */
-  int NUMBER = 149;
+  int TIMEBASED = 149;
   /** RegularExpression Id. */
-  int STRING_LITERAL = 150;
+  int AFTER = 150;
   /** RegularExpression Id. */
-  int FILENAME = 151;
+  int VMNAME = 151;
   /** RegularExpression Id. */
-  int IDENTIFIER = 152;
+  int DESTPMNAME = 152;
   /** RegularExpression Id. */
-  int DIGITS = 153;
+  int CONSTANT = 153;
   /** RegularExpression Id. */
-  int LETTER = 154;
+  int NUMBER = 154;
   /** RegularExpression Id. */
-  int DIGIT = 155;
+  int STRING_LITERAL = 155;
+  /** RegularExpression Id. */
+  int FILENAME = 156;
+  /** RegularExpression Id. */
+  int IDENTIFIER = 157;
+  /** RegularExpression Id. */
+  int DIGITS = 158;
+  /** RegularExpression Id. */
+  int LETTER = 159;
+  /** RegularExpression Id. */
+  int DIGIT = 160;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -356,7 +366,6 @@ public interface PerfParserConstants {
     "\"false\"",
     "\"ram\"",
     "\"staticsize\"",
-    "\"requestsize\"",
     "\"size\"",
     "\"warnings\"",
     "\"power_managed\"",
@@ -402,6 +411,7 @@ public interface PerfParserConstants {
     "\"waitt\"",
     "\"util\"",
     "\"qlen\"",
+    "\"avail\"",
     "\"power\"",
     "\"eperr\"",
     "\"pdp\"",
@@ -462,6 +472,11 @@ public interface PerfParserConstants {
     "\"virtualization\"",
     "\"ON\"",
     "\"OFF\"",
+    "\"migrationpolicy\"",
+    "\"timebased\"",
+    "\"after\"",
+    "\"vmname\"",
+    "\"destpmname\"",
     "\"constant\"",
     "<NUMBER>",
     "<STRING_LITERAL>",

@@ -72,7 +72,7 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 		int idleDeviceId = getIdleInstanceId();
 		// mark time when request enters the system
 		bookkeepRequestArrival(req, idleDeviceId, currTime);
-
+		//System.out.println("!!!!!!!!!" + req.id + ":" + req.currentTaskNode.name + ":" + req.softServName + ":" + req.machineName);
 		if (idleDeviceId == -1) {
 			
 			// no instance of device free
@@ -85,7 +85,6 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 				// discard request if all buffers full
 				totalNumberOfRequestsBlocked.recordValue(req,1);
 				qServer.dropRequest(req, currTime);
-
 			}
 		} else {
 			// some instance of deivce(idleDev) is free
@@ -93,14 +92,14 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 			req.qServerInstanceID = idleDeviceId;
 			createStartTaskEvent(req, idleDeviceId, currTime);
 			// update the average waiting time for this resource
-			averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
+			waitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
 		}
 	}
 
 	public void dequeueAndProcess(double currTime) throws Exception {
 		// get next first request(because it is fcfs) from buffer
-		Request req = getRequestFromBuffer(0, currTime);
 		
+		Request req = getRequestFromBuffer(0, currTime);
 		int idleDeviceId = getIdleInstanceId();
 		bookkeepRequestArrival(req, idleDeviceId, currTime);
 		
@@ -113,6 +112,6 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 		// nadeesh commented because now totalWaitingTime is not used to find the averageWaitingTime
 		//	totalWaitingTime.recordValue(req,qServerInstances.get(instanceId).reqStartTime - qServerInstances.get(instanceId).reqArrivalTime);
 		// update the average waiting time for this resource
-		averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
+		waitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
 	}
 }

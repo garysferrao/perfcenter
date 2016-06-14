@@ -96,7 +96,7 @@ public class LanLinkSim extends LanLink implements QueueServer {
 			endService(rq,rq.srcLanName, rq.destLanName, instanceId, SimulationParameters.currTime);
 
 			// get the soft server
-			SoftServerSim s = rq.machineObject.getServer(rq.softServName);
+			SoftServerSim s = SimulationParameters.distributedSystemSim.machineMap.get(rq.machineName).getServer(rq.softServName);
 
 			if (rq.isSyncReply(rq.softServName)) {
 				// if it is reply to sync call remove from the vector
@@ -152,8 +152,8 @@ public class LanLinkSim extends LanLink implements QueueServer {
 		// 1. We need to take care of the thread allocated to the request
 		// 2. Take care of contributions made to performance measures of
 		// current software server
-
-		r.machineObject.getServer(r.softServName).abortThread(r.threadNum, SimulationParameters.currTime);
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(r.machineName);
+		machineObject.getServer(r.softServName).abortThread(r.threadNum, SimulationParameters.currTime);
 		r.drop();
 	}
 }

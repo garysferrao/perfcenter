@@ -52,7 +52,7 @@ public class Lan {
 		hosts.add(name);
 	}
 
-	public void removeHost(String name) {
+	public void removeMachine(String name) {
 		hosts.remove(name);
 	}
 
@@ -75,4 +75,12 @@ public class Lan {
 		if (lans.isEmpty())
 			logger.warn("Warning:Lan \"" + name + "\" is not connected to other lans ");
 	}
+	
+	public Lan getCopy(){
+		Lan lcpy = new Lan(name);
+		lcpy.hosts = new ArrayList<String>(this.hosts);
+		lcpy.lans = new ArrayList<String>(this.lans);
+		return lcpy;
+	}
+	
 }

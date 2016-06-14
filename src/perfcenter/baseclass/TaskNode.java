@@ -54,8 +54,11 @@ public class TaskNode {
 	/** has the name of compound task this node is part of */
 	public String belongsToCT;
 	
+	/*Index of Tasknode in scenario. Index is given level-wise */
+	public int index;
+	
 	/** a node can have list of children nodes */
-	public ArrayList<TaskNode> children = new ArrayList<TaskNode>();
+	public ArrayList<TaskNode> children  = new ArrayList<TaskNode>();
 
 	public TaskNode(String name1) {
 		name = name1;
@@ -80,19 +83,44 @@ public class TaskNode {
 	public boolean isSync() {
 		return issync;
 	}
+	
+	public String getServerName(){
+		return ModelParameters.inputDistSys.tasks.get(name).softServerName;
+	}
 
-	// prints the node details
 	public void print() {
-		System.out.print(name + " prob " + prob.value + " sync:" + issync + " packet:" + pktsize.value + " arate:" + arrate + " servername:"
-				+ servername);
-		if (parent != null) {
-			System.out.println(" parent:" + parent.name);
-		} else {
-			System.out.println(" rootnode ");
+		//System.out.print(" thisnode:" + name + " prob " + prob.value + " sync:" + issync + " packet:" + pktsize.value + " arate:" + arrate + " servername:"
+			//	+ servername);
+		for(TaskNode child : children){
+			System.out.print("\t" + name + " " + child.name);
+			System.out.print(" prob " + child.prob.value);
+			if(child.issync)
+				System.out.print(" sync ");
+			else
+				System.out.print(" async ");
+			System.out.println();
+			child.print();
+		}
+	}
+	
+	// prints the node details
+	public void printFullInfo() {
+		//System.out.print(" thisnode:" + name + " prob " + prob.value + " sync:" + issync + " packet:" + pktsize.value + " arate:" + arrate + " servername:"
+			//	+ servername);
+		for(TaskNode child : children){
+			System.out.print("\t" + name + " " + child.name);
+			System.out.print(" prob " + child.prob.value);
+			System.out.print(" sync:" + child.issync);
+			System.out.print(" arrate:" + child.arrate);
+			System.out.print(" belongsToCT:" + String.valueOf(child.belongsToCT));
+			System.out.print(" isCT:" + String.valueOf(child.isCT));
+			System.out.print(" isRoot:" + String.valueOf(child.isRoot));
+			System.out.println();
+			child.print();
 		}
 	}
 
-	public TaskNode getCopy() // added by niranjan
+	public TaskNode getCopy()
 	{
 		TaskNode n = new TaskNode(name, servername, pktsize, issync);
 		n.arrate = this.arrate;
@@ -102,8 +130,20 @@ public class TaskNode {
 		n.parent = this.parent;
 		n.prob = this.prob;
 		for (TaskNode child : this.children) {
-			n.children.add(child);
+			n.children.add(child.getCopy());
 		}
+		return n;
+	}
+	
+	public TaskNode getCopyWithoutChildren() // added by niranjan
+	{
+		TaskNode n = new TaskNode(name, servername, pktsize, issync);
+		n.arrate = this.arrate;
+		n.belongsToCT = this.belongsToCT;
+		n.isCT = this.isCT;
+		n.isRoot = this.isRoot;
+		n.parent = this.parent;
+		n.prob = this.prob;
 		return n;
 	}
 }

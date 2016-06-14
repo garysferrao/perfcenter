@@ -99,7 +99,7 @@ public class DeviceSim extends Device implements QueueServer {
 
 		// resourceQueue.request = req;
 		resourceQueue.serverName = req.fromServer;
-		resourceQueue.hostName = req.machineObject.getName();
+		resourceQueue.hostName = req.machineName;
 		resourceQueue.devName = this.name;
 	}
 
@@ -167,8 +167,8 @@ public class DeviceSim extends Device implements QueueServer {
 			request.setSubTaskIdx(request.getSubTaskIdx() + 1, "DeviceSim:processTaskEndEvent");
 			// Option 1
 			// if there is no more devices then nextDeviceFound will be -1
-			boolean nextDeviceFound = request.machineObject.offerReqToNextDevice(request, SimulationParameters.currTime);
-			//System.out.println("DeviceSim.processTaskEndEvent():"  + nextDeviceFound);
+			PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(request.machineName);
+			boolean nextDeviceFound = machineObject.offerReqToNextDevice(request, SimulationParameters.currTime);
 			if (nextDeviceFound == true) {
 				return;
 			}
@@ -177,7 +177,7 @@ public class DeviceSim extends Device implements QueueServer {
 			if (request.isRequestFromTask()) {
 				// Option 2
 				request.softResIdx = 0;
-				boolean nextSoftResFound = request.machineObject.offerRequestToSoftRes(request, SimulationParameters.currTime);
+				boolean nextSoftResFound = machineObject.offerRequestToSoftRes(request, SimulationParameters.currTime);
 				logger.debug("Soft res: " + nextSoftResFound);
 				if (nextSoftResFound == true) {
 					return;
@@ -189,7 +189,7 @@ public class DeviceSim extends Device implements QueueServer {
 				//System.out.println("Software Task Ends offered");
 			} else if (request.isRequestFromSoftRes()) {
 				// Option 4
-				boolean nextLayerSoftResFound = request.machineObject.offerRequestToNextLayerSoftRes(request, SimulationParameters.currTime);
+				boolean nextLayerSoftResFound = machineObject.offerRequestToNextLayerSoftRes(request, SimulationParameters.currTime);
 				if (nextLayerSoftResFound == true) {
 					return;
 				}
@@ -216,7 +216,7 @@ public class DeviceSim extends Device implements QueueServer {
 		// get new service time for this PM device instance.
 		double serviceTime = request.serviceTimeRemaining * availableSpeedLevels[0] / availableSpeedLevels[qserverInstance.currentSpeedLevelIndex];
 		
-		double taskBaseSpeed = ModelParameters.inputDistSys.getTask(request.currentTaskNode.name).getSubTaskServt(request.getSubTaskIdx()).basespeed;
+		double taskBaseSpeed = SimulationParameters.distributedSystemSim.getTask(request.currentTaskNode.name).getSubTaskServt(request.getSubTaskIdx()).basespeed;
 		
 		if(isDevicePowerManaged){
 			//System.out.println("Current task basespeed:" + taskBaseSpeed + " device speed:" + availableSpeedLevels[qserverInstance.currentSpeedLevelIndex]);
@@ -248,8 +248,9 @@ public class DeviceSim extends Device implements QueueServer {
 	 * request 2. takes care of contributions made to performance measures of current software server
 	 */
 	public void dropRequest(Request request, double currentTime) throws Exception {
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(request.machineName);
 		if (request.isRequestFromSoftRes()) {
-			SoftResSim softResourceSim = request.machineObject.getSoftRes(request.softResName);
+			SoftResSim softResourceSim = machineObject.getSoftRes(request.softResName);
 			// stops the execution at the soft resource
 			softResourceSim.abort(request.softResInstance, currentTime);
 
@@ -258,7 +259,7 @@ public class DeviceSim extends Device implements QueueServer {
 			logger.debug("request dropped at " + softResourceSim.name);
 		} else {
 			// stops the execution at the current thread
-			request.machineObject.getServer(request.softServName).abortThread(request.threadNum, SimulationParameters.currTime);
+			machineObject.getServer(request.softServName).abortThread(request.threadNum, SimulationParameters.currTime);
 			request.drop();
 			// logger.debug("request dropped at");
 		}
