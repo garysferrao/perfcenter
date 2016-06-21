@@ -216,10 +216,17 @@ public class Request {
 			return false;
 		}
 		SyncRequest sr = synReqVector.get(synReqVector.size() - 1);
+		//System.out.print("SyncRequest Vector:");
+		//for(int i=0;i<synReqVector.size();i++){
+			//System.out.print(synReqVector.get(i).softServerName + ",");
+		//}
+		//System.out.print("--Current ss_name:" + ss_name);
 		if ((sr.softServerName.compareToIgnoreCase(ss_name) == 0) && (sr.taskName.compareToIgnoreCase(task_name) == 0) && sr.threadNum == thrdNum
 				&& sr.swServerArrivalTime == servArrTime && sr.swServerStartTime == servStartTime) {
+			//System.out.println(" isSyncRequest:true");
 			return true;
 		} else {
+			//System.out.println(" isSyncRequest:false");
 			return false;
 		}
 	}

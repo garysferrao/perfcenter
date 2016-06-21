@@ -202,7 +202,8 @@ TOKEN : {
 				<ARATE : "arate">                |//
 				<ANALYSE : "analyse">            |
 				<INTERVAL: "interval">           |
-				<FREQ: "freq">
+				<FREQ: "freq"> 			|
+				<DOWNTIME: "downtime">			// down time of virtual machine
 		}
 
 //statements
@@ -254,8 +255,11 @@ TOKEN : {
 				<VIRTUALIZATION : "virtualization" > | //
 				<ON : "ON" > | //
 				<OFF : "OFF" > | //
-				<MIGRATIONPOLICY : "migrationpolicy"> | 
-				<TIMEBASED : "timebased"> |
+				<MIGRATIONPOLICY : "migrationpolicy"> |
+				<TIMEBASED : "timebased"> | //Time based migration policy
+				<TECHNIQ : "techniq" > | //Migration Technique 
+				<STOPANDCOPY : "stopandcopy" > | //STOP and COPY migration technique
+				<ITERATIVECOPY : "iterativecopy" > | // Iterative copy migration technique
 				<AFTER : "after"> |
 				<VMNAME : "vmname"> |
 				<DESTPMNAME : "destpmname"> | 
@@ -678,18 +682,25 @@ void UnDeployDef()throws Exception:{Token name1,name2,n;UnDeployStmt undplystmt;
 		}
 }
 
-void MigrationPolicyDef() :{MigrationPolicyType type;Token vmname, destpmname;Variable v;MigrationPolicyInfo policy;}
+void MigrationPolicyDef() :{MigrationPolicyType type; MigrationTechnique technique;Token vmname, destpmname;Variable v;MigrationPolicyInfo policy;}
 {
-	<MIGRATIONPOLICY> type=MigratnPolicyType(){policy = new MigrationPolicyInfo(type); }
-	 <AFTER> v=Variable() {policy.addPolicyArg(v);}
-	 <VMNAME> vmname=ValidVMName() {policy.addVmName(vmname.image);}
-	 <DESTPMNAME> destpmname=ValidPMName() {policy.addDestPmName(destpmname.image);}
+	<MIGRATIONPOLICY> type=ValidMigrationPolicyType(){policy = new MigrationPolicyInfo(type); }
+	<AFTER> v=Variable() {policy.addPolicyArg(v);}
+	<TECHNIQ>  technique=ValidMigrationTechnique() { policy.addMigrationTechnique(technique); }	<VMNAME> vmname=ValidVMName() {policy.addVmName(vmname.image);}
+	<DESTPMNAME> destpmname=ValidPMName() {policy.addDestPmName(destpmname.image);}
 	<END> {ModelParameters.inputDistSys.setMigrationPolicyInfo(policy);}
+	
 }
 
-MigrationPolicyType MigratnPolicyType():{}
+MigrationPolicyType ValidMigrationPolicyType():{}
 {
-	<TIMEBASED> { return MigrationPolicyType.TIMEBASED;} 
+	<TIMEBASED> { return MigrationPolicyType.TimeBased;} 
+}
+
+MigrationTechnique ValidMigrationTechnique():{}
+{
+	<STOPANDCOPY> { return MigrationTechnique.StopAndCopy;}
+	<ITERATIVECOPY> { return MigrationTechnique.IterativeCopy;} 
 }
 
 
@@ -1213,7 +1224,7 @@ FunctionDefinition FunctionDef():{Token name1;Token t;}
 	   ("[" t=<NUMBER>{fdef.addSlot(t.image);} "]")?	)
 	  |
 	  (
-	   (t=<RESPT> | t=<TPUT> | t=<BPUT> |t=<GPUT>|t=<BLOCKPROB>|t=<ARATE>|t=<WAITT> |t=<UTIL> | t=<AVAIL> |t=<QLEN>|t=<AVGSERVT>|t=<QPARMS> |t=<BUFFTIMEOUT>|t=<DROPRATE>|t=<POWER>|t=<EPERR>| t=<PDP> | t=<PEFF> | t=<FREQ> ){fdef.addFunction(t.image);}
+	   (t=<RESPT> | t=<TPUT> | t=<BPUT> |t=<GPUT>|t=<BLOCKPROB>|t=<ARATE>|t=<WAITT> |t=<UTIL> | t=<AVAIL> |t=<QLEN>|t=<AVGSERVT>|t=<QPARMS> |t=<BUFFTIMEOUT>|t=<DROPRATE>|t=<POWER>|t=<EPERR>| t=<PDP> | t=<PEFF> | t=<FREQ> | t=<DOWNTIME> ){fdef.addFunction(t.image);}
 	   (
 
 

@@ -191,10 +191,12 @@ public class PerfSim {
 				break;
 
 			case NETWORK_TASK_STARTS:
+				//System.out.println("NETWORK_TASK_STARTS");
 				currentEventToBeHandled.networkTaskStarts();
 				break;
 
 			case NETWORK_TASK_ENDS:
+				//System.out.println("NETWORK_TASK_ENDS");
 				currentEventToBeHandled.networkTaskEnds();
 				break;
 

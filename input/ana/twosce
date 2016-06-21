@@ -68,6 +68,9 @@ end
 task delete_message 
 cpu servt 0.015
 //logfilewrite
+
+
+
 end
 
 //servers definition

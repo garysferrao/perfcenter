@@ -504,9 +504,13 @@ public class Event implements Comparable<Event> {
 		String vmname = SimulationParameters.distributedSystemSim.migrationPolicy.getVmName();
 		String destpmname = SimulationParameters.distributedSystemSim.migrationPolicy.getTargetPmName();
 		if(SimulationParameters.distributedSystemSim.checkFeasibilityOfMigration(vmname, destpmname)){
-			SimulationParameters.distributedSystemSim.migrate(vmname, destpmname);
+			//System.out.println("Before migration:" + SimulationParameters.currTime);
+			SimulationParameters.currTime += SimulationParameters.distributedSystemSim.migrate(vmname, destpmname);
+			//System.out.println("After migration:" + SimulationParameters.currTime);
 			SimulationParameters.migrationHappend = true;
 		}
+		
+		
 	}
 
 	public String toString() {

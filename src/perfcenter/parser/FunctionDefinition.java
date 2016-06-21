@@ -144,6 +144,8 @@ public class FunctionDefinition {
 				return o.findWaitingTime(slot, tempname1, tempname2, tempname3);
 			} else if (name_.compareTo("util") == 0) {
 				return o.findUtilization(slot, tempname1, tempname2, tempname3);
+			} else if (name_.compareTo("downtime") == 0) {
+				return o.findDownTime(slot, tempname1, tempname2, tempname3);
 			} else if (name_.compareTo("qlen") == 0) {
 				return o.findQueueLength(slot, tempname1, tempname2, tempname3);
 			} else if (name_.compareTo("avgservt") == 0) {

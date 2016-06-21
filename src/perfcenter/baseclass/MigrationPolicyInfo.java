@@ -1,10 +1,12 @@
 package perfcenter.baseclass;
 import perfcenter.baseclass.enums.MigrationPolicyType;
+import perfcenter.baseclass.enums.MigrationTechnique;
 public class MigrationPolicyInfo {
 	public MigrationPolicyType type;
 	public String vmname;
 	public double policyarg; 
 	public String destpmname;
+	public MigrationTechnique technique;
 	
 	public MigrationPolicyInfo(MigrationPolicyType _type){
 		type = _type;
@@ -20,6 +22,10 @@ public class MigrationPolicyInfo {
 	
 	public void addPolicyArg(Variable v){
 		policyarg = v.value;
+	}
+	
+	public void addMigrationTechnique(MigrationTechnique t){
+		technique = t;
 	}
 	
 	public void print(){

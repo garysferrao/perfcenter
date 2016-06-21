@@ -17,8 +17,6 @@ ver * Copyright (C) 2011-12  by Varsha Apte - <varsha@cse.iitb.ac.in>, et al.
  */
 package perfcenter.simulator;
 
-import static perfcenter.simulator.DistributedSystemSim.computeConfIvalForMetric;
-
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,9 +26,10 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import perfcenter.baseclass.enums.MigrationPolicyType;
+import perfcenter.baseclass.enums.MigrationTechnique;
 import perfcenter.baseclass.Device;
 import perfcenter.baseclass.DistributedSystem;
+import perfcenter.baseclass.Helper;
 import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.PhysicalMachine;
 import perfcenter.baseclass.LanLink;
@@ -45,9 +44,7 @@ import perfcenter.simulator.metric.ManuallyComputedMetric;
 import perfcenter.simulator.metric.MetricSim;
 import perfcenter.simulator.metric.TimeAverageMetric;
 import perfcenter.simulator.queue.QueueSim;
-import perfcenter.simulator.migrationpolicy.MigrationPolicy;
-import perfcenter.simulator.migrationpolicy.TIMEBASED;
-import umontreal.iro.lecuyer.randvarmulti.RandomMultiVariateGen;
+import perfcenter.simulator.virtualization.MigrationPolicy;
 
 /**
  * This has all the distributed system parameters as given in input file. It uses inherited class HostAna for Host and ServerAna for server.
@@ -84,6 +81,7 @@ public class DistributedSystemSim extends DistributedSystem {
 	public ManuallyComputedMetric overallRespTimeSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 	public ManuallyComputedMetric overallBlockingProbSim = new ManuallyComputedMetric(0.95); //FIXME remove hardcoding
 
+	public HashMap<String, Double> vmDownTimeMap = new HashMap<String, Double>();
 	public DistributedSystemSim() {
 		logger.debug("breakpoint");
 	}
@@ -125,6 +123,12 @@ public class DistributedSystemSim extends DistributedSystem {
 			pms.put(pmsim.getName(), pmsim);
 			machineMap.put(pmsim.getName(), pmsim);
 		}
+		
+		for(PhysicalMachine pm : ds.pms.values()){
+			for(String vmname : pm.vservers.keySet()){
+				vmDownTimeMap.put(vmname, new Double(0.0));
+			}
+		}
 		// this need not be done if its use in perfanalytic is fixed
 		for (SoftServer s : softServers.values()) {
 			for (Task t : s.tasks) {
@@ -148,17 +152,19 @@ public class DistributedSystemSim extends DistributedSystem {
 		MigrationPolicy policy = null;
 		policyinfo.print();
 		try {
-			Class c = Class.forName("perfcenter.simulator.migrationpolicy." + policyinfo.type.toString());
+			Class c = Class.forName("perfcenter.simulator.virtualization." + policyinfo.type.toString());
 
-			Class[] proto = new Class[3];
+			Class[] proto = new Class[4];
 			proto[0] = Double.class;
 			proto[1] = String.class;
 			proto[2] = String.class;
+			proto[3] = MigrationTechnique.class;
 
-			Object[] params = new Object[3];
+			Object[] params = new Object[4];
 			params[0] = policyinfo.policyarg;
 			params[1] = policyinfo.vmname;
 			params[2] = policyinfo.destpmname;
+			params[3] = policyinfo.technique;
 
 			Constructor cons = c.getConstructor(proto);
 			policy = (MigrationPolicy) cons.newInstance(params);
@@ -409,7 +415,12 @@ public class DistributedSystemSim extends DistributedSystem {
 	public double migrate1(String vmname, String destpmname){
 		return 0.0;
 	}
-	
+	/* This method should check feasibility of migration through following checks
+	 * 1) Whether physical machine of vm and destination physical machine are different
+	 * 2) Device categories of virtual machines should be supported by destination physical machine
+	 * 3) It should check whether sufficient memory is available on destination host or not. This is currently not 
+	 *    implemented.
+	 */
 	public boolean checkFeasibilityOfMigration(String vmname, String destpmname){
 		String srcpmname = ModelParameters.inputDistSys.getActualHostName(vmname);
 		PhysicalMachineSim srcpm = SimulationParameters.distributedSystemSim.machineMap.get(srcpmname);
@@ -435,30 +446,54 @@ public class DistributedSystemSim extends DistributedSystem {
 		return true;
 	}
 	
+	/* Migrates a vm from its host to destination host.
+	 * This method achieves this by updating data structures related to physical machines, software servers, their tasks and scenarios 
+	 */
 	public double migrate(String vmname, String destpmname){
 		String srcpmname = ModelParameters.inputDistSys.getActualHostName(vmname);
-		PhysicalMachineSim srcpm = SimulationParameters.distributedSystemSim.machineMap.get(srcpmname);
-		PhysicalMachineSim destpm = SimulationParameters.distributedSystemSim.machineMap.get(destpmname);
+		PhysicalMachineSim srcpm = machineMap.get(srcpmname);
+		PhysicalMachineSim destpm = machineMap.get(destpmname);
 		double downtime = 0.0;
 		ArrayList<String> origTasks = new ArrayList<String>();
+		
+		/* Move newly created vcpu servers from source physical machine to destination physical machine */
 		for(SoftServer srvr : srcpm.vservers.get(vmname)){
 			downtime += migrateServer((SoftServerSim)srvr, srcpm, destpm);
 			migratedServers.put(srvr.name, true);
+			if(isLink(srcpm.lan, destpm.lan)){
+				LanLink lnk = getLink(srcpm.lan, destpm.lan);
+				double srvrdt = migrationPolicy.computeDownTime((SoftServerSim)srvr, Helper.convertTobps(lnk.trans.getValue(), lnk.transUnit));
+				System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
+				downtime += srvrdt;
+			}
 		}
+		
+		/* Move servers actually deployed on virtual machine from source physical machine to destination physical machine */
 		for(SoftServer srvr : srcpm.serversDeployedOnVm.get(vmname)){
 			downtime += migrateServer((SoftServerSim)srvr, srcpm, destpm);
 			migratedServers.put(srvr.name, true);
 			for(Task task : ModelParameters.inputDistSys.softServers.get(srvr.name).tasks){
 				origTasks.add(task.name);
 			}
+			if(isLink(srcpm.lan, destpm.lan)){
+				LanLink lnk = getLink(srcpm.lan, destpm.lan);
+				double srvrdt = migrationPolicy.computeDownTime((SoftServerSim)srvr, Helper.convertTobps(lnk.trans.getValue(), lnk.transUnit));
+				System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
+				downtime += srvrdt;
+			}
 		}
 		
+		
+		/* vservers and serversDeployedOnVm just contain list of references to actual softservers for each vm. 
+		 * Removing them from source pm and adding to destination pm 
+		 */
 		if(destpm.vservers == null){
 			destpm.vservers = new HashMap<String, ArrayList<SoftServer> >();
 		}
 		ArrayList<SoftServer> tmp = srcpm.vservers.get(vmname);
 		srcpm.vservers.remove(vmname);
 		destpm.vservers.put(vmname, tmp);
+		
 		
 		if(destpm.serversDeployedOnVm == null){
 			destpm.serversDeployedOnVm = new HashMap<String, ArrayList<SoftServer> >();
@@ -467,17 +502,21 @@ public class DistributedSystemSim extends DistributedSystem {
 		srcpm.serversDeployedOnVm.remove(vmname);
 		destpm.serversDeployedOnVm.put(vmname, tmp);
 		
+		/* Updating appropriate Data structures related to Ram utilization in source pm and destination pm */
 		if(destpm.ramUtilSim == null){
 			destpm.ramUtilSim = new TimeAverageMetric(0.95);
 		}
+		
+		
 		if(destpm.vmRamUtilSim == null){
 			destpm.vmRamUtilSim = new HashMap<String, TimeAverageMetric>();
 		}
+		destpm.vmRamUtilSim.put(vmname, srcpm.vmRamUtilSim.get(vmname));
+		srcpm.vmRamUtilSim.remove(vmname);
+		
 		if(destpm.currVmRamUtil == null){
 			destpm.currVmRamUtil = new HashMap<String, Double>();
 		}
-		destpm.vmRamUtilSim.put(vmname, srcpm.vmRamUtilSim.get(vmname));
-		srcpm.vmRamUtilSim.remove(vmname);
 		
 		if(destpm.avgRamUtil == null){
 			destpm.avgRamUtil = new Metric();
@@ -488,9 +527,12 @@ public class DistributedSystemSim extends DistributedSystem {
 		destpm.avgVmRamUtils.put(vmname, srcpm.avgVmRamUtils.get(vmname));
 		srcpm.avgVmRamUtils.remove(vmname);
 		
+		/* Hypervisor server will not move. 
+		 * But tasks attached to them are actually related to moving servers, so they need to be changed
+		 */
 		HashMap<String, Task> hvTasksToBeModified = new HashMap<String, Task>();
-		SoftServer fromHypervisor = SimulationParameters.distributedSystemSim.softServerMap.get(srcpm.getHypervisorName());
-		SoftServer toHypervisor = SimulationParameters.distributedSystemSim.softServerMap.get(destpm.getHypervisorName());
+		SoftServer fromHypervisor = softServerMap.get(srcpm.getHypervisorName());
+		SoftServer toHypervisor = softServerMap.get(destpm.getHypervisorName());
 		
 		ArrayList<Integer> toBeDeletedTasksFromOrigHv = new ArrayList<Integer>();
 		for(int i=0;i<fromHypervisor.tasks.size();i++){
@@ -503,6 +545,7 @@ public class DistributedSystemSim extends DistributedSystem {
 				}
 			}
 		}
+		
 		for(Integer i : toBeDeletedTasksFromOrigHv){
 			fromHypervisor.tasks.remove(i);
 		}
@@ -512,10 +555,14 @@ public class DistributedSystemSim extends DistributedSystem {
 			toHypervisor.tasks.add(task);
 		}
 		
+		/* Tasks and servers are migrated. Scenarios remain same except one change. 
+		 * (Hypervisor)Server name of network overhead tasknode in scenario needs to be computed
+		 */
 		for(Scenario scenario : SimulationParameters.distributedSystemSim.scenarioMap.values()){
+			
+			/* Level traversal */
 			ArrayList<TaskNode> level = new ArrayList<TaskNode>();
 			level.add(scenario.rootNode);
-			/* Level traversal  */
 			while(!level.isEmpty()){
 				ArrayList<TaskNode> nxtlevel = new ArrayList<TaskNode>();
 				for(int i=0;i<level.size();i++){
@@ -530,10 +577,16 @@ public class DistributedSystemSim extends DistributedSystem {
 				level = nxtlevel;
 			}
 		}
+		
+		vmDownTimeMap.put(vmname, downtime);
 		return downtime;
 	}
 	
+	/* This method moves a softserver from source pm to destiantion pm
+	 */
 	public double migrateServer(SoftServerSim srvr, PhysicalMachineSim srcpm, PhysicalMachineSim destpm){
+		double downtime = 0.0;
+		
 		srcpm.softServerMap.remove(srvr.name);
 		destpm.softServerMap.put(srvr.name, srvr);
 		
@@ -556,6 +609,6 @@ public class DistributedSystemSim extends DistributedSystem {
 		}
 		srvr.hostObjects.add(destpm);
 		
-		return 0.0;
+		return downtime;
 	}
 }

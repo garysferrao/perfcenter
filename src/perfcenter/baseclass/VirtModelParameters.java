@@ -2,7 +2,7 @@ package perfcenter.baseclass;
 
 import perfcenter.baseclass.enums.SchedulingPolicy;
 
-public class VirtualizationParameters {
+public class VirtModelParameters {
 	public static double hypervisorStaticSize = 50;
 	public static double hypervisorThreadSize = 5;
 	public static double hypervisorThreadCount = 100;

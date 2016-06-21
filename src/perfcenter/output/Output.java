@@ -17,7 +17,8 @@
  */
 package perfcenter.output;
 
-import java.io.FileNotFoundException;
+import java.io.FileNotFoundException
+;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ import perfcenter.baseclass.exception.DeviceNotFoundException;
 import perfcenter.simulator.PerfSim;
 import perfcenter.simulator.SimulationParameters;
 import perfcenter.simulator.PhysicalMachineSim;
+import perfcenter.simulator.DistributedSystemSim;
 import perfcenter.simulator.queue.QServerInstance;
 import perfcenter.simulator.queue.QueueSim;
 import static perfcenter.baseclass.ModelParameters.resultantDistSys;
@@ -482,6 +484,18 @@ public class Output {
 			}
 		} else {
 			throw new Error("first parameter to util \"" + name1 + "\" is not lan or host");
+		}
+	}
+	
+	public String findDownTime(int slot, String name1, String name2, String name3) throws Exception {
+		if (ModelParameters.transformedInputDistSys.isVM(name1) == true) {
+			if (name3 == ")") {// third parameter is not specified in utilization function
+				return String.valueOf(((DistributedSystemSim)ModelParameters.resultantDistSys).vmDownTimeMap.get(name1));
+			}else {
+				throw new Error("For downtime, more than one argument is not required");
+			}
+		} else {
+			throw new Error("first parameter to util \"" + name1 + "\" is not virtual machine");
 		}
 	}
 

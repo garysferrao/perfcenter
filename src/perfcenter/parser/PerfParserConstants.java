@@ -209,115 +209,123 @@ public interface PerfParserConstants {
   /** RegularExpression Id. */
   int FREQ = 105;
   /** RegularExpression Id. */
-  int FOREACH = 106;
+  int DOWNTIME = 106;
   /** RegularExpression Id. */
-  int FOR = 107;
+  int FOREACH = 107;
   /** RegularExpression Id. */
-  int TO = 108;
+  int FOR = 108;
   /** RegularExpression Id. */
-  int INCR = 109;
+  int TO = 109;
   /** RegularExpression Id. */
-  int DECR = 110;
+  int INCR = 110;
   /** RegularExpression Id. */
-  int SET = 111;
+  int DECR = 111;
   /** RegularExpression Id. */
-  int PRINT = 112;
+  int SET = 112;
   /** RegularExpression Id. */
-  int IN = 113;
+  int PRINT = 113;
   /** RegularExpression Id. */
-  int AND = 114;
+  int IN = 114;
   /** RegularExpression Id. */
-  int IF = 115;
+  int AND = 115;
   /** RegularExpression Id. */
-  int THEN = 116;
+  int IF = 116;
   /** RegularExpression Id. */
-  int ELSE = 117;
+  int THEN = 117;
   /** RegularExpression Id. */
-  int WHILE = 118;
+  int ELSE = 118;
   /** RegularExpression Id. */
-  int BREAK = 119;
+  int WHILE = 119;
   /** RegularExpression Id. */
-  int BRANCH = 120;
+  int BREAK = 120;
   /** RegularExpression Id. */
-  int MODELPARAMS = 121;
+  int BRANCH = 121;
   /** RegularExpression Id. */
-  int LOADPARAMS = 122;
+  int MODELPARAMS = 122;
   /** RegularExpression Id. */
-  int ANALYTICAL = 123;
+  int LOADPARAMS = 123;
   /** RegularExpression Id. */
-  int SIMULATION = 124;
+  int ANALYTICAL = 124;
   /** RegularExpression Id. */
-  int THINKTIME = 125;
+  int SIMULATION = 125;
   /** RegularExpression Id. */
-  int TIMEOUT = 126;
+  int THINKTIME = 126;
   /** RegularExpression Id. */
-  int RETRYPROB = 127;
+  int TIMEOUT = 127;
   /** RegularExpression Id. */
-  int OPEN = 128;
+  int RETRYPROB = 128;
   /** RegularExpression Id. */
-  int TYPE = 129;
+  int OPEN = 129;
   /** RegularExpression Id. */
-  int METHOD = 130;
+  int TYPE = 130;
   /** RegularExpression Id. */
-  int CLOSED = 131;
+  int METHOD = 131;
   /** RegularExpression Id. */
-  int NOOFUSERS = 132;
+  int CLOSED = 132;
   /** RegularExpression Id. */
-  int NOOFREQUESTS = 133;
+  int NOOFUSERS = 133;
   /** RegularExpression Id. */
-  int SIMENDTIME = 134;
+  int NOOFREQUESTS = 134;
   /** RegularExpression Id. */
-  int CONFINT = 135;
+  int SIMENDTIME = 135;
   /** RegularExpression Id. */
-  int REPLICATIONNO = 136;
+  int CONFINT = 136;
   /** RegularExpression Id. */
-  int STARTUPSAMPLENO = 137;
+  int REPLICATIONNO = 137;
   /** RegularExpression Id. */
-  int OUTPUT = 138;
+  int STARTUPSAMPLENO = 138;
   /** RegularExpression Id. */
-  int COOLDOWNSAMPLENO = 139;
+  int OUTPUT = 139;
   /** RegularExpression Id. */
-  int ENABLE = 140;
+  int COOLDOWNSAMPLENO = 140;
   /** RegularExpression Id. */
-  int DISABLE = 141;
+  int ENABLE = 141;
   /** RegularExpression Id. */
-  int MAXRETRY = 142;
+  int DISABLE = 142;
   /** RegularExpression Id. */
-  int WORKLOAD = 143;
+  int MAXRETRY = 143;
   /** RegularExpression Id. */
-  int CYCLIC = 144;
+  int WORKLOAD = 144;
   /** RegularExpression Id. */
-  int VIRTUALIZATION = 145;
+  int CYCLIC = 145;
   /** RegularExpression Id. */
-  int ON = 146;
+  int VIRTUALIZATION = 146;
   /** RegularExpression Id. */
-  int OFF = 147;
+  int ON = 147;
   /** RegularExpression Id. */
-  int MIGRATIONPOLICY = 148;
+  int OFF = 148;
   /** RegularExpression Id. */
-  int TIMEBASED = 149;
+  int MIGRATIONPOLICY = 149;
   /** RegularExpression Id. */
-  int AFTER = 150;
+  int TIMEBASED = 150;
   /** RegularExpression Id. */
-  int VMNAME = 151;
+  int TECHNIQ = 151;
   /** RegularExpression Id. */
-  int DESTPMNAME = 152;
+  int STOPANDCOPY = 152;
   /** RegularExpression Id. */
-  int CONSTANT = 153;
+  int ITERATIVECOPY = 153;
   /** RegularExpression Id. */
-  int NUMBER = 154;
+  int AFTER = 154;
   /** RegularExpression Id. */
-  int STRING_LITERAL = 155;
+  int VMNAME = 155;
   /** RegularExpression Id. */
-  int FILENAME = 156;
+  int DESTPMNAME = 156;
   /** RegularExpression Id. */
-  int IDENTIFIER = 157;
+  int CONSTANT = 157;
   /** RegularExpression Id. */
-  int DIGITS = 158;
+  int NUMBER = 158;
   /** RegularExpression Id. */
-  int LETTER = 159;
+  int STRING_LITERAL = 159;
   /** RegularExpression Id. */
-  int DIGIT = 160;
+  int FILENAME = 160;
+  /** RegularExpression Id. */
+  int IDENTIFIER = 161;
+  /** RegularExpression Id. */
+  int DIGITS = 162;
+  /** RegularExpression Id. */
+  int LETTER = 163;
+  /** RegularExpression Id. */
+  int DIGIT = 164;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -430,6 +438,7 @@ public interface PerfParserConstants {
     "\"analyse\"",
     "\"interval\"",
     "\"freq\"",
+    "\"downtime\"",
     "\"foreach\"",
     "\"for\"",
     "\"to\"",
@@ -474,6 +483,9 @@ public interface PerfParserConstants {
     "\"OFF\"",
     "\"migrationpolicy\"",
     "\"timebased\"",
+    "\"techniq\"",
+    "\"stopandcopy\"",
+    "\"iterativecopy\"",
     "\"after\"",
     "\"vmname\"",
     "\"destpmname\"",

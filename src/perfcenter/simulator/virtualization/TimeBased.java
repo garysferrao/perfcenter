@@ -1,18 +1,23 @@
-package perfcenter.simulator.migrationpolicy;
+package perfcenter.simulator.virtualization;
 
-import perfcenter.simulator.migrationpolicy.MigrationPolicy;
+import perfcenter.baseclass.enums.MigrationTechnique;
+import perfcenter.simulator.virtualization.MigrationPolicy;
+import perfcenter.simulator.virtualization.MigrationTechniqueIface;
 import perfcenter.simulator.SimulationParameters;
+import perfcenter.simulator.SoftServerSim;
+import perfcenter.simulator.queue.QueueSim;
 
-public class TIMEBASED extends MigrationPolicy{
-	private static double nextMigrationTs;
-	private static boolean migrationToBeDone;
-	private static String vmname;
-	private static String destPmName;
-	public TIMEBASED(Double _nextMigrationTs, String _vmname, String _destPmName){
+public class TimeBased extends MigrationPolicy{
+	private double nextMigrationTs;
+	private boolean migrationToBeDone;
+	private String vmname;
+	private String destPmName;
+	public TimeBased(Double _nextMigrationTs, String _vmname, String _destPmName, MigrationTechnique techniquename){
 		nextMigrationTs = _nextMigrationTs;
 		vmname = _vmname;
 		destPmName = _destPmName;
 		migrationToBeDone = true;
+		loadMigrationTechnique(techniquename);
 	}
 	public boolean migrationRequired(){
 		if(SimulationParameters.currTime > nextMigrationTs && migrationToBeDone){

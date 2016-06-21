@@ -30,7 +30,7 @@ import java.util.Stack;
 import java.util.Random;
 import java.util.Set;
 
-import perfcenter.baseclass.VirtualizationParameters;
+import perfcenter.baseclass.VirtModelParameters;
 import perfcenter.baseclass.enums.DeviceType;
 import perfcenter.baseclass.DeviceCategory;
 
@@ -736,11 +736,11 @@ public class DistributedSystem {
 			if (pm.virtualizationEnabled) {
 				SoftServer hypervisor = new SoftServer();
 				hypervisor.name = pm.getHypervisorName();
-				hypervisor.size.setValue(VirtualizationParameters.hypervisorStaticSize);
-				hypervisor.threadSize.setValue(VirtualizationParameters.hypervisorThreadSize);
-				hypervisor.thrdCount.setValue(VirtualizationParameters.hypervisorThreadCount);
-				hypervisor.thrdBuffer.setValue(VirtualizationParameters.hypervisorThreadBufferSize);
-				hypervisor.schedp = VirtualizationParameters.hypervisorSchedP;
+				hypervisor.size.setValue(VirtModelParameters.hypervisorStaticSize);
+				hypervisor.threadSize.setValue(VirtModelParameters.hypervisorThreadSize);
+				hypervisor.thrdCount.setValue(VirtModelParameters.hypervisorThreadCount);
+				hypervisor.thrdBuffer.setValue(VirtModelParameters.hypervisorThreadBufferSize);
+				hypervisor.schedp = VirtModelParameters.hypervisorSchedP;
 				hypervisor.machines.add(pm.name);
 				transformedDistSys.pms.get(pm.name).softServers.put(hypervisor.name, hypervisor);
 				transformedDistSys.softServers.put(hypervisor.name.toLowerCase(), hypervisor);
@@ -748,7 +748,7 @@ public class DistributedSystem {
 				/* For hypervisor server, create its network_task */
 				Task network_task = new Task("network_call_" + hypervisor.name, -1);
 				DeviceCategory cpudevcat = pm.getCpuDevCategory();
-				Distribution constDist = new Distribution(VirtualizationParameters.nwOverheadDist, VirtualizationParameters.networkingOverhead); 
+				Distribution constDist = new Distribution(VirtModelParameters.nwOverheadDist, VirtModelParameters.networkingOverhead); 
 				ServiceTime st = new ServiceTime(cpudevcat, constDist, pm.getDeviceBaseSpeed(cpudevcat));
 				network_task.subtaskServiceTimes.add(st);
 				network_task.softServerName = hypervisor.name;
@@ -765,8 +765,8 @@ public class DistributedSystem {
 				if (dev.category.type == DeviceType.CPU) {
 					SoftServer server = new SoftServer();
 					server.name = vm.name.replaceAll("\\[", "").replaceAll("\\]", "") + "_" + dev.name + "_server";
-					server.size.setValue(VirtualizationParameters.vmStaticSize);
-					server.threadSize.setValue(VirtualizationParameters.vmThreadSize);
+					server.size.setValue(VirtModelParameters.vmStaticSize);
+					server.threadSize.setValue(VirtModelParameters.vmThreadSize);
 					server.thrdCount.value = dev.count.value;
 					server.thrdBuffer.value = dev.buffer.value;
 					server.schedp = dev.schedulingPolicy;
@@ -885,7 +885,7 @@ public class DistributedSystem {
 				for (int i = 1; i < tstart.subtaskServiceTimes.size(); i++) {
 					tstart.subtaskServiceTimes.remove(i);
 				}
-				Distribution constDist = new Distribution("const", VirtualizationParameters.networkingOverhead);
+				Distribution constDist = new Distribution("const", VirtModelParameters.networkingOverhead);
 				tstart.subtaskServiceTimes.get(0).dist = constDist;
 
 				transformedTasks.put(tstart.name, tstart);
@@ -908,7 +908,7 @@ public class DistributedSystem {
 						}
 						PhysicalMachine pm = transformedPms.get(getActualHostName(transformedServers.get(server.name)));
 						DeviceCategory cpudevcat = pm.getCpuDevCategory();
-						Distribution dist = new Distribution(VirtualizationParameters.ioOverheadDist, VirtualizationParameters.ioOverhead); 
+						Distribution dist = new Distribution(VirtModelParameters.ioOverheadDist, VirtModelParameters.ioOverhead); 
 						ServiceTime st = new ServiceTime(cpudevcat, dist, pm.getDeviceBaseSpeed(cpudevcat));
 						temp.add(st);
 						noncpustgroups.add(temp);
