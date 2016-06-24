@@ -316,6 +316,13 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 	// if request is added to lan link queue returns true
 	public boolean offerRequestToLink(String srcLanName, Request rq) throws Exception {
 		String destLanName;
+		if(SimulationParameters.distributedSystemSim.serverMigrated(rq.softServName)){
+			String newname = SimulationParameters.distributedSystemSim.softServerMap.get(rq.softServName).machines.get(0);
+			if(newname.compareTo(rq.machineName) != 0){
+				System.out.println("offerRequestToLink():servername:" + rq.softServName + " oldMachineName:" + rq.machineName + " machineName:" + newname  + " tasknodename:" + rq.taskName);
+				rq.machineName = newname;
+			}
+		}
 		destLanName = SimulationParameters.distributedSystemSim.machineMap.get(rq.machineName).lan;
 
 		// hosts are not deployed on to any lan

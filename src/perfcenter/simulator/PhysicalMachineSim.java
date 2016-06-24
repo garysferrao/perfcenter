@@ -310,7 +310,7 @@ public class PhysicalMachineSim extends PhysicalMachine {
 		computeConfIvalForMetric(avgRamUtil, ramUtilSim);
 		if(vmRamUtilSim != null){
 			for(String vmname : vmRamUtilSim.keySet()){
-				System.out.println("Vmname:" + vmname + " utils.size:" + avgVmRamUtils.size() );//+ " utilsim.size:" + vmRamUtilSim.size());
+				//System.out.println("Vmname:" + vmname + " utils.size:" + avgVmRamUtils.size() );//+ " utilsim.size:" + vmRamUtilSim.size());
 				computeConfIvalForMetric(avgVmRamUtils.get(vmname), vmRamUtilSim.get(vmname));
 			}
 		}

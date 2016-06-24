@@ -125,8 +125,10 @@ public class DistributedSystemSim extends DistributedSystem {
 		}
 		
 		for(PhysicalMachine pm : ds.pms.values()){
-			for(String vmname : pm.vservers.keySet()){
-				vmDownTimeMap.put(vmname, new Double(0.0));
+			if(pm.vservers != null){
+				for(String vmname : pm.vservers.keySet()){
+					vmDownTimeMap.put(vmname, new Double(0.0));
+				}
 			}
 		}
 		// this need not be done if its use in perfanalytic is fixed
@@ -150,7 +152,7 @@ public class DistributedSystemSim extends DistributedSystem {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public MigrationPolicy loadMigrationPolicyClass(MigrationPolicyInfo policyinfo) {
 		MigrationPolicy policy = null;
-		policyinfo.print();
+		//policyinfo.print();
 		try {
 			Class c = Class.forName("perfcenter.simulator.virtualization." + policyinfo.type.toString());
 
@@ -425,7 +427,7 @@ public class DistributedSystemSim extends DistributedSystem {
 		String srcpmname = ModelParameters.inputDistSys.getActualHostName(vmname);
 		PhysicalMachineSim srcpm = SimulationParameters.distributedSystemSim.machineMap.get(srcpmname);
 		PhysicalMachineSim destpm = SimulationParameters.distributedSystemSim.machineMap.get(destpmname);
-		if(destpm.vservers.containsKey(vmname)){
+		if(destpm.vservers != null && destpm.vservers.containsKey(vmname)){
 			System.err.println("No need to migrate. \"" + vmname + "\" is already deployed on \"" + destpmname + "\"");
 			return false;
 		}
@@ -463,7 +465,7 @@ public class DistributedSystemSim extends DistributedSystem {
 			if(isLink(srcpm.lan, destpm.lan)){
 				LanLink lnk = getLink(srcpm.lan, destpm.lan);
 				double srvrdt = migrationPolicy.computeDownTime((SoftServerSim)srvr, Helper.convertTobps(lnk.trans.getValue(), lnk.transUnit));
-				System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
+				//System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
 				downtime += srvrdt;
 			}
 		}
@@ -478,7 +480,7 @@ public class DistributedSystemSim extends DistributedSystem {
 			if(isLink(srcpm.lan, destpm.lan)){
 				LanLink lnk = getLink(srcpm.lan, destpm.lan);
 				double srvrdt = migrationPolicy.computeDownTime((SoftServerSim)srvr, Helper.convertTobps(lnk.trans.getValue(), lnk.transUnit));
-				System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
+				//System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
 				downtime += srvrdt;
 			}
 		}

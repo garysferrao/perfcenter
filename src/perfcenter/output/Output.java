@@ -82,16 +82,16 @@ public class Output {
 			if (ModelParameters.getSolutionMethod() == SolutionMethod.SIMULATION) {
 				// analysis for simulation
 				ModelParameters.transformedInputDistSys = ModelParameters.inputDistSys.transform();
-				System.out.println("========Input Distributed System=======");
-				ModelParameters.transformedInputDistSys.print();
+				//System.out.println("========Input Distributed System=======");
+				//ModelParameters.transformedInputDistSys.print();
 				PerfSim ps = new PerfSim(ModelParameters.transformedInputDistSys);
 				if (!(ModelParameters.getWarnings() == Warnings.DISABLE)) {
 					ModelParameters.transformedInputDistSys.validate();
 				}
 				//ModelParameters.transformedInputDistSys.validate();
 				resultantDistSys = ps.performSimulation();
-				System.out.println("========output Distributed System=======");
-				resultantDistSys.print();
+				//System.out.println("========output Distributed System=======");
+//				/resultantDistSys.print();
 			} else {
 				// analysis for analytical
 				/*ANALYTICAL
@@ -433,7 +433,6 @@ public class Output {
 				if (pm.isServerDeployed(name2)) {
 					return pm.getServer(name2).resourceQueue.avgUtil.toString(slot);
 				} else if (pm.isDeviceDeployed(name2)) {
-					System.out.println(pm.getDevice(name2).resourceQueue.avgUtil.getValue());
 					return pm.getDevice(name2).resourceQueue.avgUtil.toString(slot);
 				} else if (pm.isSoftResourceDeployed(name2)) {
 					return pm.getSoftRes(name2).resourceQueue.avgUtil.toString(slot);
@@ -483,7 +482,7 @@ public class Output {
 				throw new Error("For virtual machine, three parameter util function is not supported yet.");
 			}
 		} else {
-			throw new Error("first parameter to util \"" + name1 + "\" is not lan or host");
+			throw new Error("first parameter to util \"" + name1 + "\" is not lan, physical machine or virtual machine");
 		}
 	}
 	

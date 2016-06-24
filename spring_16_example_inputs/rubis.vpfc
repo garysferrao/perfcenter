@@ -1,3 +1,7 @@
+variable 
+	nusers 1
+end
+
 devicecategory
 	cpu intelxeon
 	noncpu disk
@@ -13,32 +17,27 @@ vdevice
 	disk vdisk1
 end
 
-task wt1 
-	intelxeon servt 0.04 at 2.8
+task apache_bc
+	intelxeon servt 0.00867 at 2.8
 end
 
-task wt2 
-	intelxeon servt 0.04 at 2.8
+task mysql_bc
+	intelxeon servt 0.00256 at 2.8
 end
 
-task dt1 
-	intelxeon servt 0.08 at 2.8
-	disk servt 0.20 at 300
-end
-
-physicalmachine pollaczek
-	cpu1 count 12
+physicalmachine pollaczek[1]
+	cpu1 count 2
 	cpu1 buffer 999999
 	cpu1 schedP fcfs
-	cpu1 basespeed 1.2
+	cpu1 basespeed 2.8
 	disk1 count 1
 	disk1 buffer 999999
 	disk1 schedP fcfs
 	virtualization on
 end
 
-physicalmachine khinchin
-	cpu1 count 12
+physicalmachine khinchin[1]
+	cpu1 count 2
 	cpu1 buffer 999999
 	cpu1 schedP fcfs
 	cpu1 basespeed 2.8
@@ -49,8 +48,8 @@ physicalmachine khinchin
 end
 
 virtualmachine vm1[1]
-	vcpu1 count 2
-	vcpu1 buffer 10
+	vcpu1 count 1
+	vcpu1 buffer 100000
 	vcpu1  schedP fcfs
 	vdisk1 count 1
 	vdisk1 buffer 10
@@ -58,8 +57,8 @@ virtualmachine vm1[1]
 end
 
 virtualmachine vm2[1]
-	vcpu1 count 2
-	vcpu1 buffer 10
+	vcpu1 count 1
+	vcpu1 buffer 100000
 	vcpu1  schedP fcfs
 	vdisk1 count 1
 	vdisk1 buffer 10
@@ -67,38 +66,36 @@ virtualmachine vm2[1]
 end
 
 server apache
-	thread count 4
-	thread buffer 100
+	thread count 100
+	thread buffer 10000
 	thread schedP fcfs
-	task wt1
-	task wt2
+	task apache_bc
 end
 
 server mysql
-	thread count 4
-	thread buffer 100
+	thread count 151
+	thread buffer 10000
 	thread schedP fcfs
-	task dt1
+	task mysql_bc
 end
 
-scenario sc1 prob 1.0
-	wt1 dt1 300 sync
-	dt1 wt2 400
+scenario browse_categories prob 1.0
+	apache_bc mysql_bc 300
 end
 
 lan 
     lan1
 end
 
-deploy web vm1[1]
-deploy db vm2[1]
-deploy vm1[1] pm1[1]
-deploy vm2[1] pm1[2]
-deploy pm1[1] lan1
-deploy pm1[2] lan1
+deploy apache vm1[1]
+deploy mysql vm2[1]
+deploy vm1[1] khinchin[1]
+deploy vm2[1] pollaczek[1]
+deploy pollaczek[1] lan1
+deploy khinchin[1] lan1
 
 loadparams
-	noofusers 100
+	noofusers nusers
 	thinktime 0.001
 end
 
@@ -106,9 +103,12 @@ modelparams
 	method simulation
     type closed
     replicationno 1
-    noofrequests 2000
+    noofrequests 20000
 	warnings disable
 end
 
-print "Number of Uers,Response Time, Throughput"
-print 100 + "," + respt() + "," + tput()
+print "Number of Uers,Response Time, Throughput, Apache VM Util, MySql VM Util, Apache Server Util, MySQL Server Util"
+while(nusers < 150)
+	print nusers + "," + respt() + "," + tput() + "," + util(vm1[1]:vcpu1) + "," + util(vm2[1]:vcpu1) + "," + util(vm1[1]:apache) + "," + util(vm2[1]:mysql) 
+	nusers = nusers + 2
+end

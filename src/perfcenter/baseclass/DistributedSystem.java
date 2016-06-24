@@ -487,17 +487,17 @@ public class DistributedSystem {
 		return false;
 	}
 	
-	private boolean isDeployedOnVm(SoftServer server, HashMap<String, VirtualMachine> _vms) {
-		if(server == null || server.name == "user"){
+	private boolean isDeployedOnVm(SoftServer origServer, HashMap<String, VirtualMachine> origVms) {
+		if(origServer == null || origServer.name == "user"){
 			return false;
 		}
 		
-		if(server.machines.size() == 0){
-			throw new Error("ERROR:SoftServer " + server.name + " is not deployed");
+		if(origServer.machines.size() == 0){
+			throw new Error("ERROR:SoftServer " + origServer.name + " is not deployed");
 		}
-		String mname = server.machines.get(0); // TRANSCHECK: What if there softServer is deployed on more than one machines. Right
+		String mname = origServer.machines.get(0); // TRANSCHECK: What if there softServer is deployed on more than one machines. Right
 												// now assumption is that it is deployed on only on machine
-		if (_vms.containsKey(mname)) {
+		if (origVms.containsKey(mname)) {
 			return true;
 		}
 		/* If not depoyed on VM, then it should be deployed on Physical Machine
@@ -519,9 +519,10 @@ public class DistributedSystem {
 		return vm.host.name;
 	}
 	
-	public String getActualHostName(String vmname, HashMap<String, VirtualMachine> _vms, HashMap<String, PhysicalMachine> transformedPms){
-		VirtualMachine vm = _vms.get(vmname);
-		while(_vms.containsKey(vm.host.name)){
+	
+	public String getActualHostName(String vmname, HashMap<String, VirtualMachine> origVms, HashMap<String, PhysicalMachine> transformedPms){
+		VirtualMachine vm = origVms.get(vmname);
+		while(origVms.containsKey(vm.host.name)){
 			vm = ModelParameters.inputDistSys.getVM(vm.host.name);
 		}
 		if(!transformedPms.containsKey(vm.host.name)){
@@ -617,9 +618,12 @@ public class DistributedSystem {
 		return hvname;
 	}
 	
-	public String getHypervisorName(SoftServer server, HashMap<String, VirtualMachine> _vms, HashMap<String, PhysicalMachine> _pms){
-		String vmname = server.machines.get(0);											//TRANSCHECK
-		String pmname  = getActualHostName(vmname, _vms, _pms);
+	/*
+	 * 
+	 */
+	public String getHypervisorName(SoftServer origServer, HashMap<String, VirtualMachine> origVms, HashMap<String, PhysicalMachine> origPms){
+		String vmname = origServer.machines.get(0);											//TRANSCHECK
+		String pmname  = getActualHostName(vmname, origVms, origPms);
 		String hvname = pmname.replaceAll("\\[", "").replaceAll("\\]", "") + "_hypervisor";
 		return hvname;
 	}
@@ -805,7 +809,7 @@ public class DistributedSystem {
 
 		transformedDistSys.scenarios = buildTransformedScenarios(ModelParameters.inputDistSys.scenarios,ModelParameters.inputDistSys.vms, ModelParameters.inputDistSys.softServers, transformedDistSys.softServers, transformedDistSys.pms, ModelParameters.inputDistSys.tasks, transformedDistSys.tasks, taskgroup);
 		
-		addNwOverheadToScenarios(transformedDistSys.scenarios, ModelParameters.inputDistSys.vms, transformedDistSys.tasks, transformedDistSys.softServers, transformedDistSys.pms, transformedDistSys.vservers);
+		addNwOverheadToScenarios(transformedDistSys.scenarios, ModelParameters.inputDistSys.vms, transformedDistSys.tasks, ModelParameters.inputDistSys.softServers, transformedDistSys.softServers, transformedDistSys.pms, transformedDistSys.vservers);
 		
 		transformedDistSys.migrationPolicyInfo = migrationPolicyInfo;
 		transformedDistSys.checkParameters();
@@ -1118,7 +1122,7 @@ public class DistributedSystem {
 		return transformedScenarios;
 	}
 	
-	public void addNwOverheadToScenarios(HashMap<String, Scenario> transformedScenarios, HashMap<String, VirtualMachine> origVms, HashMap<String, Task> transformedTasks, HashMap<String, SoftServer> transformedServers, HashMap<String, PhysicalMachine> transformedPms, HashMap<String, ArrayList<SoftServer>> _vservers){
+	public void addNwOverheadToScenarios(HashMap<String, Scenario> transformedScenarios, HashMap<String, VirtualMachine> origVms, HashMap<String, Task> transformedTasks, HashMap<String, SoftServer> origServers, HashMap<String, SoftServer> transformedServers, HashMap<String, PhysicalMachine> transformedPms, HashMap<String, ArrayList<SoftServer>> _vservers){
 		/* For newly formed scenario, look for pair of tasknodes whose servers are deployed on virtual machine and those vms are not co-located 
 		 * Add communication overhead task nodes between them
 		 */
@@ -1168,7 +1172,7 @@ public class DistributedSystem {
 							/* Check whether source and destination servers were originally deployed on virtual machine or not 
 							 */
 					
-							if((vserverSet.contains(fromserver) || isDeployedOnVm(fromserver, origVms)) && (vserverSet.contains(toserver) || isDeployedOnVm(toserver, origVms))){
+							if((vserverSet.contains(fromserver) || isDeployedOnVm(origServers.get(fromserver.name), origVms)) && (vserverSet.contains(toserver) || isDeployedOnVm(origServers.get(toserver.name), origVms))){
 								fromnode.children.set(j, from_nwtasknode);
 								from_nwtasknode.parent = fromnode;
 								from_nwtasknode.children.add(to_nwtasknode);
@@ -1179,20 +1183,22 @@ public class DistributedSystem {
 								to_nwtasknode.prob.value = tonode.prob.value;
 								to_nwtasknode.children.add(tonode);
 								tonode.parent = to_nwtasknode;
-							}else if((vserverSet.contains(fromserver) || isDeployedOnVm(fromserver, origVms))){
+							}else if((vserverSet.contains(fromserver) || isDeployedOnVm(origServers.get(fromserver.name), origVms))){
 								fromnode.children.set(j, from_nwtasknode);
 								from_nwtasknode.parent = fromnode;
 								from_nwtasknode.children.add(tonode);
 								tonode.parent = from_nwtasknode;
 								copyNodeInfo(fromnode, from_nwtasknode, from_nwtasknode);
 								from_nwtasknode.prob.value = tonode.prob.value;
-							}else if((vserverSet.contains(toserver) || isDeployedOnVm(toserver, origVms))){
+							}else if((vserverSet.contains(toserver) || isDeployedOnVm(origServers.get(toserver.name), origVms))){
 								fromnode.children.set(j, to_nwtasknode);
 								to_nwtasknode.parent = fromnode;
 								copyNodeInfo(fromnode, to_nwtasknode, to_nwtasknode);
 								to_nwtasknode.children.add(tonode);
 								tonode.parent = to_nwtasknode;
 								to_nwtasknode.prob.value = tonode.prob.value;
+							}else{
+								//System.out.println("Kuch nahi hua");
 							}
 							
 						}
@@ -1201,12 +1207,12 @@ public class DistributedSystem {
 				level = _level;
 			}
 		}
-		
+
 		/* For each scenario, if servers of start and end tasks are deployed on VM, then add netwokr overhead */
 		for(Scenario scenario : transformedScenarios.values()){
 			SoftServer fromServer = transformedServers.get(scenario.rootNode.servername);
-			if(isDeployedOnVm(fromServer, origVms)){
-				String hypervisorname = getHypervisorName(fromServer, origVms, transformedPms);
+			if(isDeployedOnVm(origServers.get(fromServer.name), origVms)){
+				String hypervisorname = getHypervisorName(origServers.get(fromServer.name), origVms, transformedPms);
 				TaskNode nwcall = new TaskNode("network_call_" + hypervisorname);
 				nwcall.servername = hypervisorname;
 				nwcall.parent = null;
@@ -1239,10 +1245,10 @@ public class DistributedSystem {
 			
 			for(TaskNode endnode : endnodes){
 				SoftServer endserver = transformedServers.get(endnode.servername);
-				if(isDeployedOnVm(endserver, origVms)){
+				if(isDeployedOnVm(origServers.get(endserver.name), origVms)){
 					String hypervisorname = getHypervisorName(endnode.servername);
 					TaskNode nwcall = new TaskNode("network_call_" + hypervisorname);
-					nwcall.servername  = getHypervisorName(endserver, origVms, transformedPms);
+					nwcall.servername  = getHypervisorName(origServers.get(endserver.name), origVms, transformedPms);
 					copyNodeInfo(endnode, nwcall, nwcall);
 					nwcall.parent = endnode;
 					endnode.children.add(nwcall);

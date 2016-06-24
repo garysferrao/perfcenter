@@ -87,13 +87,16 @@ public class Event implements Comparable<Event> {
 		}
 	}
 	
+	/* Once migration has happened for any event already in the event queue, we have to update that event's request's machine name to new machine name.
+	 * This updation won't be done for HARDWARE_TASK_ENDS event as it is already scheduled on older machine. When this HARDWARE_TASK_ENDS event is processed, we have to do this updation.
+	 */
 	public void updateReqAfterMigration(){
-		//SimulationParameters.distributedSystemSim.print();
-		if(reqObj.softServName != null && reqObj.softServName.compareTo("") != 0 && SimulationParameters.distributedSystemSim.serverMigrated(reqObj.softServName)){
+		if(reqObj.softServName != null && reqObj.softServName.compareTo("") != 0 && type != EventType.HARDWARE_TASK_ENDS && SimulationParameters.distributedSystemSim.serverMigrated(reqObj.softServName)){
+			String oldname = reqObj.machineName;
 			String newmname = SimulationParameters.distributedSystemSim.softServerMap.get(reqObj.softServName).machines.get(0);
 			if(newmname.compareTo(reqObj.machineName) != 0){
 				reqObj.machineName = newmname;
-				//System.out.println("AFTER:ReqObj.id:" + reqObj.id + " servername:" + reqObj.softServName + " machineName:" + reqObj.machineName);
+				System.out.println(type.toString() + ":ReqObj.id:" + reqObj.id + " servername:" + reqObj.softServName + " oldMachineName:" + oldname + " machineName:" + reqObj.machineName + " scenarioname:" + reqObj.scenario.name + " tasknodename:" + reqObj.taskName);
 			}
 		}
 	}
@@ -500,7 +503,7 @@ public class Event implements Comparable<Event> {
 	}
 	
 	public void doMigration() throws Exception {
-		System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$8Handling Migration");
+		//System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$8Handling Migration");
 		String vmname = SimulationParameters.distributedSystemSim.migrationPolicy.getVmName();
 		String destpmname = SimulationParameters.distributedSystemSim.migrationPolicy.getTargetPmName();
 		if(SimulationParameters.distributedSystemSim.checkFeasibilityOfMigration(vmname, destpmname)){

@@ -18,6 +18,7 @@
 package perfcenter.simulator.request;
 
 import perfcenter.simulator.PhysicalMachineSim;
+import perfcenter.simulator.SimulationParameters;
 
 /** Synchronous request between two servers */
 //CHECK
@@ -48,6 +49,14 @@ public class SyncRequest {
 	}
 
 	String getMachineName() {
+		if(SimulationParameters.distributedSystemSim.serverMigrated(softServerName)){
+			String newname = SimulationParameters.distributedSystemSim.softServerMap.get(softServerName).machines.get(0);
+			if(newname.compareTo(machineName) != 0){
+				System.out.println("SR.getMachineName:servername:" + softServerName + " oldMachineName:" + machineName + " machineName:" + newname  + " tasknodename:" + taskName);
+				machineName = newname;
+			}
+		}
+
 		return machineName;
 	}
 

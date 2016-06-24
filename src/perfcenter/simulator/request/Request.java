@@ -312,9 +312,6 @@ public class Request {
 			SyncRequest sr = synReqVector.get(i);
 			if ((sr.softServerName.compareToIgnoreCase(ss_name) == 0) && sr.reqID == rqID) {
 				flag = 1;
-				if(SimulationParameters.distributedSystemSim.serverMigrated(ss_name)){
-					sr.setMachineName(SimulationParameters.distributedSystemSim.softServerMap.get(ss_name).machines.get(0));
-				}
 				return sr.getMachineName();
 
 			}
@@ -461,6 +458,15 @@ public class Request {
 	 */
 	public String getNextDeviceName() throws Exception {  //MAKECHANGE 
 		DeviceCategory nextDevCat = null;
+		/* Check Event.updateReqAfterMigration method */
+		if(SimulationParameters.distributedSystemSim.serverMigrated(softServName)){
+			String newname = SimulationParameters.distributedSystemSim.softServerMap.get(softServName).machines.get(0);
+			if(newname.compareTo(machineName) != 0){
+				System.out.println("getNextDeviceName:ReqObj.id:" + id + " servername:" + softServName + " oldMachineName:" + machineName + " machineName:" + machineName + " scenarioname:" + scenario.name + " tasknodename:" + taskName);
+				machineName = newname;
+			}
+		}
+
 		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(machineName);
 		String nextDev = null;
 		if (this.requestFromTask) {
