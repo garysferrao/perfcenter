@@ -96,7 +96,7 @@ public class Event implements Comparable<Event> {
 			String newmname = SimulationParameters.distributedSystemSim.softServerMap.get(reqObj.softServName).machines.get(0);
 			if(newmname.compareTo(reqObj.machineName) != 0){
 				reqObj.machineName = newmname;
-				System.out.println(type.toString() + ":ReqObj.id:" + reqObj.id + " servername:" + reqObj.softServName + " oldMachineName:" + oldname + " machineName:" + reqObj.machineName + " scenarioname:" + reqObj.scenario.name + " tasknodename:" + reqObj.taskName);
+				//System.out.println(type.toString() + ":ReqObj.id:" + reqObj.id + " servername:" + reqObj.softServName + " oldMachineName:" + oldname + " machineName:" + reqObj.machineName + " scenarioname:" + reqObj.scenario.name + " tasknodename:" + reqObj.taskName);
 			}
 		}
 	}

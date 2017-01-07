@@ -13,8 +13,8 @@ public class VirtModelParameters {
 	public static double vmStaticSize = 100;
 	public static double vmThreadSize = 10;
 
-	public static double networkingOverhead = 0.0022;
+	public static double networkingOverhead = 0.0034;
 	public static String nwOverheadDist = "const"; 
-	public static double ioOverhead = 0.005;
+	public static double ioOverhead = 0.001;
 	public static String ioOverheadDist = "const";
 }

@@ -90,7 +90,7 @@ modelparams
 end
 
 print "Number of Users, Throughput, Downtime"
-while(nusers < 200)
+while(nusers < 35)
 print nusers + "," + tput() + "," + downtime(vm[1]:aa)
 nusers = nusers + 15
 end

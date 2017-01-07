@@ -107,6 +107,7 @@ public class TaskNode {
 	public void printFullInfo() {
 		//System.out.print(" thisnode:" + name + " prob " + prob.value + " sync:" + issync + " packet:" + pktsize.value + " arate:" + arrate + " servername:"
 			//	+ servername);
+		System.out.print(" servername:" + servername);
 		for(TaskNode child : children){
 			System.out.print("\t" + name + " " + child.name);
 			System.out.print(" prob " + child.prob.value);
@@ -116,7 +117,7 @@ public class TaskNode {
 			System.out.print(" isCT:" + String.valueOf(child.isCT));
 			System.out.print(" isRoot:" + String.valueOf(child.isRoot));
 			System.out.println();
-			child.print();
+			child.printFullInfo();
 		}
 	}
 

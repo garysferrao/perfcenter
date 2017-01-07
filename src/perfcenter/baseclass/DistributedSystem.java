@@ -772,6 +772,7 @@ public class DistributedSystem {
 					server.size.setValue(VirtModelParameters.vmStaticSize);
 					server.threadSize.setValue(VirtModelParameters.vmThreadSize);
 					server.thrdCount.value = dev.count.value;
+					//System.out.println("name:" + server.name + "thrdCount:" + server.thrdCount.value);
 					server.thrdBuffer.value = dev.buffer.value;
 					server.schedp = dev.schedulingPolicy;
 					if(vm.host != null){
@@ -889,7 +890,7 @@ public class DistributedSystem {
 				for (int i = 1; i < tstart.subtaskServiceTimes.size(); i++) {
 					tstart.subtaskServiceTimes.remove(i);
 				}
-				Distribution constDist = new Distribution("const", VirtModelParameters.networkingOverhead);
+				Distribution constDist = new Distribution("const", 0.0);
 				tstart.subtaskServiceTimes.get(0).dist = constDist;
 
 				transformedTasks.put(tstart.name, tstart);
@@ -925,7 +926,6 @@ public class DistributedSystem {
 					String tname = task.name + "_" + vservername + "_" + String.valueOf(i + 1) + "_"
 							+ String.valueOf(cpustgroups.size());
 					Task temptask = new Task(tname, -1);
-					temptask.softServerName = server.name;
 					temptask.subtaskServiceTimes = cpustgroups.get(i);
 					temptask.softServerName = vservername;
 					transformedTasks.put(temptask.name, temptask);

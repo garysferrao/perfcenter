@@ -82,9 +82,11 @@ public class Output {
 			if (ModelParameters.getSolutionMethod() == SolutionMethod.SIMULATION) {
 				// analysis for simulation
 				ModelParameters.transformedInputDistSys = ModelParameters.inputDistSys.transform();
-				//System.out.println("========Input Distributed System=======");
+				//System.out.println("========Transformed Input Distributed System=======");
 				//ModelParameters.transformedInputDistSys.print();
 				PerfSim ps = new PerfSim(ModelParameters.transformedInputDistSys);
+				//System.out.println("========Initial Distributed System Sim=======");
+				//SimulationParameters.distributedSystemSim.print();
 				if (!(ModelParameters.getWarnings() == Warnings.DISABLE)) {
 					ModelParameters.transformedInputDistSys.validate();
 				}
@@ -469,6 +471,8 @@ public class Output {
 					ArrayList<SoftServer> vservlist = ModelParameters.transformedInputDistSys.vservers.get(name1);
 					for(SoftServer vserv : vservlist){
 						if(vserv.name.indexOf(name2) != -1){
+							//System.out.println();
+							//System.out.println(vserv.name + ":" + vserv.thrdCount.value);
 							return pm.getServer(vserv.name).resourceQueue.avgUtil.toString(slot);
 						}
 					}

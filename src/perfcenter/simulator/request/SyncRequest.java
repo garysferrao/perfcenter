@@ -52,7 +52,7 @@ public class SyncRequest {
 		if(SimulationParameters.distributedSystemSim.serverMigrated(softServerName)){
 			String newname = SimulationParameters.distributedSystemSim.softServerMap.get(softServerName).machines.get(0);
 			if(newname.compareTo(machineName) != 0){
-				System.out.println("SR.getMachineName:servername:" + softServerName + " oldMachineName:" + machineName + " machineName:" + newname  + " tasknodename:" + taskName);
+				//System.out.println("SR.getMachineName:servername:" + softServerName + " oldMachineName:" + machineName + " machineName:" + newname  + " tasknodename:" + taskName);
 				machineName = newname;
 			}
 		}

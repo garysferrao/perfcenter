@@ -452,11 +452,14 @@ public class DistributedSystemSim extends DistributedSystem {
 	 * This method achieves this by updating data structures related to physical machines, software servers, their tasks and scenarios 
 	 */
 	public double migrate(String vmname, String destpmname){
+		//this.print();
 		String srcpmname = ModelParameters.inputDistSys.getActualHostName(vmname);
 		PhysicalMachineSim srcpm = machineMap.get(srcpmname);
 		PhysicalMachineSim destpm = machineMap.get(destpmname);
 		double downtime = 0.0;
 		ArrayList<String> origTasks = new ArrayList<String>();
+		
+		HashSet<String> migratedTasks = new HashSet<String>();
 		
 		/* Move newly created vcpu servers from source physical machine to destination physical machine */
 		for(SoftServer srvr : srcpm.vservers.get(vmname)){
@@ -467,6 +470,9 @@ public class DistributedSystemSim extends DistributedSystem {
 				double srvrdt = migrationPolicy.computeDownTime((SoftServerSim)srvr, Helper.convertTobps(lnk.trans.getValue(), lnk.transUnit));
 				//System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
 				downtime += srvrdt;
+			}
+			for(Task task : srvr.tasks){
+				migratedTasks.add(task.name);
 			}
 		}
 		
@@ -482,6 +488,9 @@ public class DistributedSystemSim extends DistributedSystem {
 				double srvrdt = migrationPolicy.computeDownTime((SoftServerSim)srvr, Helper.convertTobps(lnk.trans.getValue(), lnk.transUnit));
 				//System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
 				downtime += srvrdt;
+			}
+			for(Task task : srvr.tasks){
+				migratedTasks.add(task.name);
 			}
 		}
 		
@@ -529,21 +538,28 @@ public class DistributedSystemSim extends DistributedSystem {
 		destpm.avgVmRamUtils.put(vmname, srcpm.avgVmRamUtils.get(vmname));
 		srcpm.avgVmRamUtils.remove(vmname);
 		
-		/* Hypervisor server will not move. 
-		 * But tasks attached to them are actually related to moving servers, so they need to be changed
+		/* Hypervisor server will not move. But tasks attached to them are actually related to moving servers.
+		 * So tasks of hypervisor which are actually there to serve networking and IO demands of moving servers
+		 * need to be removed from source pm's hypervisor and need to be added in destination pm's hypervisor. 
+		 * Server name of scenario tasknodes need to reflect this change. 
 		 */
-		HashMap<String, Task> hvTasksToBeModified = new HashMap<String, Task>();
 		SoftServer fromHypervisor = softServerMap.get(srcpm.getHypervisorName());
 		SoftServer toHypervisor = softServerMap.get(destpm.getHypervisorName());
 		
+		/* List of tasks whose server names need to be modified*/
+		HashMap<String, Task> hvTasksToBeModified = new HashMap<String, Task>();
+		
+		/* List of indices of tasks to be removed from hypervisor tasklist */
 		ArrayList<Integer> toBeDeletedTasksFromOrigHv = new ArrayList<Integer>();
+		
 		for(int i=0;i<fromHypervisor.tasks.size();i++){
 			Task hvTask = fromHypervisor.tasks.get(i);
 			for(String origtaskname : origTasks){
+				System.out.println("origTask:" + origtaskname + " hvtask:" + hvTask.name);
 				if(hvTask.name.contains(origtaskname)){
+					System.out.println("toBeModified:" + hvTask.name);
 					hvTasksToBeModified.put(hvTask.name, hvTask);
 					toBeDeletedTasksFromOrigHv.add(i);
-					break;
 				}
 			}
 		}
@@ -559,28 +575,71 @@ public class DistributedSystemSim extends DistributedSystem {
 		
 		/* Tasks and servers are migrated. Scenarios remain same except one change. 
 		 * (Hypervisor)Server name of network overhead tasknode in scenario needs to be computed
-		 */
+		 */		
 		for(Scenario scenario : SimulationParameters.distributedSystemSim.scenarioMap.values()){
+			TaskNode firstnode = scenario.rootNode;
+			if(firstnode.name.contains("network_call_" + srcpm.getHypervisorName())){
+				/* Supposing rootnode has only one child */
+				if(migratedTasks.contains(firstnode.children.get(0).name)){
+					scenario.rootNode.name = "network_call_" + toHypervisor.name;
+					scenario.rootNode.servername = toHypervisor.name;
+				}
+			}
 			
 			/* Level traversal */
 			ArrayList<TaskNode> level = new ArrayList<TaskNode>();
 			level.add(scenario.rootNode);
 			while(!level.isEmpty()){
 				ArrayList<TaskNode> nxtlevel = new ArrayList<TaskNode>();
-				for(int i=0;i<level.size();i++){
-					TaskNode node = level.get(i);
+				for(TaskNode node : level){
+					/*For IO task */
 					if(hvTasksToBeModified.containsKey(node.name)){
 						node.servername = toHypervisor.name;
 					}
+					boolean receiving_side_flag = false;
+					boolean sending_side_flag = false;
+					if(node.name.contains("network_call_" + srcpm.getHypervisorName())){
+						if(node.parent != null && node.parent.name.contains("network_call")){
+                           /* If server of current node is from_hypervisor and server of its parent is another network call,
+                           * then all the children of this node need to be further probed, set flag1 to true for that
+                           */
+							receiving_side_flag = true;
+						}else if(node.parent != null && !node.parent.name.contains("network_call")){
+                           /* If server of current node is network call (does not belong to from hypervisor) and server of its
+                            * parent is not a network call, then all the children of this node need to be further probed, set flag1 to true for that
+                           */
+							sending_side_flag = true;
+						}
+					}
 					for(TaskNode child : node.children){
 						nxtlevel.add(child);
+						
+						if(receiving_side_flag && !child.name.contains("network_call")){
+							if(migratedTasks.contains(child.name)){
+								node.name = "network_call_" + toHypervisor.name;
+								node.servername = toHypervisor.name;
+							}
+						}else if(sending_side_flag && child.name.contains("network_call")){
+							if(migratedTasks.contains(node.parent.name)){
+								node.name = "network_call_" + toHypervisor.name;
+								node.servername = toHypervisor.name;
+							}
+						}
+					}
+					
+					if(node.children.size() == 0){
+						if(migratedTasks.contains(node.parent.name) && node.name.contains("network_call_" + srcpm.getHypervisorName())){
+							node.name = "network_call_" + toHypervisor.name;
+							node.servername = toHypervisor.name;
+						}
 					}
 				}
 				level = nxtlevel;
 			}
-		}
+		}	
 		
 		vmDownTimeMap.put(vmname, downtime);
+		//this.print();
 		return downtime;
 	}
 	

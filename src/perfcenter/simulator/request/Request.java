@@ -458,15 +458,43 @@ public class Request {
 	 */
 	public String getNextDeviceName() throws Exception {  //MAKECHANGE 
 		DeviceCategory nextDevCat = null;
+		
 		/* Check Event.updateReqAfterMigration method */
-		if(SimulationParameters.distributedSystemSim.serverMigrated(softServName)){
-			String newname = SimulationParameters.distributedSystemSim.softServerMap.get(softServName).machines.get(0);
-			if(newname.compareTo(machineName) != 0){
-				System.out.println("getNextDeviceName:ReqObj.id:" + id + " servername:" + softServName + " oldMachineName:" + machineName + " machineName:" + machineName + " scenarioname:" + scenario.name + " tasknodename:" + taskName);
-				machineName = newname;
+		if(SimulationParameters.migrationHappend){
+			if(SimulationParameters.distributedSystemSim.serverMigrated(softServName)){
+				String newname = SimulationParameters.distributedSystemSim.softServerMap.get(softServName).machines.get(0);
+				if(newname.compareTo(machineName) != 0){
+					System.out.println("getNextDeviceName:ReqObj.id:" + id + " servername:" + softServName + " oldMachineName:" + machineName + " machineName:" + machineName + " scenarioname:" + scenario.name + " tasknodename:" + taskName);
+					machineName = newname;
+				}
+			}else if(currentTaskNode.name.contains("network_call")){
+				
+				
+				/* If current task node is network call, then check whether it is caused by any of the migrated server's tasks */ 
+				if(nextTaskNode == null || nextTaskNode.name.contains("network_call")){
+					/*Sending Side Network Call or last task node sending response to user*/
+					if(currentTaskNode.parent != null && SimulationParameters.distributedSystemSim.serverMigrated(currentTaskNode.parent.servername)){
+						machineName = SimulationParameters.distributedSystemSim.softServerMap.get(currentTaskNode.parent.servername).machines.get(0);
+						softServName = SimulationParameters.distributedSystemSim.machineMap.get(machineName).getHypervisorName();
+						currentTaskNode.name = "network_call_" + softServName;
+						currentTaskNode.servername = softServName;
+						taskName = currentTaskNode.name;
+					}
+				}else{
+					/* Receiving Side Network Call
+					 * Supposing receiving side network call will have only one child or no child
+					 */
+					if(currentTaskNode.children.size() == 0 || SimulationParameters.distributedSystemSim.serverMigrated(currentTaskNode.children.get(0).servername)){
+						machineName = SimulationParameters.distributedSystemSim.softServerMap.get(currentTaskNode.children.get(0).servername).machines.get(0);
+						softServName = SimulationParameters.distributedSystemSim.machineMap.get(machineName).getHypervisorName();
+						currentTaskNode.name = "network_call_" + softServName;
+						currentTaskNode.servername = softServName;
+						taskName = currentTaskNode.name;
+					}
+				}
+				//System.out.println("tasknode:" + currentTaskNode.name + " servername:" + currentTaskNode.servername + " machineName:" + machineName);
 			}
 		}
-
 		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(machineName);
 		String nextDev = null;
 		if (this.requestFromTask) {

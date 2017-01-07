@@ -1,4 +1,3 @@
-perfcenter.analytical
 perfcenter.baseclass
 perfcenter.baseclass.enums
 perfcenter.baseclass.exception
@@ -9,3 +8,4 @@ perfcenter.simulator.metric
 perfcenter.simulator.queue
 perfcenter.simulator.queue.SchedulingStratergy
 perfcenter.simulator.request
+perfcenter.simulator.virtualization

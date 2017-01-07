@@ -243,7 +243,10 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 	public void processTaskEndEvent(Request rq, int instanceId, double currTime) throws Exception {
 		//System.out.println("In SoftServerSim.processTaskEndEvent(): Before: "  + name + " : " + ((QueueSim)resourceQueue).qServerInstances.size() + " : " + ((QueueSim)resourceQueue).freeQServerInstances.size());
 		SoftResVector sr1 = rq.virtResStack.pop();
+		
 		if (sr1.softResName_.compareToIgnoreCase(rq.taskName) != 0) {
+			System.out.println("********");
+			System.out.println(sr1.softResName_ + ":" + rq.taskName);
 			throw new Exception("wrong stack");
 		}
 
