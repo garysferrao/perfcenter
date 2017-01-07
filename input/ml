@@ -15,6 +15,16 @@ monthdb 0
 sendtodb_st 0.005
 end
 
+dayweb = 0.1186 - sendtodb_st
+daydb = 0.002262
+
+weekweb = 0.122 - sendtodb_st
+weekdb = 0.003458
+
+monthweb = 0.4 - sendtodb_st
+monthweb2 = 0.15 - sendtodb_st
+monthdb = 0.0029
+
 device
 corei5
 xeon
@@ -151,15 +161,6 @@ modelparams
 	warnings disable
 end
 
-	dayweb = 0.1186 - sendtodb_st
-	daydb = 0.002262
-	
-	weekweb = 0.122 - sendtodb_st
-	weekdb = 0.003458
-	
-	monthweb = 0.4 - sendtodb_st
-	monthweb2 = 0.15 - sendtodb_st
-	monthdb = 0.0029
 		
 	print "respt:"
 	print respt()

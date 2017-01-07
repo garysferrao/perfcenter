@@ -41,31 +41,32 @@ public class SimulationParameters {
 	public static PriorityQueue<Event> eventQueue;
 
 	/** currentTime=time since the beginning of simulation */
-	public static double currentTime = 0.0f;
+	public static double currTime = 0.0f;
 
 	/** has the complete state of simulation */
 	public static DistributedSystemSim distributedSystemSim;
 
-	public static int totalRequestsArrived = 0;
+	public static int totalReqArrived = 0;
 
 	/** parameters and data structures for confidence interval calculation */
-	public static int replicationNumber = 0; //changed from -1 to 1 BHAVIN
+	public static int replicationNo = 0; //changed from -1 to 1 BHAVIN
 											// changed from 1 to 0 nadeesh
 
 	/** current sample number for the current simulation run */
 //	public static int sampleNumber = 1;
 
 	/** generates id for every new request created. akhila */
-	public static int requestIDGenerator = 0;
+	public static int reqIdGenerator = 0;
 
 	/**************************************************************************/
 	/** keeps track of current event being executed. rakesh */
-	public static Event currentEventBeingHandled = null;
+	public static Event currEventBeingHandled = null;
 
 	/**************************************************************************/
 	/** keep track of last scenario arrival event */
 	public static double lastScenarioArrivalTime = 0.0f;
 
+	//CHECK: why ExponentialDistribution is here
 	/** Distribution */
 	public static ExponentialDistribution exp = new ExponentialDistribution();
 
@@ -73,9 +74,9 @@ public class SimulationParameters {
 //	public static ArrayList<Double> energyArray = new ArrayList<Double>();
 
 	/** Static counter for changing arrival rate */
-	private static int intervalSlotCounter = 0;
+	private static int ivalSlotCntr = 0;
 	
-	private static double[] intervalSlotRunTimes = new double[1000];// ARCHITECTURE: change this to ArrayList
+	private static double[] ivalSlotRunTimes = new double[1000];// ARCHITECTURE: change this to ArrayList
 	private static double lastSlotChangeTime = 0;
 
 	/** 
@@ -87,7 +88,9 @@ public class SimulationParameters {
 	 * in the hashmaps inside the metric hierarchy.
 	 */
 	public static boolean warmupEnabled = false;
-
+	
+	public static boolean migrationHappend = false; 
+	
 	/**
 	 * This function is used for closed loop. every scenario has an associated probability.
 	 * This function returns a single scenario from given set of
@@ -98,7 +101,7 @@ public class SimulationParameters {
 		// the value in d will be in between 0 and 1
 		double d = r.nextDouble();
 		double dbl = 0.0;
-		for (Scenario c : distributedSystemSim.scenarios) {
+		for (Scenario c : distributedSystemSim.scenarios.values()) {
 			dbl += c.getProbability();
 			if (dbl >= d) {
 				return (ScenarioSim)c;
@@ -154,7 +157,7 @@ public class SimulationParameters {
 	 */
 	public static int getTotalRequestArrived() {
 		int totalreq = 0;
-		for (Object c : distributedSystemSim.scenarios) {
+		for (Object c : distributedSystemSim.scenarios.values()) {
 
 			totalreq += (((ScenarioSim) c).getNumOfRequestsArrived());
 		}
@@ -164,7 +167,7 @@ public class SimulationParameters {
 
 	public static int getTotalRequestProcessed() {
 		int totalreq = 0;
-		for (Object c : distributedSystemSim.scenarios) {
+		for (Object c : distributedSystemSim.scenarios.values()) {
 			totalreq += (((ScenarioSim) c).getNumOfRequestsProcessed());
 		}
 		return totalreq;
@@ -182,27 +185,27 @@ public class SimulationParameters {
 	}
 
 	public static int getIntervalSlotCounter() {
-		return intervalSlotCounter;
+		return ivalSlotCntr;
 	}
 
 	public static void clearIntervalSlotCounter() {
-		SimulationParameters.intervalSlotCounter = 0;
+		SimulationParameters.ivalSlotCntr = 0;
 	}
 	
 	public static void incrementIntervalSlotCounter() {
-		intervalSlotCounter++;
-		intervalSlotCounter = intervalSlotCounter % ModelParameters.intervalSlotCount;
+		ivalSlotCntr++;
+		ivalSlotCntr = ivalSlotCntr % ModelParameters.intervalSlotCount;
 	}
 	
 	public static double getCurrentSlotLength() {
-		return ModelParameters.intervalSlotDurations[intervalSlotCounter].value;
+		return ModelParameters.ivalSlotDurCyclic[ivalSlotCntr].value;
 	}
 	public static double getIntervalSlotRunTime(int slot) {
-		return intervalSlotRunTimes[slot];
+		return ivalSlotRunTimes[slot];
 	}
 	
 	public static void recordIntervalSlotRunTime() {
-		intervalSlotRunTimes[intervalSlotCounter] += currentTime - lastSlotChangeTime;
-		lastSlotChangeTime = currentTime;
+		ivalSlotRunTimes[ivalSlotCntr] += currTime - lastSlotChangeTime;
+		lastSlotChangeTime = currTime;
 	}
 }

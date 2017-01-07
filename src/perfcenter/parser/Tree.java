@@ -1,6 +1,6 @@
 package perfcenter.parser;
 
-import perfcenter.baseclass.Node;
+import perfcenter.baseclass.TaskNode;
 import perfcenter.baseclass.Variable;
 
 /**
@@ -9,16 +9,16 @@ import perfcenter.baseclass.Variable;
  * @author akhila
  */
 public class Tree {
-	Node root;
+	TaskNode root;
 	Variable prob;
 
 	public Tree(Variable p) {
 		prob = p;
 	}
 
-	public Node addArc(Node srcN, String src, String src_server, String dest, String dest_server, Variable pktsize, boolean isSync) {
+	public TaskNode addArc(TaskNode srcN, String src, String src_server, String dest, String dest_server, Variable pktsize, boolean isSync) {
 
-		Node destNode = new Node(dest, dest_server, pktsize, isSync);
+		TaskNode destNode = new TaskNode(dest, dest_server, pktsize, isSync);
 		destNode.prob = prob;
 		if (srcN.name.compareToIgnoreCase("root") == 0) {
 			srcN.name = src;
@@ -51,16 +51,16 @@ public class Tree {
 		return destNode;
 	}
 
-	public void addBranch(Node src, Node dest) {
+	public void addBranch(TaskNode src, TaskNode dest) {
 		if (src.name.compareToIgnoreCase(dest.name) != 0) {
 			throw new Error("Task(" + src.name + ") at end of previous arc and task(" + dest.name + ") at start of current arc is not same");
 		}
-		Node n = dest.children.get(0);
+		TaskNode n = dest.children.get(0);
 		src.children.add(n);
 		n.parent = src;
 	}
 
-	public Node getRootNode() {
+	public TaskNode getRootNode() {
 		return root;
 	}
 }

@@ -1,0 +1,80 @@
+variable
+	nusers 5
+end
+
+devicecategory
+	cpu intel
+end
+
+pdevice 
+	intel cpu1
+end
+
+vdevice 
+	intel vcpu1
+end
+
+task t1 
+	intel servt 0.04 at 2.8
+end
+
+physicalmachine pm[2]
+	cpu1 count 1
+	cpu1 buffer 999999
+	cpu1 schedP fcfs
+	cpu1 basespeed 2.8
+	virtualization on
+	ram size 1000000
+end
+
+virtualmachine vm[1]
+	vcpu1 count 1
+	vcpu1 buffer 999999
+	vcpu1 schedP fcfs
+end
+
+server srvr
+	staticsize 100
+	thread size 10
+	thread count 20
+	thread buffer 100
+	thread schedP fcfs
+	task t1
+end
+
+scenario sc1 prob 1.0
+	user t1 300
+	t1 user 400
+end
+
+lan 
+    lan1
+end
+
+deploy srvr vm[1]
+deploy vm[1] pm[1]
+deploy pm[1] lan1
+
+loadparams
+	noofusers nusers
+	thinktime 1
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 1
+    noofrequests 20
+	warnings disable
+end
+
+print "Number of Users:" + nusers
+print "Response Time:" + respt()
+print "Throughput:" + tput()
+print "Utilization(vm[1]:vcpu1): " + util(vm[1]:vcpu1)
+print "Utilization(pm[1]:cpu1): " + util(pm[1]:cpu1)
+print "Utilization(pm[1]:ram): " + util(pm[1]:ram)
+print "Utilization(vm[1]:ram): " + util(vm[1]:ram)
+print "Utilization(pm[1]:web:ram): " + util(pm[1]:srvr:ram)
+print "Utilization(pm[1]:pm1_hypervisor:ram): " + util(pm[1]:pm1_hypervisor:ram)
+print "Utilization(pm[1]:vm1_vcpu1_server:ram): " + util(pm[1]:vm1_vcpu1_server:ram)

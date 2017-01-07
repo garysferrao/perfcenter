@@ -17,9 +17,11 @@
  */
 package perfcenter.simulator.request;
 
-import perfcenter.simulator.HostSim;
+import perfcenter.simulator.PhysicalMachineSim;
+import perfcenter.simulator.SimulationParameters;
 
 /** Synchronous request between two servers */
+//CHECK
 public class SyncRequest {
 
 	int reqID;
@@ -28,7 +30,7 @@ public class SyncRequest {
 
 	String taskName;
 
-	private HostSim hostObject;
+	private String machineName;
 
 	int threadNum;
 
@@ -36,22 +38,30 @@ public class SyncRequest {
 
 	double swServerStartTime;
 
-	public SyncRequest(HostSim h, String swID, String tskID, int thrdNum, int rqID, double servArrTime, double servStartTime) {
+	public SyncRequest(String mname, String swID, String tskID, int thrdNum, int rqID, double servArrTime, double servStartTime) {
 		softServerName = swID;
 		taskName = tskID;
 		threadNum = thrdNum;
 		reqID = rqID;
 		swServerArrivalTime = servArrTime;
 		swServerStartTime = servStartTime;
-		setHostObject(h);
+		setMachineName(mname);
 	}
 
-	HostSim getHostObject() {
-		return hostObject;
+	String getMachineName() {
+		if(SimulationParameters.distributedSystemSim.serverMigrated(softServerName)){
+			String newname = SimulationParameters.distributedSystemSim.softServerMap.get(softServerName).machines.get(0);
+			if(newname.compareTo(machineName) != 0){
+				System.out.println("SR.getMachineName:servername:" + softServerName + " oldMachineName:" + machineName + " machineName:" + newname  + " tasknodename:" + taskName);
+				machineName = newname;
+			}
+		}
+
+		return machineName;
 	}
 
-	void setHostObject(HostSim hostObject) {
-		this.hostObject = hostObject;
+	void setMachineName(String mname) {
+		this.machineName = mname;
 	}
 
 }

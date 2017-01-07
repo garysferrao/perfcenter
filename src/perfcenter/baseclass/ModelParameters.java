@@ -32,21 +32,18 @@ import perfcenter.simulator.SimulationParameters;
 public class ModelParameters {
 
 	/** Method of solving the distributed system's layered queueing network.
-	 * 
 	 *  This can be simulation or analytical.
 	 */
 	static SolutionMethod solutionMethod = SolutionMethod.NONE;
 	
 	/** System type is the nature of the workload in the system. This can be open or closed.
-	 * 
 	 *  The current workload details does not allow mixing both of these modes, but in simulation
 	 *  mode this can be implemented in future.
 	 */
-	private static SystemType systemType = SystemType.NONE;
+	private static SystemType sysType = SystemType.NONE;
 	
 	/**
-	 * Decides whether to validate the system for undeployed hosts / servers before solving it.
-	 * 
+	 * Decides whether to validate the system for undeployed machines / servers before solving it.
 	 * A value of DISABLE would switch off this checking.
 	 */
 	private static Warnings warnings = Warnings.NONE;
@@ -54,7 +51,7 @@ public class ModelParameters {
 	/** 
 	 * Total number of users / requests in a closed system, either being processed, or waiting, or thinking.
 	 */
-	private static Variable numberOfUsers; // this variable is used when type is closed
+	private static Variable noOfUsers; // this variable is used when type is closed
 	
 	/**
 	 * Arrival rate to the system, in case of open system.
@@ -62,15 +59,13 @@ public class ModelParameters {
 	public static Variable arrivalRate;
 	
 	/**
-	 * Time for which the requests think. This is essentially outside the system.
-	 * 
+	 * Time for which the requests think. This is essentially outside the system. 
 	 * This is used to determine when to generate the next request when one request exists the system.
 	 */
 	private static Distribution thinkTime; // this variable is used when type is closed
 	
 	/**
 	 * Timeout value indicates the time after which end-user would stop waiting for the reply.
-	 * 
 	 * Since the user would stop waiting, any processing done beyond this time is considered bad.
 	 * This is essential in computing the badput, goodput etc of the system.
 	 */
@@ -78,11 +73,11 @@ public class ModelParameters {
 	
 	/**
 	 * Probability with which the user would send the same request back to the system, as a retry attempt after timing out.
-	 * 
 	 * When a request times out, the user can choose to just leave, and not issue the request again, or the request
 	 * can be reissued for re-processing. This variable is the probability of retrying and sending the request again.
 	 */
-	private static Variable retryProbabilty = new Variable("", 0);
+	//CHECK why retryProb is variable
+	private static Variable retryProb = new Variable("", 0);
 	
 	/**
 	 * Output would be redirected to this file also. This does not work for all classes, and
@@ -90,14 +85,14 @@ public class ModelParameters {
 	 * 
 	 * Way-around is to get all the output on the console and manually redirecting it to a file.
 	 */
-	static String outputFileString = "";
+	static String outputFileStr = "";
 	
 	/**
 	 * Total number of requests which will be simulated.
 	 * 
 	 * If not specified, this defaults to 10000; 
 	 */
-	private static double totalNumberOfRequests = 10000;
+	private static double totalNoOfReq = 10000;
 	
 	/**
 	 * Time for which the simulation should be run.
@@ -105,36 +100,35 @@ public class ModelParameters {
 	 * This parameter is considered if and only if the total number of requests are not specified in the input file.
 	 * Its value defaults to 100 time units.
 	 */
-	private static Variable simulationEndTime = new Variable("", 100);
+	private static Variable simEndTime = new Variable("", 100);
 	
 	/**
 	 * Flag indicating if input file specified the total number of requests. Defaults to false.
 	 */
-	private static boolean totalNumberOfRequestEnabled = false;
+	private static boolean totalNoOfReqEnabled = false;
 	
 	/**
 	 * Flag indicating if input file specified the total time to run simulation. Defaults to false.
 	 */
-	private static boolean simulationEndTimeEnabled = false;
+	private static boolean simEndTimeEnabled = false;
 	
 	/**
 	 * Flag indicating if confidence intervals are enabled in the input. Defaults to false.
 	 */
-	static boolean confIntervalsEnabled = false;
+	static boolean confIvalsEnabled = false;
 	/**
 	 * Number of replications to run if the confidence interval is true. Defaults to 1.
 	 */
-	private static double numberOfReplications = 1;
+	private static double noOfRepl = 1;
 	
 	/**
 	 * Total number of requests to be considered in warm-up phase.
-	 * 
 	 * This is considered only if the total number of requests is specified in the input file. 
 	 */
-	private static double startUpSampleNumber = 1000;
+	private static double startUpSampleNo = 1000;
+	
 	/**
-	 * Total number of requests to be considered in the warm-down phase.
-	 * 
+	 * Total number of requests to be considered in the cool-down phase.
 	 * This is considered only if the total number of requests is specified in the input file.
 	 */
 //	private static double coolDownSampleNumber = 1000; //FIXME fix startup and cooldown
@@ -158,13 +152,13 @@ public class ModelParameters {
 	
 	//RIGHTNOW: resume from here
 	/** arrival rates for cyclic workload */
-	public static Variable[] arrivalRates = new Variable[1000]; // ARCHITECTURE: change this to ArrayList
+	public static Variable[] arrivalRatesCyclic = new Variable[1000]; // ARCHITECTURE: change this to ArrayList
 	
 	/** number of users for cyclic workload */
-	public static Variable[] numberofUsers = new Variable[1000];// ARCHITECTURE: change this to ArrayList
+	public static Variable[] noOfUsersCyclic = new Variable[1000];// ARCHITECTURE: change this to ArrayList
 	
 	/** slot durations of cyclic workload */
-	public static Variable[] intervalSlotDurations = new Variable[1000];// ARCHITECTURE: change this to ArrayList
+	public static Variable[] ivalSlotDurCyclic = new Variable[1000];// ARCHITECTURE: change this to ArrayList
 	
 	/** Number of entries in the array arrivalRates */
 	public static int arrivalRateCount = 0;
@@ -197,12 +191,19 @@ public class ModelParameters {
 	public static boolean timeoutEnabled = false;
 	
 	/** All the values read from input file is stored into this variable */
-	public static DistributedSystem inputDistributedSystem;
+	public static DistributedSystem inputDistSys;
+	public static boolean isTransformed = false;
+	
+	/*
+	 * Next few member variables are used for virtualization support
+	 */
+	/* Input (Non)Virtual distributed system is transformed to its equivalent PerfCenter non-virtual distributed system */
+	public static DistributedSystem transformedInputDistSys;
 	
 	/**
 	 * The results are stored in this variable. Output uses this variable to read and print the results.
 	 */
-	public static DistributedSystem resultDistributedSystem;
+	public static DistributedSystem resultantDistSys;
 	public static boolean isWorkloadTypeSet = false;
 
 	/** Before the first run if any of variables are not set then default is set. */
@@ -210,22 +211,22 @@ public class ModelParameters {
 		if (solutionMethod == SolutionMethod.NONE) {
 			solutionMethod = SolutionMethod.ANALYTICAL;
 		}
-		if (systemType == SystemType.NONE) {
-			systemType = SystemType.OPEN;
+		if (sysType == SystemType.NONE) {
+			sysType = SystemType.OPEN;
 		}
 		if (timeout == null) {
 			timeout = new Distribution("exp", 0.04);
 		}
 
-		if (systemType == SystemType.CLOSED) {
-			if (numberOfUsers == null) {
-				numberOfUsers = new Variable("local", 10);
+		if (sysType == SystemType.CLOSED) {
+			if (noOfUsers == null) {
+				noOfUsers = new Variable("local", 10);
 			}
 			if (thinkTime == null) {
 				thinkTime = new Distribution("exp", 0.02);
 			}
 		}
-		if (systemType == SystemType.OPEN) {
+		if (sysType == SystemType.OPEN) {
 			if (arrivalRate == null) {
 				arrivalRate = new Variable("local", 10);
 
@@ -238,9 +239,9 @@ public class ModelParameters {
 		// if confidence interval is enabled then number of replication should
 		// be
 		// at least two
-		if (confIntervalsEnabled == true) {
+		if (confIvalsEnabled == true) {
 			if (getNumberOfReplications() <= 1) {
-				numberOfReplications = 2.0;
+				noOfRepl = 2.0;
 			}
 		}
 
@@ -253,37 +254,39 @@ public class ModelParameters {
 	public static void setWarnings(Warnings w) {
 		warnings = w;
 	}
-
+	
+	
 	public static void setSystemType(SystemType t) {
-		systemType = t;
+		sysType = t;
 	}
-
+	//CHECK
 	public static void addNoOfUsers(Variable var) {
-		numberOfUsers = var;
-		numberofUsers[numberofUsersCount++] = var;
+		noOfUsers = var;
+		noOfUsersCyclic[numberofUsersCount++] = var;
 		intervalSlotCount = 1;
 	}
 
 	public static void addArrivalRate(Variable var) {
 		arrivalRate = var;
-		arrivalRates[arrivalRateCount++] = var;
+		arrivalRatesCyclic[arrivalRateCount++] = var;
 		intervalSlotCount = 1;
 	}
 
 	public static void addArrivalRates(Variable var) {
-		arrivalRates[arrivalRateCount++] = var;
-		arrivalRate = arrivalRates[0];
+		arrivalRatesCyclic[arrivalRateCount++] = var;
+		arrivalRate = arrivalRatesCyclic[0];
 		isWorkloadTypeSet = true;
 	}
-
+	
+	//CHECK : addNoOfUsers is
 	public static void addNumberOfUsers(Variable var) {
-		numberofUsers[numberofUsersCount++] = var;
-		numberOfUsers = numberofUsers[0];
+		noOfUsersCyclic[numberofUsersCount++] = var;
+		noOfUsers = noOfUsersCyclic[0];
 		isWorkloadTypeSet = true;
 	}
 
 	public static void addIntervalSlots(Variable var) {
-		intervalSlotDurations[intervalSlotCount++] = var;
+		ivalSlotDurCyclic[intervalSlotCount++] = var;
 	}
 
 	public static void addThinkTime(Distribution d) {
@@ -296,16 +299,16 @@ public class ModelParameters {
 	}
 
 	public static void addNoOfRequests(double var) {
-		totalNumberOfRequests = var;
-		totalNumberOfRequestEnabled = true;
+		totalNoOfReq = var;
+		totalNoOfReqEnabled = true;
 	}
 
 	public static void addRetryProbability(Variable var) {
-		retryProbabilty = var;
+		retryProb = var;
 	}
 
 	public static void setConfIntervalsEnabled(boolean var) {
-		confIntervalsEnabled = var;
+		confIvalsEnabled = var;
 	}
 
 	public static void setMaxUsers(double musers) {
@@ -313,11 +316,11 @@ public class ModelParameters {
 	}
 
 	public static void addNoOfReplications(double var) {
-		numberOfReplications = var;
+		noOfRepl = var;
 	}
 
 	public static void addStartUpSampleNo(double var) {
-		startUpSampleNumber = var;
+		startUpSampleNo = var;
 		SimulationParameters.warmupEnabled = true;
 	}
 
@@ -346,12 +349,12 @@ public class ModelParameters {
 	}
 
 	public static void addOutputFile(String var) {
-		outputFileString = var;
+		outputFileStr = var;
 	}
 
 	public static void addSimulationEndTime(Variable var) {
-		simulationEndTime = var;
-		simulationEndTimeEnabled = true;
+		simEndTime = var;
+		simEndTimeEnabled = true;
 	}
 
 	public static SolutionMethod getSolutionMethod() {
@@ -363,16 +366,16 @@ public class ModelParameters {
 	}
 
 	public static SystemType getSystemType() {
-		return systemType;
+		return sysType;
 	}
 
 	public static double getNumberOfUsers() {
-		return numberOfUsers.getValue();
+		return noOfUsers.getValue();
 	}
-
+	
 	public static double getNumberOfUserss(int slot) {
 		slot = (slot == -1) ? intervalSlotCount - 1 : slot; 
-		return numberofUsers[slot].getValue();
+		return noOfUsersCyclic[slot].getValue();
 	}
 	
 	public static Distribution getThinkTime() {
@@ -384,7 +387,7 @@ public class ModelParameters {
 	}
 
 	public static double getTotalNumberOfRequests() {
-		return totalNumberOfRequests;
+		return totalNoOfReq;
 	}
 
 	public static double getArrivalRate() {
@@ -393,7 +396,7 @@ public class ModelParameters {
 	
 	public static Variable getArrivalRate(int slot) {
 		slot = (slot == -1) ? intervalSlotCount - 1 : slot; 
-		return arrivalRates[slot];
+		return arrivalRatesCyclic[slot];
 	}
 
 	public static double getMaxRetry() {
@@ -401,24 +404,24 @@ public class ModelParameters {
 	}
 
 	public static boolean getSimulationEndTimeEnabled() {
-		return simulationEndTimeEnabled;
+		return simEndTimeEnabled;
 	}
 
 	public static boolean getTotalNumberOfRequestEnabled() {
-		return totalNumberOfRequestEnabled;
+		return totalNoOfReqEnabled;
 	}
 
 	/**
 	 * Returns the number of simulations to run to calculate confidence interval.
 	 * 
-	 * {@link #numberOfReplications numberOfReplications}
+	 * {@link #noOfRepl numberOfReplications}
 	 */
 	public static double getNumberOfReplications() {
-		return numberOfReplications;
+		return noOfRepl;
 	}
 
 	public static double getStartUpSampleNumber() {
-		return startUpSampleNumber;
+		return startUpSampleNo;
 	}
 
 //	public static double getCoolDownSampleNumber() {
@@ -442,11 +445,11 @@ public class ModelParameters {
 	}
 
 	public static double getRetryProbability() {
-		return retryProbabilty.value;
+		return retryProb.value;
 	}
 
 	public static double getSimulationEndTime() {
-		return simulationEndTime.value;
+		return simEndTime.value;
 	}
 
 	public static double getMaxUsers() {

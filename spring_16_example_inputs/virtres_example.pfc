@@ -1,0 +1,135 @@
+variable
+	nusr 1
+	ccount 10
+end
+
+devicecategory
+	cpu intel
+end
+
+pdevice 
+	intel cpu1
+end
+
+lan
+	lan1
+end
+
+physicalmachine pm1[1]
+	cpu1 count ccount
+	cpu1 buffer 99999
+	cpu1 schedP fcfs
+end
+
+physicalmachine pm2[1]
+	cpu1 count 3
+	cpu1 buffer 99999
+	cpu1 schedP fcfs
+end
+
+task send_to_auth
+	intel servt 0.030 at 3.0
+end
+
+task send_to_imap 
+	intel servt 0.020 at 3.0
+end
+ 
+
+task change_to_html
+	intel servt 0.010 at 3.0
+end 
+
+task verify_passwd 
+	intel servt 0.010 at 3.0
+end 
+
+task list_message
+	intel servt 0.025 at 3.0
+end 
+
+task read_message 
+	intel servt 0.020 at 3.0
+end 
+
+task delete_message 
+	intel servt 0.015 at 3.0
+end
+
+server web
+	thread count 400
+	thread buffer 99999
+	thread schedP fcfs
+	task send_to_auth
+	task send_to_imap
+	task change_to_html
+end
+
+
+server auth
+	thread count 400
+	thread buffer 99999
+	thread schedP fcfs
+	task verify_passwd
+end
+
+server imap
+	thread count 400
+	thread buffer 99999
+	thread schedP fcfs
+	task list_message
+	task read_message
+	task delete_message
+end
+
+deploy web pm1[1]
+deploy auth pm1[1]
+deploy imap pm2[1]
+
+
+deploy pm1[1] lan1
+deploy pm2[1] lan1
+ 
+scenario Login prob 0.75
+    send_to_auth  verify_passwd 128 SYNC
+    branch prob 0.1
+        verify_passwd  change_to_html 128 
+    end 
+    branch prob 0.9
+         verify_passwd  send_to_imap 256  
+         send_to_imap list_message 512 SYNC 
+         list_message  change_to_html 2048
+    end  
+end
+
+scenario dosomet prob 0.25
+    send_to_auth  verify_passwd 128 SYNC
+    branch prob 0.1
+        verify_passwd  change_to_html 128 
+    end 
+    branch prob 0.9
+         verify_passwd  send_to_imap 256  
+         send_to_imap list_message 512 SYNC 
+         list_message  change_to_html 2048
+    end  
+end
+
+
+loadparams
+	noofusers 10
+	thinktime 1
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 1
+    noofrequests 2000
+	warnings disable
+end
+
+print "Overall tput "+ tput()
+print "Resource Utilization"
+print respt(pm1[1]:cpu1)
+print respt(pm1[1]:web)
+bottleneck()

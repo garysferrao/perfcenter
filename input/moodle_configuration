@@ -28,8 +28,8 @@ end
 powermanagement cpu1 
 speed_levels 1 1.37 1.83 end
 power_consumed 40 45 50 end
-idlepower 40
-probe_interval 1
+idlepower 40 40 40 end
+probe_interval 0.90
 governor_up_threshold 40 
 governor_down_threshold 15
 end
@@ -38,7 +38,7 @@ end
 powermanagement cpu2
 speed_levels 1 1.37 1.75 2 end
 power_consumed 45 50 55 60 end
-idlepower 45
+idlepower 40 40 40 40 end
 probe_interval 2
 governor_up_threshold 80 
 governor_down_threshold 20
@@ -48,7 +48,7 @@ end
 powermanagement cpu3
 speed_levels 1 1.37 1.75 2 end
 power_consumed 45 50 55 60 end
-idlepower 45
+idlepower 45 45 45 45 end
 probe_interval 1
 governor_up_threshold 80 
 governor_down_threshold 20
@@ -159,7 +159,7 @@ end
 deploy web hpmachine[1]
 deploy auth ibmmachine[1]
 deploy db ibmmachine[2]
-deploy smtp ibmmachine[3]
+deploy smtp ibmmachine[2]
 deploy hpmachine[1] lan1
 deploy ibmmachine[1] lan1
 deploy ibmmachine[2] lan1
@@ -170,28 +170,30 @@ modelparams
     method simulation
     type closed
 	replicationno 3
-   		simendtime 100
-		confint true
+	simendtime 100
+	confint true
 	warnings disable
 end
 //metrics-18
 print "Throughput	ResponseTime	Web-Util	Auth-Util	DB-Util	SMTP-Util	Web-Energy	Auth-Energy	DB-Energy	SMTP-Energy	Web-EDP	Auth-EDP	DB-EDP	SMTP-EDP	Web-peff	Auth-peff	DB-peff	SMTP-peff"
-print tput()
-print respt()
-print util(hpmachine[1]:cpu1)
-print util(ibmmachine[1]:cpu2)
-print util(ibmmachine[2]:cpu2)
-print util(ibmmachine[3]:cpu2)
-print energy(hpmachine[1]:cpu1)
-print energy(ibmmachine[1]:cpu2)
-print energy(ibmmachine[2]:cpu2)
-print energy(ibmmachine[3]:cpu2)
-print edp(hpmachine[1]:cpu1)
-print edp(ibmmachine[1]:cpu2)
-print edp(ibmmachine[2]:cpu2)
-print edp(ibmmachine[3]:cpu2)
-print peff(hpmachine[1]:cpu1)
-print peff(ibmmachine[1]:cpu2)
-print peff(ibmmachine[2]:cpu2)
-print peff(ibmmachine[3]:cpu2)
+print "Throughput: " + tput()
+print "Response Time: " + respt()
+print "Utilization of hpmachine[1]:cpu " + util(hpmachine[1]:cpu1)
+print "Utilization of ibmmachine[1]:cpu " + util(ibmmachine[1]:cpu2)
+print "Utilization of ibmmachine[2]:cpu " + util(ibmmachine[2]:cpu2)
+print "Utilization of ibmmachine[3]:cpu " + util(ibmmachine[3]:cpu2)
+print "Utilization of ibmmachine[1]:cpu " + util(ibmmachine[1]:cpu2)
+//print energy(hpmachine[1]:cpu1)
+//print energy(ibmmachine[1]:cpu2)
+//print energy(ibmmachine[2]:cpu2)
+//print energy(ibmmachine[3]:cpu2)
+//print edp(hpmachine[1]:cpu1)
+//print edp(ibmmachine[1]:cpu2)
+//print edp(ibmmachine[2]:cpu2)
+//print edp(ibmmachine[3]:cpu2)
 
+print "Power efficient of hpmachine[1]:cpu " + peff(hpmachine[1]:cpu1)
+print "Power efficient of ibmmachine[1]:cpu " + peff(ibmmachine[1]:cpu2)
+print "Power efficient of ibmmachine[2]:cpu " + peff(ibmmachine[2]:cpu2)
+print "Power efficient of ibmmachine[3]:cpu " + peff(ibmmachine[3]:cpu2)
+print "Power efficient of hpmachine[1]:cpu " + peff(hpmachine[1]:cpu1)

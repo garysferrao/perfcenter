@@ -19,7 +19,6 @@ package perfcenter.baseclass;
 
 import java.util.ArrayList;
 import java.util.Random;
-
 import org.apache.log4j.Logger;
 
 import perfcenter.baseclass.enums.SchedulingPolicy;
@@ -45,23 +44,24 @@ public class SoftServer extends QueuingResource {
 	/** Size of each thread, nikhil */
 	public Variable threadSize;
 
-	/** Size of each request, nikhil */
-	public Variable requestSize;
-
 	/** Scheduling policy */
 	public SchedulingPolicy schedp = SchedulingPolicy.FCFS;
 
 	/** List of server tasks */
-	public ArrayList<Task> simpleTasks = new ArrayList<Task>();
+	public ArrayList<Task> tasks = new ArrayList<Task>();
 	Logger logger = Logger.getLogger("SoftServer");
 
 	/** List of hosts on which this server is deployed */
-	public ArrayList<String> hosts = new ArrayList<String>();
+	public ArrayList<String> machines = new ArrayList<String>();
 
 	public Random r;
 
 	/** energy collector, used by code of RAM. Not sure how this is used. */
 	public double totalServerEnergy; 
+	
+	public Metric availability = new Metric();
+	
+	public Metric ramUtil = new Metric();
 
 	public SoftServer() {
 		name = "undef";
@@ -69,7 +69,6 @@ public class SoftServer extends QueuingResource {
 		thrdBuffer = new Variable("local", 9999999);
 		size = new Variable("local", 0);
 		threadSize = new Variable("threadSize", 0.0);
-		requestSize = new Variable("requestSize", 0.0);
 		r = new Random();
 		totalServerEnergy = 0.0;
 
@@ -81,7 +80,6 @@ public class SoftServer extends QueuingResource {
 		thrdBuffer = new Variable("local", 9999999);
 		size = new Variable("local", 0);
 		threadSize = new Variable("local", 0.0);
-		requestSize = new Variable("requestSize", 0.0);
 		r = new Random();
 		totalServerEnergy = 0.0;
 
@@ -92,7 +90,7 @@ public class SoftServer extends QueuingResource {
 	}
 
 	public int getNumCopies() {
-		return hosts.size();
+		return machines.size();
 	}
 
 	public void setThreadCount(Variable count) {
@@ -105,6 +103,14 @@ public class SoftServer extends QueuingResource {
 
 	public void setSchedPolicy(SchedulingPolicy sched) {
 		schedp = sched;
+	}
+	
+	public void setAvailability(double avail) {
+		availability.setValue(avail);
+	}
+
+	public double getAvailability() {
+		return availability.getValue();
 	}
 
 	SoftServer getCopy() {
@@ -130,27 +136,22 @@ public class SoftServer extends QueuingResource {
 		} else {
 			sscpy.threadSize.value = threadSize.value;
 		}
-		if (requestSize.getName().compareToIgnoreCase("local") != 0) {
-			sscpy.requestSize = requestSize;
-		} else {
-			sscpy.requestSize.value = requestSize.value;
-		}
 
-		for (Task task : simpleTasks) {
+		for (Task task : tasks) {
 			Task tcpy = task.getCopy();
 			sscpy.addTask(tcpy);
 		}
-		for (String h : hosts) {
-			String hcpy = new String(h);
-			sscpy.addHost(hcpy);
+		for (String m : machines) {
+			String mcpy = new String(m);
+			sscpy.addMachine(mcpy);
 		}
 		return sscpy;
 	}
 
 	public void validate() {
-		if (hosts.isEmpty())
-			logger.warn("Warning:Server \"" + name + "\" is not deployed on to any host ");
-		if (simpleTasks.isEmpty())
+		if (machines.isEmpty())
+			logger.warn("Warning:Server \"" + name + "\" is not deployed on to any machine ");
+		if (tasks.isEmpty())
 			logger.warn("Warning:Server \"" + name + "\" does not have tasks defined ");
 	}
 
@@ -161,18 +162,21 @@ public class SoftServer extends QueuingResource {
 		System.out.println(" Static Size " + size.name + ":" + size.value);
 		System.out.println(" SchedPolicy " + schedp.toString());
 		System.out.println(" Server Tasks:");
-		for (Task task : simpleTasks) {
+		for (Task task : tasks) {
 			task.print();
 		}
 		System.out.println(" Deployed on ");
-		for (String host : hosts) {
-			System.out.println("   Host " + host);
+		for (String machineName : machines) {
+			if(ModelParameters.inputDistSys.isVM(machineName))
+				System.out.println("   Virtual Machine: " + machineName);
+			else if(ModelParameters.inputDistSys.isVM(machineName))
+				System.out.println("   Physical Machine: " + machineName);
 		}
 	}
 
 	/** add host name on which this server is deployed */
-	public void addHost(String name) {
-		hosts.add(name);
+	public void addMachine(String name) {
+		machines.add(name);
 	}
 
 	public void modifyThreadCount(double var1) {
@@ -192,43 +196,43 @@ public class SoftServer extends QueuingResource {
 	}
 
 	/** Get a simple Task object given its name */
-	public Task getSimpleTask(String name) {
-		for (Task task : simpleTasks) {
+	public Task getTaskObject(String name) {
+		for (Task task : tasks) {
 			if (task.name.compareToIgnoreCase(name) == 0)
 				return task;
 		}
-		throw new Error(name + " is not Simple Task");
+		throw new Error(name + " is not Simple Task in server " + this.name);
 	}
 
 	/** Add a task to the list simpleTasks */
 	public void addTask(Task task) {
 		Task tcpy = task.getCopy();
-		simpleTasks.add(tcpy);
+		tasks.add(tcpy);
 	}
 
 	/** 
 	 * Remove the host name. (called when server is un deployed from a host)
 	 */
-	public void removeHost(String name) {
-		hosts.remove(name);
+	public void removeMachine(String name) {
+		machines.remove(name);
 	}
 
 	/**
 	 * Checks if softserver has any tasks that require virtual resource.
 	 * If there are then those virtual resources are deployed on the host
 	 * @param h
-	 * @param vrList
+	 * @param softResList
 	 * @throws Exception
 	 */
-	void deployVirtResRecursive(Host h, ArrayList<String> vrList) throws Exception {
-		for (String vr : vrList) {
+	void deploySoftResRecursive(Machine h, ArrayList<String> softResList) throws Exception {
+		for (String sr : softResList) {
 			// deploy the virtual resource
-			h.deployVirtualRes(vr, this.name);
+			h.deploySoftRes(sr, this.name);
 
 			// check if the virtual res calls other virtual resource.
-			VirtualResource currvr = ModelParameters.inputDistributedSystem.getVirtualRes(vr);
-			if (currvr.virtRes.size() != 0) {
-				deployVirtResRecursive(h, currvr.virtRes);
+			SoftResource currSr = ModelParameters.inputDistSys.getSoftRes(sr);
+			if (currSr.softRes.size() != 0) {
+				deploySoftResRecursive(h, currSr.softRes);
 			}
 		}
 	}
@@ -236,41 +240,40 @@ public class SoftServer extends QueuingResource {
 	/** Checks if softserver has any tasks that require virtual resource.
 	 *  If it does then those virtual resources are undeployed from the host
 	 */
-	void undeployVirtResRecursive(Host h, ArrayList<String> vrList) throws Exception {
-		for (String vr : vrList) {
+	void undeployVirtResRecursive(Machine m, ArrayList<String> srList) throws Exception {
+		for (String sr : srList) {
 			// undeploy virtual resource
-			h.unDeployVirtualRes(vr, this.name);
+			m.unDeploySoftRes(sr, this.name);
 
 			// check if the virtual resource calls other virtual resources
-			VirtualResource currvr = ModelParameters.inputDistributedSystem.getVirtualRes(vr);
-			if (currvr.virtRes.size() == 0) {
-				undeployVirtResRecursive(h, currvr.virtRes);
+			SoftResource currsr = ModelParameters.inputDistSys.getSoftRes(sr);
+			if (currsr.softRes.size() == 0) {
+				undeployVirtResRecursive(m, currsr.softRes);
 			}
 		}
 	}
 
 	/** deploys virtual resource on the host.
 	 * A virtual resource can call other virtual resources. hence this deployment is done recursively */
-	public void deployVirtualResOnHost(Host h) throws Exception {
-		for (Task t : simpleTasks) {
-			if (t.virRes.size() > 0) {
-				deployVirtResRecursive(h, t.virRes);
+	public void deploySoftResOnHost(Machine h) throws Exception {
+		for (Task t : tasks) {
+			if (t.softRes.size() > 0) {
+				deploySoftResRecursive(h, t.softRes);
 			}
-
 		}
 	}
 
 	/** undeploys virtual resource from the host. 
 	 * A virtual resource can call other virtual resources. hence this undeployment is done recursively
 	 */
-	public void unDeployVirtualResOnHost(Host h) throws Exception {
-		for (Task t : simpleTasks) {
-			if (t.virRes.size() > 0) {
-				undeployVirtResRecursive(h, t.virRes);
+	public void unDeploySoftResOnHost(Machine m) throws Exception {
+		for (Task t : tasks) {
+			if (t.softRes.size() > 0) {
+				undeployVirtResRecursive(m, t.softRes);
 			}
 		}
 	}
-
+	
 	public void setStaticSize(Variable v) {
 		size = v;
 	}
@@ -285,14 +288,6 @@ public class SoftServer extends QueuingResource {
 
 	public double getThreadSize() {
 		return (threadSize.value);
-	}
-
-	public void setRequestSize(Variable size) {
-		requestSize = size;
-	}
-
-	public double getRequestSize() {
-		return (requestSize.value);
 	}
 
 	public Double getTotalEnergyConsumption() {

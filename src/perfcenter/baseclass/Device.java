@@ -18,6 +18,7 @@
 package perfcenter.baseclass;
 
 import perfcenter.baseclass.enums.PowerManagementGovernor;
+import perfcenter.baseclass.DeviceCategory;
 import perfcenter.baseclass.enums.SchedulingPolicy;
 import perfcenter.baseclass.exception.DeviceNotFoundException;
 import perfcenter.simulator.SimulationParameters;
@@ -42,6 +43,8 @@ public class Device extends QueuingResource {
 
 	/** Name of the device. This identifies the device throughout the perfcenter. */
 	public String name = "undef";
+	public DeviceCategory category; 
+	
 	
 	/** Number of device instances. This is used to spawn as many {@link perfcenter.simulator.queue.QServerInstance QServerInstance} objects */
 	public Variable count = new Variable("local", 1);
@@ -52,6 +55,11 @@ public class Device extends QueuingResource {
 	/** Scheduling policy object which would decide how to enqueue and dequeue something. 
 	 */
 	public SchedulingPolicy schedulingPolicy = SchedulingPolicy.FCFS;
+	
+	/** Basespeed of device. Its unit depends on input specification. It is modeler dependent.
+	 *  If value is set to -1, then its basespeed is not set 
+	 **/
+	public Variable basespeed = new Variable("local", -1);
 	
 	/** Device speed up factor. It decides the <i>effective</i> service time of a job.
 	 * 
@@ -73,7 +81,7 @@ public class Device extends QueuingResource {
 	 * 
 	 * @author rakesh
 	 */
-	public double availabelSpeedLevels[] = new double[35]; // speed_inedx limit=15; taken implecitly
+	public double availableSpeedLevels[] = new double[35]; // speed_inedx limit=15; taken implicitly
 	
 	/**
 	 * The dynamic power consumption component corresponding to each speed level, of a power managed device.
@@ -101,7 +109,7 @@ public class Device extends QueuingResource {
 	/** Governing policy of power-management governor. */
 	public PowerManagementGovernor governor;
 	
-	/** Flag indicating whether this is a powermanaged device or not. */
+	/** Flag indicating whether this is a powerymanaged device or not. */
 	public boolean isDevicePowerManaged = false;
 
 	/** Used only by USERSPACE governor, gives the index of device speed selected for USERSPACE governor */
@@ -120,14 +128,75 @@ public class Device extends QueuingResource {
 	public Metric averageFrequency = new Metric();
 
 	public Device() {
-		this.availabelSpeedLevels[0] = 1;
+		this.availableSpeedLevels[0] = 1;
 	}
 
-	public Device(String deviceName) {
+	public Device(String _name) {
 		this();
-		name = deviceName;
+		name = _name;
 	}
-
+	
+	public Device(String _name, DeviceCategory _category) {
+		this();
+		name = _name;
+		category = _category;
+		//System.out.println("For 1-device " + name + " setting baseline speed " + basespeed.value);
+	}
+	
+	public Device(String _name, String _catname) {
+		this();
+		name = _name;
+		category = ModelParameters.inputDistSys.getDeviceCategory(_catname);
+		//System.out.println("For 2-device " + name + " setting baseline speed " + basespeed.value);
+	}
+	
+	public Device(String _name, DeviceCategory _category, double _baselineSpeed){
+		this();
+		name = _name;
+		category = _category;
+		basespeed.value = _baselineSpeed;
+		//System.out.println("For 3-device " + name + " setting baseline speed " + basespeed.value);
+	}
+	
+	public Device(String _name, String _catname, double _baselineSpeed){
+		this();
+		name = _name;
+		category = ModelParameters.inputDistSys.getDeviceCategory(_catname);
+		basespeed.value = _baselineSpeed;
+		//System.out.println("For 4-device " + name + " setting baseline speed " + basespeed.value);
+	}
+/*
+	public Device(Device anotherDevice){
+		System.out.println("In device copy constructor.");
+		schedulingPolicy = anotherDevice.schedulingPolicy;
+		name = anotherDevice.name;
+		category = anotherDevice.category;
+		if (anotherDevice.buffer.getName().compareToIgnoreCase("local") != 0) {
+			buffer = anotherDevice.buffer;
+		} else {
+			buffer.value = anotherDevice.buffer.value;
+		}
+		if (anotherDevice.count.getName().compareToIgnoreCase("local") != 0) {
+			count = anotherDevice.count;
+		} else {
+			count.value = anotherDevice.count.value;
+		}
+		if (anotherDevice.speedUpFactor.getName().compareToIgnoreCase("local") != 0) {
+			speedUpFactor = anotherDevice.speedUpFactor;
+		} else {
+			speedUpFactor.value = anotherDevice.speedUpFactor.value;
+		}
+		idlePower = anotherDevice.idlePower;
+		isDevicePowerManaged = anotherDevice.isDevicePowerManaged;
+		System.arraycopy(anotherDevice.powerConsumptionsLevels, 0, powerConsumptionsLevels, 0, anotherDevice.powerConsumptionsLevels.length);
+		System.arraycopy(anotherDevice.availableSpeedLevels, 0, availableSpeedLevels, 0, anotherDevice.availableSpeedLevels.length);
+		avgDeviceSpeedup = anotherDevice.avgDeviceSpeedup;
+		downThreshold = anotherDevice.downThreshold;
+		upThreshold = anotherDevice.upThreshold;
+		deviceProbeInterval = anotherDevice.deviceProbeInterval;
+		userspaceSpeedIndex = anotherDevice.userspaceSpeedIndex;
+		governor = anotherDevice.governor;
+	} */
 	/** Print device and its values */
 	public void print() {
 		System.out.println("----StartDevice:" + name + " Sched pol " + schedulingPolicy);
@@ -142,6 +211,7 @@ public class Device extends QueuingResource {
 
 		dcpy.schedulingPolicy = schedulingPolicy;
 		dcpy.name = name;
+		dcpy.category = category;
 		if (buffer.getName().compareToIgnoreCase("local") != 0) {
 			dcpy.buffer = buffer;
 		} else {
@@ -160,7 +230,7 @@ public class Device extends QueuingResource {
 		dcpy.idlePower = idlePower;
 		dcpy.isDevicePowerManaged = isDevicePowerManaged;
 		System.arraycopy(powerConsumptionsLevels, 0, this.powerConsumptionsLevels, 0, powerConsumptionsLevels.length);
-		System.arraycopy(availabelSpeedLevels, 0, this.availabelSpeedLevels, 0, availabelSpeedLevels.length);
+		System.arraycopy(availableSpeedLevels, 0, this.availableSpeedLevels, 0, availableSpeedLevels.length);
 		dcpy.avgDeviceSpeedup = avgDeviceSpeedup;
 		dcpy.downThreshold = downThreshold;
 		dcpy.upThreshold = upThreshold;
@@ -189,7 +259,7 @@ public class Device extends QueuingResource {
 	}
 
 	public void addSpeedLevels(String name, Variable v) throws DeviceNotFoundException {
-		this.availabelSpeedLevels[this.totalFrequencyLevels++] = v.value;
+		this.availableSpeedLevels[this.totalFrequencyLevels++] = v.value;
 	}
 
 	public void addPowerConsumedLevels(String name, Variable v) throws DeviceNotFoundException {
@@ -219,7 +289,7 @@ public class Device extends QueuingResource {
 	/*
 	 * Calculating device instance speedup here. dev_util*speedup = sigma(qsi.uti * qsi.speedup)/ dev_util;
 	 */
-	public void calculateAndPrintAverageDeviceSpeedup(Host host) {
+	public void calculateAndPrintAverageDeviceSpeedup(Machine host) {
 		avgDeviceSpeedup = 0;
 		double qsi_util = 0.0;
 		int i = 0;
@@ -227,11 +297,11 @@ public class Device extends QueuingResource {
 		for (QServerInstance qsi : ((QueueSim) resourceQueue).qServerInstances) // devQ has devices of type cpu
 		{
 			System.out.println("------>>   device name: " + name + "\t instance: " + i + "\t Device instance util:" + qsi.totalBusyTime.getTotalValue()
-					/ SimulationParameters.currentTime + "\t Device instance speedup: " + qsi.avgSpeedup);
+					/ SimulationParameters.currTime + "\t Device instance speedup: " + qsi.avgSpeedup);
 
 			// sum(qsi.util * qsi.avg_speedup)
-			avgDeviceSpeedup += (qsi.totalBusyTime.getTotalValue() / SimulationParameters.currentTime) * qsi.avgSpeedup;
-			qsi_util += qsi.totalBusyTime.getTotalValue() / SimulationParameters.currentTime;
+			avgDeviceSpeedup += (qsi.totalBusyTime.getTotalValue() / SimulationParameters.currTime) * qsi.avgSpeedup;
+			qsi_util += qsi.totalBusyTime.getTotalValue() / SimulationParameters.currTime;
 			i++;
 		}
 		avgDeviceSpeedup = avgDeviceSpeedup / qsi_util;

@@ -8,7 +8,7 @@ import java.util.Set;
  *
  */
 abstract public class MetricSim {
-	public abstract void calculateConfidenceIntervalsAtTheEndOfReplications();
+	public abstract void computeConfIvalsAtEndOfRepl();
 
 	public abstract double getMean(int slot);
 

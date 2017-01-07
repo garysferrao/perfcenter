@@ -16,19 +16,19 @@ public abstract class QueuingResource {
 	}
 
 	public void setAverageArrivalRate(double arate) {
-		resourceQueue.averageArrivalRate.setValue(arate);
+		resourceQueue.avgArrivalRate.setValue(arate);
 	}
 
 	public double getAverageArrivalRate() {
-		return resourceQueue.averageArrivalRate.getValue();
+		return resourceQueue.avgArrivalRate.getValue();
 	}
 
 	public void setAverageResponseTime(double rtime) {
-		resourceQueue.averageResponseTime.setValue(rtime);
+		resourceQueue.avgRespTime.setValue(rtime);
 	}
 
 	public double getAvgResponseTime() {
-		return resourceQueue.averageResponseTime.getValue();
+		return resourceQueue.avgRespTime.getValue();
 	}
 
 	public double getBlockingProbability() {
@@ -36,47 +36,47 @@ public abstract class QueuingResource {
 	}
 
 	public double getAvgServiceTime() {
-		return resourceQueue.averageServiceTime.getValue();
+		return resourceQueue.avgServiceTime.getValue();
 	}
 
 	public void setAvgWaitingTime(double wtime) {
-		resourceQueue.averageWaitingTime.setValue(wtime);
+		resourceQueue.avgWaitingTime.setValue(wtime);
 	}
 
 	public double getAvgWaitingTime() {
-		return resourceQueue.averageWaitingTime.getValue();
+		return resourceQueue.avgWaitingTime.getValue();
 	}
 
 	public double getAvgQueueLength() {
-		return resourceQueue.averageQueueLength.getValue();
+		return resourceQueue.avgQueueLen.getValue();
 	}
 
 	public void setAvgQueueLength(double len) {
-		resourceQueue.averageQueueLength.setValue(len);
+		resourceQueue.avgQueueLen.setValue(len);
 	}
 
 	public void setUtilization(double util) {
-		resourceQueue.averageUtilization.setValue(util);
+		resourceQueue.avgUtil.setValue(util);
 	}
 
 	public double getUtilization() {
-		return resourceQueue.averageUtilization.getValue();
+		return resourceQueue.avgUtil.getValue();
 	}
 
 	public void setThroughput(double thru) {
-		resourceQueue.averageThroughput.setValue(thru);
+		resourceQueue.avgThroughput.setValue(thru);
 	}
 
 	public double getThroughput() {
-		return resourceQueue.averageThroughput.getValue();
+		return resourceQueue.avgThroughput.getValue();
 	}
 
 	public void setAvgServiceTime(double t) {
-		resourceQueue.averageServiceTime.setValue(t);
+		resourceQueue.avgServiceTime.setValue(t);
 	}
 
 	public double getAveragePowerConsumed() {
-		return resourceQueue.averagePowerConsumed.getValue();
+		return resourceQueue.avgPowerConsumed.getValue();
 	}
 	
 	public Queue getResourceQueue() {

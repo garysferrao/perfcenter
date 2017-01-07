@@ -64,10 +64,10 @@ loadparams
 end
 
 modelparams
-    method analytical
+    method simulation
     type closed
     confint true
-    replicationno 5
+    replicationno 1
     noofrequests 200000
 end
 

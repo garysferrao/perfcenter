@@ -34,9 +34,9 @@ public interface QueueServer {
 
 	public void dequeue() throws Exception;
 
-	public void processTaskEndEvent(Request r, int instanceId, double currTime) throws Exception;
-
 	public void processTaskStartEvent(Request r, double currTime) throws Exception;
+
+	public void processTaskEndEvent(Request r, int instanceId, double currTime) throws Exception;
 
 	public void dropRequest(Request r, double currTime) throws Exception;
 

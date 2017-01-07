@@ -19,12 +19,13 @@ package perfcenter.simulator;
 
 import java.util.HashMap;
 import java.util.PriorityQueue;
+import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
 import perfcenter.baseclass.Device;
 import perfcenter.baseclass.DistributedSystem;
-import perfcenter.baseclass.Host;
+import perfcenter.baseclass.Machine;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.Scenario;
 import perfcenter.baseclass.SoftServer;
@@ -43,12 +44,12 @@ public class PerfSim {
 	// length of interval after which sample will be taken
 	Logger logger = Logger.getLogger("PerfSim");
 
-	public PerfSim(DistributedSystem perfc) {
+	public PerfSim(DistributedSystem perfc) throws IOException {
 		SimulationParameters.distributedSystemSim = new DistributedSystemSim(perfc);
 		SimulationParameters.requestMap = new HashMap<Integer, Request>();
 		SimulationParameters.eventQueue = new PriorityQueue<Event>();
-		SimulationParameters.requestIDGenerator = 0;
-		SimulationParameters.currentTime = 0.0;
+		SimulationParameters.reqIdGenerator = 0;
+		SimulationParameters.currTime = 0.0;
 		SimulationParameters.clearIntervalSlotCounter();
 	}
 
@@ -57,9 +58,9 @@ public class PerfSim {
 		// execute replications for the given set of arrival rates for the different
 		// scenarios. the performance measures generated from these scenarios are
 		// then used to generate confidence intervals.
-		for (SimulationParameters.replicationNumber = 0;
-				SimulationParameters.replicationNumber < ModelParameters.getNumberOfReplications();
-				SimulationParameters.replicationNumber++) {
+		for (SimulationParameters.replicationNo = 0;
+				SimulationParameters.replicationNo < ModelParameters.getNumberOfReplications();
+				SimulationParameters.replicationNo++) {
 
 			// before starting each simulation iteration, we will have to reset
 			// bookkeeping data structures to get rid of info from previous run
@@ -67,8 +68,8 @@ public class PerfSim {
 			createObjectReferences();
 			startSimulation();
 		}
-		SimulationParameters.replicationNumber--;
-		SimulationParameters.distributedSystemSim.calculateConfidenceIntervalsAtTheEndOfReplications();
+		SimulationParameters.replicationNo--;
+		SimulationParameters.distributedSystemSim.computeConfIvalsAtEndOfRepl();
 		return SimulationParameters.distributedSystemSim;
 	}
 
@@ -84,10 +85,10 @@ public class PerfSim {
 	 */
 	private void createObjectReferences() {
 		DistributedSystemSim distributedSystemSim = SimulationParameters.distributedSystemSim;
-		for(SoftServer softServer : distributedSystemSim.softServers) {
+		for(SoftServer softServer : distributedSystemSim.softServers.values()) {
 			SoftServerSim softServerSim = (SoftServerSim) softServer;
-			for(String hostName : softServerSim.hosts) {
-				softServerSim.hostObjects.add(distributedSystemSim.getHost(hostName));
+			for(String hostName : softServerSim.machines) {
+				softServerSim.hostObjects.add(distributedSystemSim.getPM(hostName));
 			}
 		}
 		
@@ -113,11 +114,11 @@ public class PerfSim {
 	private static void clearValuesButKeepConfInts() {
 		SimulationParameters.requestMap.clear();
 		SimulationParameters.eventQueue.clear();
-		SimulationParameters.currentTime = 0.0;
-		SimulationParameters.totalRequestsArrived = 0;
-		SimulationParameters.distributedSystemSim.clearValuesButKeepConfInts();
-		SimulationParameters.requestIDGenerator = 0;
-		SimulationParameters.currentEventBeingHandled = null;
+		SimulationParameters.currTime = 0.0;
+		SimulationParameters.totalReqArrived = 0;
+		SimulationParameters.distributedSystemSim.clearValuesButKeepConfIvals();
+		SimulationParameters.reqIdGenerator = 0;
+		SimulationParameters.currEventBeingHandled = null;
 		SimulationParameters.lastScenarioArrivalTime = 0.0;
 		SimulationParameters.clearIntervalSlotCounter();
 	}
@@ -143,18 +144,22 @@ public class PerfSim {
 		} else {
 			generateRequestsForClosedSystem();
 		}
-
+		
 		// run simulation till SIMULATION_ENDS event is encountered.
 		while (true) {
+			
 			Event currentEventToBeHandled = SimulationParameters.eventQueue.poll();
-
-			SimulationParameters.currentEventBeingHandled = currentEventToBeHandled;
+			SimulationParameters.currEventBeingHandled = currentEventToBeHandled;
 			if (currentEventToBeHandled == null) {
 				assert false;
 				throw new Error("No event in event list. It should NEVER happen. This is a bug.");
 			}
 			
-			logger.debug("Event: " + currentEventToBeHandled.type + "\t\ttime: " + currentEventToBeHandled.time);
+			if(currentEventToBeHandled.type != EventType.SCENARIO_ARRIVAL && currentEventToBeHandled.type != EventType.SIMULATION_COMPLETE 
+					&& SimulationParameters.migrationHappend){
+				currentEventToBeHandled.updateReqAfterMigration();
+			}
+			logger.debug("Event: " + currentEventToBeHandled.type + "\t\ttime: " + currentEventToBeHandled.timestamp);
 			switch (currentEventToBeHandled.type) {
 			case NO_OF_USERS_CHANGES:
 				currentEventToBeHandled.numberOfUserChanged();
@@ -186,38 +191,42 @@ public class PerfSim {
 				break;
 
 			case NETWORK_TASK_STARTS:
+				//System.out.println("NETWORK_TASK_STARTS");
 				currentEventToBeHandled.networkTaskStarts();
 				break;
 
 			case NETWORK_TASK_ENDS:
+				//System.out.println("NETWORK_TASK_ENDS");
 				currentEventToBeHandled.networkTaskEnds();
 				break;
 
-			case VIRTUALRES_TASK_STARTS:
-				currentEventToBeHandled.virtualResourceTaskStarts();
+			case SOFTRES_TASK_STARTS:
+				currentEventToBeHandled.softResourceTaskStarts();
 				break;
 
-			case VIRTUALRES_TASK_ENDS:
-				currentEventToBeHandled.virtualResourceTaskEnds();
+			case SOFTRES_TASK_ENDS:
+				currentEventToBeHandled.softResourceTaskEnds();
 				break;
 
 			case REQUEST_DONE:
 				currentEventToBeHandled.requestCompleted();
 				break;
+				
+			case MIGRATE:
+				currentEventToBeHandled.doMigration();
+				break;
 
 			case WARMUP_ENDS:
-				SimulationParameters.warmupEnabled = false;
 				break;
 
 			case COOLDOWN_STARTS:
-				SimulationParameters.warmupEnabled = true;
 				break;
 
 			case SIMULATION_COMPLETE:
 				SimulationParameters.recordIntervalSlotRunTime();
 				SimulationParameters.distributedSystemSim.recordCISampleAtTheEndOfSimulation();
-				logger.debug("Sim end at : " + SimulationParameters.currentTime);
-				System.out.println("Sim TotalReq Processed : " + SimulationParameters.getTotalRequestProcessed());
+				logger.debug("Sim end at : " + SimulationParameters.currTime);
+				//System.out.println("Sim TotalReq Processed : " + SimulationParameters.getTotalRequestProcessed());
 				return;
 
 			default:
@@ -239,14 +248,14 @@ public class PerfSim {
 				System.out.println("Please check the pair of rate and associate interval ");
 				System.exit(1);
 			}
-			double eventTime = SimulationParameters.currentTime + SimulationParameters.getCurrentSlotLength();
+			double eventTime = SimulationParameters.currTime + SimulationParameters.getCurrentSlotLength();
 			Event ev = new Event(eventTime, EventType.ARRIVAL_RATE_CHANGES);
 			SimulationParameters.offerEvent(ev);
 		}
 		ExponentialDistribution exp = new ExponentialDistribution();
 
 		// we will have to generate requests for each scenario
-		for (Scenario sc : SimulationParameters.distributedSystemSim.scenarios) {
+		for (Scenario sc : SimulationParameters.distributedSystemSim.scenarios.values()) {
 			// now we generate request
 			if (sc.getArateToScenario() > 0) {
 				double interArrivalTime = exp.nextExp(1 / sc.getArateToScenario());
@@ -256,9 +265,9 @@ public class PerfSim {
 		}
 
 		// If device type is powermanaged then create events and add then to global eventList: rakesh
-		for (Host h : SimulationParameters.distributedSystemSim.hosts) {
-			HostSim hs = (HostSim) h;
-			for (Device d : hs.devices) {
+		for (Machine h : SimulationParameters.distributedSystemSim.pms.values()) {
+			PhysicalMachineSim hs = (PhysicalMachineSim) h;
+			for (Device d : hs.devices.values()) {
 				DeviceSim ds = (DeviceSim) d;
 				if (ds.isDevicePowerManaged) {
 					generateDeviceAssociatedEvents(hs, ds);
@@ -271,18 +280,16 @@ public class PerfSim {
 	// added by akhila
 	public void generateRequestsForClosedSystem() throws Exception {
 		if (ModelParameters.isWorkloadTypeSet) {
-
 			if (ModelParameters.numberofUsersCount != ModelParameters.intervalSlotCount) {
 				System.out.println("Please check the pair of users and associate interval ");
 				System.exit(1);
 			}
-			double event_time = SimulationParameters.currentTime + SimulationParameters.getCurrentSlotLength();
+			double event_time = SimulationParameters.currTime + SimulationParameters.getCurrentSlotLength();
 			
 			Event ev = new Event(event_time, EventType.NO_OF_USERS_CHANGES);
 			SimulationParameters.offerEvent(ev);
-
-			// find the max users that this workload has use perticularly when workload is cyclic.... added by yogesh
-			double musers = findMaxUsers(ModelParameters.numberofUsers);
+			//Find the max users that this workload is using when workload is cyclic 
+			double musers = findMaxUsers(ModelParameters.noOfUsersCyclic);
 			ModelParameters.setMaxUsers(musers);
 		}
 
@@ -292,16 +299,17 @@ public class PerfSim {
 			double interArrivalTimeNext = ModelParameters.getThinkTime().nextRandomVal(1);
 
 			// picks a scenario randomly: Login, Send, Read, Delete
-			ScenarioSim sceName = SimulationParameters.getRandomScenarioSimBasedOnProb();
+			ScenarioSim sce = SimulationParameters.getRandomScenarioSimBasedOnProb();
 
-			generateScenarioArrivalEvent(sceName, interArrivalTimeNext);
-			logger.debug("scenario name: " + sceName + "\t scenario_ID: " + i + "\t\t  scenario arrival time: " + interArrivalTimeNext);
+			generateScenarioArrivalEvent(sce, interArrivalTimeNext);
+			logger.debug("scenario name: " + sce + "\t scenario_ID: " + i + "\t\t  scenario arrival time: " + interArrivalTimeNext);
+            //System.out.println("No of users: "  + i + " scenario name: " + sce.getName() + "\t scenario_ID: " + i + "\t\t  scenario arrival time: " + interArrivalTimeNext);
 		}
 
 		// If device type id powermanaged then create events and add then to global eventList: rakesh
-		for (Host h : SimulationParameters.distributedSystemSim.hosts) {
-			HostSim hs = (HostSim) h;
-			for (Device d : hs.devices) {
+		for (Machine h : SimulationParameters.distributedSystemSim.pms.values()) {
+			PhysicalMachineSim hs = (PhysicalMachineSim) h;
+			for (Device d : hs.devices.values()) {
 				DeviceSim ds = (DeviceSim) d;
 				if (ds.isDevicePowerManaged) {
 					generateDeviceAssociatedEvents(hs, ds);
@@ -310,7 +318,7 @@ public class PerfSim {
 		}
 	}
 
-	void generateDeviceAssociatedEvents(HostSim host, DeviceSim device) { //added by rakesh
+	void generateDeviceAssociatedEvents(PhysicalMachineSim host, DeviceSim device) { //added by rakesh
 		/***
 		 * TODO PONDER Rakesh: what if 2 different types of cpu(heterogenous) present on a same host How service-time will be affected
 		 ***/
@@ -327,8 +335,9 @@ public class PerfSim {
 	/** this is where we create the request and add it to requestList */
 	void generateScenarioArrivalEvent(ScenarioSim sceName, double time) {
 
-		logger.debug("reqID: " + SimulationParameters.requestIDGenerator);
-		Request req = new Request(SimulationParameters.requestIDGenerator++, sceName, time);
+		logger.debug("reqID: " + SimulationParameters.reqIdGenerator + " Time : " + time);
+		//System.out.println("reqID: " + SimulationParameters.reqIdGenerator + " Time : " + time);
+		Request req = new Request(SimulationParameters.reqIdGenerator++, sceName, time);
 		// req.scenarioArrivalTime = time;
 
 		/***** All the scenarios are added into request list here *****/
@@ -339,8 +348,8 @@ public class PerfSim {
 		Event ev = new Event(time, EventType.SCENARIO_ARRIVAL, req);
 
 		// change lastscenarioarrivaltime only if scenario arrival event have greater value
-		if (SimulationParameters.lastScenarioArrivalTime < ev.time) {
-			SimulationParameters.lastScenarioArrivalTime = ev.time;
+		if (SimulationParameters.lastScenarioArrivalTime < ev.timestamp) {
+			SimulationParameters.lastScenarioArrivalTime = ev.timestamp;
 		}
 
 		SimulationParameters.offerEvent(ev);

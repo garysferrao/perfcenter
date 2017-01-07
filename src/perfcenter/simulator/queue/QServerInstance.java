@@ -94,13 +94,13 @@ public class QServerInstance {
 		setBusyStatus(true);
 		logger.debug("::::::::::::::::::::::::::: [In start server instances] Time : " + time);
 
-		double timeSinceLastPowerUpdate = SimulationParameters.currentTime - lastPowerUpdate;
+		double timeSinceLastPowerUpdate = SimulationParameters.currTime - lastPowerUpdate;
 
 		if (parentQueue.qServer instanceof DeviceSim) {
 			DeviceSim parentDevice = (DeviceSim) parentQueue.qServer;
 
 			/** Created dummy request namely _idle and store the power used while server is idle **/
-			Request idleRequest = new Request(0, null, SimulationParameters.currentTime); // 2nd argument of Request isthe scenario name
+			Request idleRequest = new Request(0, null, SimulationParameters.currTime); // 2nd argument of Request isthe scenario name
 			idleRequest.fromServer = "_idle"; // assign idle power to a _idle server
 			double freeEnergy = parentDevice.computeEnergy(this, timeSinceLastPowerUpdate, false);
 			totalEnergyConsumption.recordValue(idleRequest, freeEnergy);
@@ -122,7 +122,7 @@ public class QServerInstance {
 			totalEnergyConsumption.recordValue(currentRequest, power);
 		}
 
-		lastPowerUpdate = SimulationParameters.currentTime;
+		lastPowerUpdate = SimulationParameters.currTime;
 
 		// lastUpdateTimeInProbeInterval = time; // this is updated in device sim
 		reqArrivalTime = 0;
@@ -150,6 +150,7 @@ public class QServerInstance {
 	public void setBusyStatus(boolean busyStatus) {
 		this.busyStatus = busyStatus;
 		if (busyStatus == false) { // not busy
+	
 			if (!onFreeStack) {
 				this.parentQueue.freeQServerInstances.push(this);
 				onFreeStack = true;

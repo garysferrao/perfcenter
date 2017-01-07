@@ -1,0 +1,96 @@
+devicecategory
+	cpu intel
+	noncpu disk
+end
+
+pdevice 
+	intel cpu1
+	disk disk1
+end
+
+vdevice
+	intel vcpu1
+	disk vdisk1
+end
+
+task wt1 
+	intel servt 0.04 at 2.8
+end
+
+task wt2 
+	intel servt 0.04 at 2.8
+end
+
+task dt1 
+	intel servt 0.08 at 2.8
+	disk servt 0.20 at 300
+end
+
+physicalmachine pm1[2]
+	cpu1 count 2
+	cpu1 buffer 10
+	cpu1 schedP fcfs
+	cpu1 basespeed 2.8
+	disk1 count 1
+	disk1 buffer 10
+	disk1 schedP fcfs
+	virtualization on
+end
+
+virtualmachine vm1[1]
+	vcpu1 count 2
+	vcpu1 buffer 10
+	vcpu1  schedP fcfs
+	vdisk1 count 1
+	vdisk1 buffer 10
+	vdisk1 schedP fcfs
+end
+
+virtualmachine vm2[1]
+	vcpu1 count 2
+	vcpu1 buffer 10
+	vcpu1  schedP fcfs
+	vdisk1 count 1
+	vdisk1 buffer 10
+	vdisk1 schedP fcfs
+end
+
+server web
+	thread count 4
+	thread buffer 100
+	thread schedP fcfs
+	task wt1
+end
+
+server db
+	thread count 4
+	thread buffer 100
+	thread schedP fcfs
+	task dt1
+end
+
+scenario sc1 prob 1.0
+	wt1 dt1 300
+	dt1 wt2 400
+end
+
+deploy web vm1[1]
+deploy db vm2[1]
+deploy vm1[1] pm1[1]
+deploy vm2[1] pm1[2]
+
+loadparams
+	noofusers 100
+	thinktime 10
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 1
+    noofrequests 2000
+	warnings disable
+end
+
+print "Number of Uers,Response Time, Throughput"
+print 100 + "," + respt() + "," + tput()

@@ -125,7 +125,7 @@ public class TimeAverageMetric extends MetricSim {
 		}
 	}
 
-	public final void calculateConfidenceIntervalsAtTheEndOfReplications() {
+	public final void computeConfIvalsAtEndOfRepl() {
 		for (int i = 0; i < metricSlots.length; i++) {
 			metricSlots[i].calculateConfidenceIntervalsAtTheEndOfReplications();
 		}
@@ -218,7 +218,7 @@ class _TimeAverageMetricSlotLevel extends _MetricSimSlotLevel {
 	public double getMean() {
 		return perServerMetric.get("_total") != null ? perServerMetric.get("_total").getMean() : 0;
 	}
-
+	
 	public boolean isValuesCapturedSinceLastCI(String serverName) {
 		return perServerMetric.get(serverName).isValuesCapturedSinceLastCI();
 	}
@@ -292,15 +292,14 @@ class _TimeAverageMetricLowestLevel extends _MetricSimLowestLevel {
 			return;
 		}
 		
-		recordValue(sampleValue, SimulationParameters.currentTime - timeOfLastSampleRecording);
-		timeOfLastSampleRecording = SimulationParameters.currentTime;
+		recordValue(sampleValue, SimulationParameters.currTime - timeOfLastSampleRecording);
+		timeOfLastSampleRecording = SimulationParameters.currTime;
 	}
 
 	public void recordValue(double sampleValue, double timeElapsedForCurrentSample) {
 		if(SimulationParameters.warmupEnabled) {
 			return;
 		}
-		
 		if (!Double.isNaN(sampleValue) && !Double.isNaN(timeElapsedForCurrentSample)) {
 			totalValue += sampleValue * timeElapsedForCurrentSample;
 		}

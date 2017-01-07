@@ -3,6 +3,7 @@ package perfcenter.parser;
 import perfcenter.baseclass.Distribution;
 import perfcenter.baseclass.ModelParameters;
 import perfcenter.baseclass.SoftServer;
+import perfcenter.baseclass.Task;
 import perfcenter.baseclass.Variable;
 import perfcenter.baseclass.enums.SchedulingPolicy;
 import perfcenter.baseclass.exception.DeviceNotFoundException;
@@ -14,7 +15,7 @@ import perfcenter.baseclass.exception.DeviceNotFoundException;
  */
 public class SetStmt {
 
-	String host, device, server, lan1, lan2, task, scenario, var, mtuUnit, propUnit, transUnit;
+	String pmname,vmname, pdevname, vdevname, server, lan1, lan2, taskName, scenario, var, mtuUnit, propUnit, transUnit;
 
 	Distribution dist;
 
@@ -86,8 +87,12 @@ public class SetStmt {
 		transUnit = unit;
 	}
 
-	public void addHost(String name) {
-		host = name;
+	public void addPM(String name) {
+		pmname = name;
+	}
+	
+	public void addVM(String name) {
+		vmname = name;
 	}
 
 	public void addVariable(String var1) {
@@ -98,8 +103,12 @@ public class SetStmt {
 		varval = val;
 	}
 
-	public void addDevice(String name) {
-		device = name;
+	public void addPDevice(String name) {
+		pdevname = name;
+	}
+	
+	public void addVDevice(String name) {
+		pdevname = name;
 	}
 
 	public void addServer(String name) {
@@ -117,7 +126,7 @@ public class SetStmt {
 	}
 
 	public void addTask(String name) {
-		task = name;
+		taskName = name;
 	}
 
 	public void addSchedulingPolicy(SchedulingPolicy p) {
@@ -131,58 +140,58 @@ public class SetStmt {
 	public void execute() throws DeviceNotFoundException, Exception {
 		ModelParameters.isModified = true;
 		try {
-			if (host != null) {
+			if (pmname != null) {
 				if (server != null) {
 					if (count >= 0) {
-						((SoftServer) ModelParameters.inputDistributedSystem.getHost(host).getServer(server)).modifyThreadCount(count);
+						((SoftServer) ModelParameters.inputDistSys.getPM(pmname).getServer(server)).modifyThreadCount(count);
 						return;
 					} else if (buffer >= 0) {
-						((SoftServer) ModelParameters.inputDistributedSystem.getHost(host).getServer(server)).modifyThreadBuffer(buffer);
+						((SoftServer) ModelParameters.inputDistSys.getPM(pmname).getServer(server)).modifyThreadBuffer(buffer);
 						return;
 					} else if (pol != null) {
-						((SoftServer) ModelParameters.inputDistributedSystem.getHost(host).getServer(server)).setSchedPolicy(pol);
+						((SoftServer) ModelParameters.inputDistSys.getPM(pmname).getServer(server)).setSchedPolicy(pol);
 						return;
 					}
 
-				} else if (device != null) {
+				} else if (pdevname != null) {
 					if (count >= 0) {
-						ModelParameters.inputDistributedSystem.getHost(host).modifyDeviceCount(device, count);
+						ModelParameters.inputDistSys.getPM(pmname).modifyDeviceCount(pdevname, count);
 						return;
 					} else if (buffer >= 0) {
-						ModelParameters.inputDistributedSystem.getHost(host).modifyDeviceBuffer(device, buffer);
+						ModelParameters.inputDistSys.getPM(pmname).modifyDeviceBuffer(pdevname, buffer);
 						return;
 					} else if (pol != null) {
-						ModelParameters.inputDistributedSystem.getHost(host).modifyDeviceSchedPol(device, pol);
+						ModelParameters.inputDistSys.getPM(pmname).modifyDeviceSchedPol(pdevname, pol);
 						return;
 					} else if (probe_interval > 0) { // modify probe interval of device, added by rakesh
-						ModelParameters.inputDistributedSystem.getHost(host).modifyProbeInterval(device, probe_interval);
+						ModelParameters.inputDistSys.getPM(pmname).modifyProbeInterval(pdevname, probe_interval);
 						return;
 					} else if (gov_up_threshold.getValue() > 0) { // modify governor up threshold of device, added by rakesh //BHAVIN
-						ModelParameters.inputDistributedSystem.getHost(host).modifyGovUpThreshold(device, gov_up_threshold.getValue()); //BHAVIN
+						ModelParameters.inputDistSys.getPM(pmname).modifyGovUpThreshold(pdevname, gov_up_threshold.getValue()); //BHAVIN
 						return;
 					} else if (gov_down_threshold.getValue() > 0) {// modify governor down threshold of device, added by rakesh //BHAVIN
 //						ModelParameters.inputDistributedSystem.getHost(host).modifyGovDownThreshold(device, gov_down_threshold);
-						ModelParameters.inputDistributedSystem.getHost(host).modifyGovDownThreshold(device, gov_down_threshold.getValue()); //BHAVIN
+						ModelParameters.inputDistSys.getPM(pmname).modifyGovDownThreshold(pdevname, gov_down_threshold.getValue()); //BHAVIN
 						return;
 					}
 				}
 			} else if (lan1 != null) {
 				if (mtu > 0) {
-					ModelParameters.inputDistributedSystem.getLink(lan1, lan2).modifyMTU(mtu, mtuUnit);
+					ModelParameters.inputDistSys.getLink(lan1, lan2).modifyMTU(mtu, mtuUnit);
 					return;
 				} else if (prop >= 0) {
-					ModelParameters.inputDistributedSystem.getLink(lan1, lan2).modifyPropDelay(prop, propUnit);
+					ModelParameters.inputDistSys.getLink(lan1, lan2).modifyPropDelay(prop, propUnit);
 					return;
 				} else if (trans >= 0) {
-					ModelParameters.inputDistributedSystem.getLink(lan1, lan2).modifyTransRate(trans, transUnit);
+					ModelParameters.inputDistSys.getLink(lan1, lan2).modifyTransRate(trans, transUnit);
 					return;
 				}
-			} else if (task != null) {
-				ModelParameters.inputDistributedSystem.getTask(task).modifyServiceTime(device, dist);
+			} else if (taskName != null) {
+				ModelParameters.inputDistSys.getTask(taskName).modifyServiceTime(pdevname, dist);
 			} else if (var != null) {
-				ModelParameters.inputDistributedSystem.getVariable(var).setValue(varval);
+				ModelParameters.inputDistSys.getVariable(var).setValue(varval);
 			} else if (scenario != null) {
-				ModelParameters.inputDistributedSystem.getScenario(scenario).modifyProbability(prob);
+				ModelParameters.inputDistSys.getScenario(scenario).modifyProbability(prob);
 			}
 		} catch (Error e) {
 			throw new Error("Line no:" + lineno + " " + e.getMessage());

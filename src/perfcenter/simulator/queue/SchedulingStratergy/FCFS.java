@@ -17,6 +17,7 @@
  */
 package perfcenter.simulator.queue.SchedulingStratergy;
 
+import perfcenter.simulator.SimulationParameters;
 import perfcenter.simulator.queue.QueueServer;
 import perfcenter.simulator.queue.QueueSim;
 import perfcenter.simulator.request.Request;
@@ -69,11 +70,11 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 	public void enqueue(Request req, double currTime) throws Exception {
 		// chk if any instance of resource free
 		int idleDeviceId = getIdleInstanceId();
-
 		// mark time when request enters the system
-		processRequestArrival(req, idleDeviceId, currTime);
-
+		bookkeepRequestArrival(req, idleDeviceId, currTime);
+		//System.out.println("!!!!!!!!!" + req.id + ":" + req.currentTaskNode.name + ":" + req.softServName + ":" + req.machineName);
 		if (idleDeviceId == -1) {
+			
 			// no instance of device free
 			// chk if buffer is not full
 			if (!isBufferFull()) {
@@ -84,7 +85,6 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 				// discard request if all buffers full
 				totalNumberOfRequestsBlocked.recordValue(req,1);
 				qServer.dropRequest(req, currTime);
-
 			}
 		} else {
 			// some instance of deivce(idleDev) is free
@@ -92,16 +92,16 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 			req.qServerInstanceID = idleDeviceId;
 			createStartTaskEvent(req, idleDeviceId, currTime);
 			// update the average waiting time for this resource
-			averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
+			waitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
 		}
 	}
 
 	public void dequeueAndProcess(double currTime) throws Exception {
 		// get next first request(because it is fcfs) from buffer
-		Request req = getRequestFromBuffer(0, currTime);
 		
+		Request req = getRequestFromBuffer(0, currTime);
 		int idleDeviceId = getIdleInstanceId();
-		processRequestArrival(req, idleDeviceId, currTime);
+		bookkeepRequestArrival(req, idleDeviceId, currTime);
 		
 		req.qServerInstanceID = idleDeviceId;
 
@@ -112,6 +112,6 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 		// nadeesh commented because now totalWaitingTime is not used to find the averageWaitingTime
 		//	totalWaitingTime.recordValue(req,qServerInstances.get(instanceId).reqStartTime - qServerInstances.get(instanceId).reqArrivalTime);
 		// update the average waiting time for this resource
-		averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
+		waitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
 	}
 }

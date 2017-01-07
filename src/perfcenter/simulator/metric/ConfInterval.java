@@ -52,7 +52,7 @@ public class ConfInterval { //ARCHITECTURE: merge this class with MetricSim
 
 	public void recordCISample(double val) {
 		assert val >= 0 : val;
-		data[SimulationParameters.replicationNumber] = val;
+		data[SimulationParameters.replicationNo] = val;
 	}
 
 	/**

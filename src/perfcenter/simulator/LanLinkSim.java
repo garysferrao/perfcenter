@@ -93,21 +93,21 @@ public class LanLinkSim extends LanLink implements QueueServer {
 	public void processTaskEndEvent(Request rq, int instanceId, double currTime) throws Exception {
 		try {
 			// end service for the queue
-			endService(rq,rq.srcLanName, rq.destLanName, instanceId, SimulationParameters.currentTime);
+			endService(rq,rq.srcLanName, rq.destLanName, instanceId, SimulationParameters.currTime);
 
 			// get the soft server
-			SoftServerSim s = rq.hostObject.getServer(rq.softServerName);
+			SoftServerSim s = SimulationParameters.distributedSystemSim.machineMap.get(rq.machineName).getServer(rq.softServName);
 
-			if (rq.isSyncReply(rq.softServerName)) {
+			if (rq.isSyncReply(rq.softServName)) {
 				// if it is reply to sync call remove from the vector
 				rq.synReqVector.remove(rq.synReqVector.size() - 1);
 
 				// This request is not added to queue, but processing begins
 				// immediately
-				s.createStartTaskEvent(rq, rq.threadNum, SimulationParameters.currentTime);
+				s.createStartTaskEvent(rq, rq.threadNum, SimulationParameters.currTime);
 			} else {
 				// add request to the queue of soft server
-				s.enqueue(rq, SimulationParameters.currentTime);
+				s.enqueue(rq, SimulationParameters.currTime);
 			}
 		} catch (Exception e) {
 			throw e;
@@ -140,7 +140,7 @@ public class LanLinkSim extends LanLink implements QueueServer {
 		// calculate end time. and add new event in the event list
 		// double endTime = SimParams.currentTime + transdelay + propdelay;
 		ExponentialDistribution exp = new ExponentialDistribution();
-		double endTime = SimulationParameters.currentTime + exp.nextExp(transdelay) + propdelay;// modified by niranjan
+		double endTime = SimulationParameters.currTime + exp.nextExp(transdelay) + propdelay;// modified by niranjan
 		Event ev = new Event(endTime, EventType.NETWORK_TASK_ENDS, r);
 		SimulationParameters.offerEvent(ev);
 
@@ -152,8 +152,8 @@ public class LanLinkSim extends LanLink implements QueueServer {
 		// 1. We need to take care of the thread allocated to the request
 		// 2. Take care of contributions made to performance measures of
 		// current software server
-
-		r.hostObject.getServer(r.softServerName).abortThread(r.threadNum, SimulationParameters.currentTime);
+		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(r.machineName);
+		machineObject.getServer(r.softServName).abortThread(r.threadNum, SimulationParameters.currTime);
 		r.drop();
 	}
 }

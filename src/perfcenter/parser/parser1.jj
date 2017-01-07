@@ -1,22 +1,22 @@
-/* @author  akhila modified by rakesh, nikhil, yogesh
+/* @author  akhila modified by rakesh, nikhil, yogesh, bhavin, samkit
  */
 options {
-  JDK_VERSION = "1.5";
-  IGNORE_CASE = true;
-  STATIC = true;
-  //DEBUG_PARSER = true;
+	JDK_VERSION = "1.5";
+	IGNORE_CASE = true;
+	STATIC = true;
+	//DEBUG_PARSER = true;
 }
 PARSER_BEGIN(PerfParser)
-package perfcenter.parser;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.*;
-import perfcenter.baseclass.*;
-import perfcenter.baseclass.enums.*;
-import perfcenter.baseclass.exception.*;
-//import perfcenter.simulator.SimParams;
-@SuppressWarnings("unused")
-public class PerfParser
+	package perfcenter.parser;
+	import org.apache.log4j.Level;
+	import org.apache.log4j.Logger;
+	import org.apache.log4j.*;
+	import perfcenter.baseclass.*;
+	import perfcenter.baseclass.enums.*;
+	import perfcenter.baseclass.exception.*;
+	//import perfcenter.simulator.SimParams;
+	@SuppressWarnings("unused")
+	public class PerfParser
 {
 
 	static PerfParser parsr,parsr2;
@@ -24,419 +24,517 @@ public class PerfParser
 	static ConsoleAppender appender = new ConsoleAppender(new PatternLayout());
 
 
-  public static void main(String args[]) throws Exception {
-  	int i=0;
-  	String arg="none";
-  	SolutionMethod m=SolutionMethod.NONE;
-  	SystemType t=SystemType.NONE;
-  	logger.setLevel((Level) Level.INFO);
-  	logger.addAppender(appender);
-  	ModelParameters.inputDistributedSystem = new DistributedSystem();
-  	try {
-  		while (i < args.length && args[i].startsWith("-")) {
-            arg = args[i++];
-            if (arg.equals("-a")) {
-                m=SolutionMethod.ANALYTICAL;
-                //System.out.println("Analytical solution");
-            }else
-            if (arg.equals("-s")) {
-                m=SolutionMethod.SIMULATION;
-                //System.out.println("Simulation ");
-            }else
-            if (arg.equals("-o")) {
-                t=SystemType.OPEN;
-            }else
-            if (arg.equals("-c")) {
-                t=SystemType.CLOSED;
-            }
-            if (arg.equals("-d")) {
-                logger.setLevel((Level) Level.DEBUG);
-            }
-            if (arg.equals("-q")) {
-                logger.setLevel((Level) Level.ERROR);
-            }
-        }
-        if (i == args.length)
-       	 	throw new Error("Usage:  java [-d] [-a|-s] perfcenter file");
-        arg=args[i];
-        parsr = new PerfParser(new java.io.FileInputStream(arg));
-//        logger.info("Input file "+arg);
-        ModelParameters.setSolutionMethod(m);
-        ModelParameters.setSystemType(t);
-//        logger.info("Started at "+Helper.timeNow());
-        PerfParser.InputFile();
-        //InputParams.ds.print();
-//        logger.info("Completed at "+Helper.timeNow());
-    }
-    catch(java.io.FileNotFoundException e) {
-        logger.error("PerfCenter:  File " + arg + " not found.");
-        e.printStackTrace();
-        return ;
-    }
-  }//End of main
+	public static void main(String args[]) throws Exception {
+		int i=0;
+		String arg="none";
+		SolutionMethod m=SolutionMethod.NONE;
+		SystemType t=SystemType.NONE;
+		logger.setLevel((Level) Level.INFO);
+		logger.addAppender(appender);
+		ModelParameters.inputDistSys = new DistributedSystem();
+		try {
+			while (i < args.length && args[i].startsWith("-")) {
+				arg = args[i++];
+				if (arg.equals("-a")) {
+					m=SolutionMethod.ANALYTICAL;
+					//System.out.println("Analytical solution");
+				}else
+					if (arg.equals("-s")) {
+						m=SolutionMethod.SIMULATION;
+						//System.out.println("Simulation ");
+					}else
+						if (arg.equals("-o")) {
+							t=SystemType.OPEN;
+						}else
+							if (arg.equals("-c")) {
+								t=SystemType.CLOSED;
+							}
+				if (arg.equals("-d")) {
+					logger.setLevel((Level) Level.DEBUG);
+				}
+				if (arg.equals("-q")) {
+					logger.setLevel((Level) Level.ERROR);
+				}
+			}
+			if (i == args.length)
+				throw new Error("Usage:  java [-d] [-a|-s] perfcenter file");
+			arg=args[i];
+			parsr = new PerfParser(new java.io.FileInputStream(arg));
+			//        logger.info("Input file "+arg);
+			ModelParameters.setSolutionMethod(m);
+			ModelParameters.setSystemType(t);
+			//        logger.info("Started at "+Helper.timeNow());
+			PerfParser.InputFile();
+			//InputParams.ds.print();
+			//        logger.info("Completed at "+Helper.timeNow());
+		}
+		catch(java.io.FileNotFoundException e) {
+			logger.error("PerfCenter:  File " + arg + " not found.");
+			e.printStackTrace();
+			return ;
+		}
+	}//End of main
 }
 PARSER_END(PerfParser)
 
-SKIP :{
- 	" "
-|	"\r"
-|	"\t"
-|	"\n"
-|  <"//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")>
-|  <"/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/">
-}
-
-
-
-
-TOKEN : {
-	<SCENARIO: "scenario"> |
-	<END: "end"> |
-	<VARIABLE: "variable"> |
-	<DEVICE: "device"> |
-	<PS: "ps"> | //scheduling policy
-	<FCFS: "fcfs"> |
-	<LCFS: "lcfs"> |
-	<DEPLOY: "deploy"> |
-	<UNDEPLOY: "undeploy"> |
-	<HOST: "host"> |
-	<SERVER: "server"> |
-	<COUNT: "count"> |
-	<PROB: "prob"> | //prob of scenario
-	<SYNC: "sync"> | //whether message is synchronous or not
-	<SERVT: "servt"> | //service time
-	<THREAD: "thread"> |
-	<TASK: "task"> |
-	<BUFFER: "buffer"> |
-	<VIRTRES: "virtres"> | //virtual resource
-	<SCHEDP: "schedp"> |
-	<SPEEDUP: "speedup"> | //device speedup
-	<TRUE: "true">|
-	<FALSE: "false"> |
-
-	//added by nikhil - memory model
- 	<RAM : "ram"> |       // added by nikhil(memory model), host ram size
-	<STATICSIZE: "staticsize">|       // added by nikhil(memory model), static size of software server
-	<REQUESTSIZE: "requestsize">|      // added by nikhil(memory model), its request size
-	<SIZE: "size">      | // added by nikhil(memory model), its thread size
-	<WARNINGS: "warnings"> |//added by nikhil, you can get rid of warnings if you want
-
-	// Keywords for power-management devices are added: Rakesh
-	<POWERMANAGED: "power_managed">|
-	<GOVERNOR: "governor">|
-	<CONSERVATIVE: "conservative">|
-	<ONDEMAND: "ondemand">|
-	<PERFORMANCE: "performance">|
-	<POWERSAVE: "powersave">|
-	<USERSPACE: "userspace">|
-
-	<POWERMANAGEMENT: "powermanagement">|
-	<SPEEDLEVELS:"speed_levels">|
-	<POWERCONSUMEDLEVELS:"power_consumed">|
-    <IDLEPOWER:"idlepower">|
-	<SETSPEEDLEVELINDEX: "setspeed_level_index">|
-	<PROBEINTERVAL: "probe_interval">|
-	<PROBEINTERVALDOWNFACTOR: "probe_interval_down_factor">|
-	<GOVERNOR_UP_THRESHOLD: "governor_up_threshold" >|
-	<GOVERNOR_DOWN_THRESHOLD: "governor_down_threshold" >
+	SKIP :{
+		" "
+			|	"\r"
+			|	"\t"
+			|	"\n"
+			|  <"//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")>
+			|  <"/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/">
 	}
 
+
+
+
 TOKEN : {
-	<LAN: "lan"> |
-	<LINK: "link"> |
-	<PROP: "prop"> |
-	<TRANS: "trans"> |
-	<HEADERSIZE: "headersize"> |
-	<BYTES:"bytes">|
-	<MS:"ms">|
-	<US:"us">|
-	<NS:"ns">|
-	<KBPS:"Kbps">|
-	<BPS:"bps">|
-	<MBPS:"Mbps">|
-	<GBPS:"Gbps">|
-	<MTU: "mtu">
-}
+			<SCENARIO: "scenario"> |
+				<END: "end"> |
+				<VARIABLE: "variable"> |
+				<PDEVICE: "pdevice"> |
+				<DEVICECATEGORY: "devicecategory" > |
+				<VDEVICE: "vdevice"> |
+				<CPU: "cpu" > |	//DEVICETYPE-1 //Added by Samkit
+				<NONCPU: "noncpu" > |	//DEVICETYPE-2 //Added by Samkit
+				<VCPU: "vcpu" > |	//DEVICETYPE-1 //Added by Samkit
+				<VSTORAGE: "vstorage" > |	//DEVICETYPE-2 //Added by Samkit
+				<PS: "ps"> | //scheduling policy
+				<FCFS: "fcfs"> |
+				<LCFS: "lcfs"> |
+				<XCS: "xcs" >  |
+				<DEPLOY: "deploy"> |
+				<UNDEPLOY: "undeploy"> |
+				<PHYSICALMACHINE: "physicalmachine"> |
+				<VIRTUALMACHINE: "virtualmachine"> |
+				<SERVER: "server"> |
+				<COUNT: "count"> |
+				<PROB: "prob"> | //prob of scenario
+				<SYNC: "sync"> | //whether message is synchronous or not
+				<SERVT: "servt"> | //service time
+				<AT: "at"> | 		//To specify cpu freq with task service time
+				<THREAD: "thread"> |
+				<TASK: "task"> |
+				<BUFFER: "buffer"> |
+				<BASESPEED: "basespeed"> |
+				<SOFTRES: "softres"> | 
+				<SCHEDP: "schedp"> |
+				<SPEEDUP: "speedup"> | //device speedup
+				<TRUE: "true">|
+				<FALSE: "false"> |
+
+				<RAM : "ram"> |       
+				<STATICSIZE: "staticsize">|       
+				<SIZE: "size">      | 
+				<WARNINGS: "warnings"> |
+
+				// Keywords for power-management devices are added: Rakesh
+				<POWERMANAGED: "power_managed">|
+				<GOVERNOR: "governor">|
+				<CONSERVATIVE: "conservative">|
+				<ONDEMAND: "ondemand">|
+				<PERFORMANCE: "performance">|
+				<POWERSAVE: "powersave">|
+				<USERSPACE: "userspace">|
+
+				<POWERMANAGEMENT: "powermanagement">|
+				<SPEEDLEVELS:"speed_levels">|
+				<POWERCONSUMEDLEVELS:"power_consumed">|
+				<IDLEPOWER:"idlepower">|
+				<SETSPEEDLEVELINDEX: "setspeed_level_index">|
+				<PROBEINTERVAL: "probe_interval">|
+				<PROBEINTERVALDOWNFACTOR: "probe_interval_down_factor">|
+				<GOVERNOR_UP_THRESHOLD: "governor_up_threshold" >|
+				<GOVERNOR_DOWN_THRESHOLD: "governor_down_threshold" >
+		}
+
+TOKEN : {
+			<LAN: "lan"> |
+				<LINK: "link"> |
+				<PROP: "prop"> |
+				<TRANS: "trans"> |
+				<HEADERSIZE: "headersize"> |
+				<BYTES:"bytes">|
+				<MS:"ms">|
+				<US:"us">|
+				<NS:"ns">|
+				<KBPS:"Kbps">|
+				<BPS:"bps">|
+				<MBPS:"Mbps">|
+				<GBPS:"Gbps">|
+				<MTU: "mtu">
+		}
 
 //Distributions
 TOKEN : {
-	<EXP: "exp"> |
-	<NOR: "nor"> |
-	<POI: "poi"> |
-	<UNI: "uni"> |
-	<BETA: "beta"> |
-	<BINOM: "binom"> |
-	<CHISQR: "chisqr"> |
-	<GAMMA: "gamma"> |
-        <CONST: "const">
-}
+			<EXP: "exp"> |
+				<NOR: "nor"> |
+				<POI: "poi"> |
+				<UNI: "uni"> |
+				<BETA: "beta"> |
+				<BINOM: "binom"> |
+				<CHISQR: "chisqr"> |
+				<GAMMA: "gamma"> |
+				<CONST: "const">
+		}
 //functions
 TOKEN : {
-	<RESPT: "respt"> 		|//
-	<WAITT: "waitt"> 		|//
-	<UTIL: "util">			|//
-	<QLEN: "qlen">			|//
-        <POWER : "power">             |
-        <EPERR : "eperr">               |
-        <PDP : "pdp">                   |
-        <PEFF : "peff">                 |
-	<TPUT : "tput">			|//
-	<BPUT : "bput">			|//
-	<GPUT : "gput">			|//
-	<BUFFTIMEOUT : "buffTimeout">    |
-	<DROPRATE : "droprate">          |
-	<AVGSERVT : "avgservt">          |//
-	<QPARMS : "qparms">		|//
-	<BOTTLENECK : "bottleneck">	|
-	<BLOCKPROB : "blockprob">	|//
-	<PRINTCFG : "printcfg">		|//
-	<ARATE : "arate">                |//
-	<ANALYSE : "analyse">            |
-        <INTERVAL: "interval">           |
-        <FREQ: "freq">
-}
+			<RESPT: "respt"> 		|//
+				<WAITT: "waitt"> 		|//
+				<UTIL: "util">			|//
+				<QLEN: "qlen">			|//
+				<AVAIL: "avail" >       |//
+				<POWER : "power">             |
+				<EPERR : "eperr">               |
+				<PDP : "pdp">                   |
+				<PEFF : "peff">                 |
+				<TPUT : "tput">			|//
+				<BPUT : "bput">			|//
+				<GPUT : "gput">			|//
+				<BUFFTIMEOUT : "buffTimeout">    |
+				<DROPRATE : "droprate">          |
+				<AVGSERVT : "avgservt">          |//
+				<QPARMS : "qparms">		|//
+				<BOTTLENECK : "bottleneck">	|
+				<BLOCKPROB : "blockprob">	|//
+				<PRINTCFG : "printcfg">		|//
+				<ARATE : "arate">                |//
+				<ANALYSE : "analyse">            |
+				<INTERVAL: "interval">           |
+				<FREQ: "freq"> 			|
+				<DOWNTIME: "downtime">			// down time of virtual machine
+		}
 
 //statements
 TOKEN : {
-	<FOREACH: "foreach">	|
-	<FOR: "for">		|
-	<TO: "to">				|
-	<INCR: "incr">			|
-	<DECR: "decr">			|
-	<SET: "set">			|
-	<PRINT: "print">		|
-	<IN: "in">		|
-	<AND:"and"> |
-	<IF:"if"> |
-	<THEN:"then"> |
-	<ELSE:"else"> |
-	<WHILE:"while"> |
-	<BREAK:"break">|
-	<BRANCH: "branch">
-}
+			<FOREACH: "foreach">	|
+				<FOR: "for">		|
+				<TO: "to">				|
+				<INCR: "incr">			|
+				<DECR: "decr">			|
+				<SET: "set">			|
+				<PRINT: "print">		|
+				<IN: "in">		|
+				<AND:"and"> |
+				<IF:"if"> |
+				<THEN:"then"> |
+				<ELSE:"else"> |
+				<WHILE:"while"> |
+				<BREAK:"break">|
+				<BRANCH: "branch">
+		}
 
 //Input and Simulation parameters
 TOKEN : {
-	<MODELPARAMS: "modelparams">	|//
-	<LOADPARAMS: "loadparams">	|//
-	<ANALYTICAL: "analytical">	|//
-	<SIMULATION: "simulation">	|//
-	<THINKTIME: "thinktime">	|//
-	<TIMEOUT: "timeout">	|//
-	<RETRYPROB: "retryProb">	|//
-	<OPEN: "open">	|//
-	<TYPE: "type">	|//
-	<METHOD: "method">	|//
-	<CLOSED: "closed">	|//
-	<NOOFUSERS: "noofusers">	|//
-	<NOOFREQUESTS: "noofrequests">		|//
-        <SIMENDTIME:"simendtime">       |//
-	<CONFINT: "confint">				|//
-	<REPLICATIONNO: "replicationno">			|//
-//	<SAMPLENO: "sampleno">			|//
-	<STARTUPSAMPLENO: "startupsampleno">			|//
-	<OUTPUT:"output">|//
-	<COOLDOWNSAMPLENO: "cooldownsampleno">	|//
-	<ENABLE : "enable"> |//
-	<DISABLE : "disable">|//
-        <MAXRETRY : "maxretry">|//
-        <WORKLOAD : "workload">|//
-        <CYCLIC : "cyclic">|//
-        <CONSTANT  : "constant">//
+			<MODELPARAMS: "modelparams">	|//
+				<LOADPARAMS: "loadparams">	|//
+				<ANALYTICAL: "analytical">	|//
+				<SIMULATION: "simulation">	|//
+				<THINKTIME: "thinktime">	|//
+				<TIMEOUT: "timeout">	|//
+				<RETRYPROB: "retryProb">	|//
+				<OPEN: "open">	|//
+				<TYPE: "type">	|//
+				<METHOD: "method">	|//
+				<CLOSED: "closed">	|//
+				<NOOFUSERS: "noofusers">	|//
+				<NOOFREQUESTS: "noofrequests">		|//
+				<SIMENDTIME:"simendtime">       |//
+				<CONFINT: "confint">				|//
+				<REPLICATIONNO: "replicationno">			|//
+				//	<SAMPLENO: "sampleno">			|//
+				<STARTUPSAMPLENO: "startupsampleno">			|//
+				<OUTPUT:"output">|//
+				<COOLDOWNSAMPLENO: "cooldownsampleno">	|//
+				<ENABLE : "enable"> |//
+				<DISABLE : "disable">|//
+				<MAXRETRY : "maxretry">|//
+				<WORKLOAD : "workload">| //
+				<CYCLIC : "cyclic">|//
+				<VIRTUALIZATION : "virtualization" > | //
+				<ON : "ON" > | //
+				<OFF : "OFF" > | //
+				<MIGRATIONPOLICY : "migrationpolicy"> |
+				<TIMEBASED : "timebased"> | //Time based migration policy
+				<TECHNIQ : "techniq" > | //Migration Technique 
+				<STOPANDCOPY : "stopandcopy" > | //STOP and COPY migration technique
+				<ITERATIVECOPY : "iterativecopy" > | // Iterative copy migration technique
+				<AFTER : "after"> |
+				<VMNAME : "vmname"> |
+				<DESTPMNAME : "destpmname"> | 
+				<CONSTANT  : "constant">//
 
-}
+		}
 
 TOKEN :{
- < NUMBER : <DIGITS> | <DIGITS> "." <DIGITS> | <DIGITS> "." | "." <DIGITS> > |
- <STRING_LITERAL: "\"" ( ~["\"","\\","\n","\r"] | "\\" ( ["n","t","b","r","f","\\","\'","\""] | ["0"-"7"] (["0"-"7"])?  | ["0"-"3"] ["0"-"7"] ["0"-"7"] | ( ["\n","\r"] | "\r\n")))* "\"">|
- < FILENAME :  ("/")* (<LETTER>(<LETTER>|<DIGIT>)* "/")* <LETTER>(<LETTER>|<DIGIT>)* "." (<LETTER>)+  >
-}
+		   < NUMBER : <DIGITS> | <DIGITS> "." <DIGITS> | <DIGITS> "." | "." <DIGITS> > |
+			   <STRING_LITERAL: "\"" ( ~["\"","\\","\n","\r"] | "\\" ( ["n","t","b","r","f","\\","\'","\""] | ["0"-"7"] (["0"-"7"])?  | ["0"-"3"] ["0"-"7"] ["0"-"7"] | ( ["\n","\r"] | "\r\n")))* "\"">|
+			   < FILENAME :  ("/")* (<LETTER>(<LETTER>|<DIGIT>)* "/")* <LETTER>(<LETTER>|<DIGIT>)* "." (<LETTER>)+  >
+	   }
 
 TOKEN : {
 
- <IDENTIFIER: <LETTER> (<LETTER> | <DIGIT>)*>
-|  	<DIGITS : (<DIGIT>)+ >
-|  	<#LETTER: ["A"-"Z","_","a"-"z"]>
-|  	<#DIGIT: ["0"-"9"]>
+			<IDENTIFIER: <LETTER> (<LETTER> | <DIGIT>)*>
+				|  	<DIGITS : (<DIGIT>)+ >
+				|  	<#LETTER: ["A"-"Z","_","a"-"z"]>
+				|  	<#DIGIT: ["0"-"9"]>
 
-}
+		}
 
 void InputFile() throws DeviceNotFoundException,Exception:
 {
 	Task task;
 	SoftServer serv;
-	//Host host;
+	//Machine machine;
 	Scenario sce;
-	VirtualResource res;
+	SoftResource res;
 	Statement stmt;
 	//Expression aexp;
 }
 {
 	(
-		 DeviceDef() 		|
-		 PowerManagementDef()|
-		 VariableDef() 		|
-	 	 LanDef() 			|
-	 	 LanLinkDef()		|
-		 res=VirtualResourceDef()	{ModelParameters.inputDistributedSystem.virRes.add(res);}	|
-		 HostDef() 			|
-		 task=TaskDef()     {ModelParameters.inputDistributedSystem.tasks.add(task);}		|
-		 sce=ScenarioDef()	{ModelParameters.inputDistributedSystem.scenarios.add(sce);}	|
-		 serv=ServerDef()	{ModelParameters.inputDistributedSystem.softServers.add(serv);}	|
-		 DeployDef()	|
-		 stmt=StatementDef(){stmt.execute();} |
-		 LoadParamDef()|
-		 ModelParamDef()|
-		 UnDeployDef()|
-                 ModelWorkLoad()
+	 DeviceCategoryDef() | 
+	 PDeviceDef() 		|
+	 VDeviceDef() 		|
+	 PowerManagementDef()|
+	 VariableDef() 		|
+	 LanDef() 			|
+	 LanLinkDef()		|
+	 res=SoftResourceDef()	{ModelParameters.inputDistSys.softRes.put(res.name.toLowerCase(), res);}	|
+	 PhysicalMachineDef() 			|
+	 VirtualMachineDef() 			|
+	 task=TaskDef()     {ModelParameters.inputDistSys.tasks.put(task.name.toLowerCase(), task);}		|
+	 sce=ScenarioDef()	{ModelParameters.inputDistSys.scenarios.put(sce.name.toLowerCase(), sce);}	|
+	 serv=ServerDef()	{ModelParameters.inputDistSys.softServers.put(serv.name.toLowerCase(), serv);}	|
+	 DeployDef()	|
+	 MigrationPolicyDef() |
+	 stmt=StatementDef(){stmt.execute();} |
+	 LoadParamDef()|
+	 ModelParamDef()|
+	 UnDeployDef()|
+	 ModelWorkLoad()
 	)*
 	<EOF>
 }
 
-void DeviceDef() : { 	Token name; }
+
+void DeviceCategoryDef() : { DeviceType devtype; String devcatname;}
 {
 	LOOKAHEAD(3)
-  (<DEVICE>
-  (name=DeviceName() {ModelParameters.inputDistributedSystem.devices.add(name.image); })*
-  <END>)
-  |<DEVICE> name=DeviceName(){ModelParameters.inputDistributedSystem.devices.add(name.image); }
+		(	<DEVICECATEGORY>   (  devtype=DevType() devcatname=DeviceCategoryName() {
+									DeviceCategory devcat = new DeviceCategory(devcatname, devtype);
+									ModelParameters.inputDistSys.devcats.put(devcat.name.toLowerCase(), devcat);
+									})*
+			<END> )
+		| <DEVICECATEGORY> devtype=DevType() devcatname=DeviceCategoryName(){
+			DeviceCategory devcat = new DeviceCategory(devcatname, devtype);
+			ModelParameters.inputDistSys.devcats.put(devcat.name.toLowerCase(), devcat);
+		}  
+}  
+//DeviceDef can be refactored to have DeviceDetail for more readablity
+void PDeviceDef() : { Token devcatname; Token pdevname; }
+{
+	LOOKAHEAD(3)
+		(<PDEVICE>
+		 (devcatname=ValidDeviceCategoryName() pdevname=PhysicalDeviceName() {
+		  PhysicalDevice pdev = new PhysicalDevice(pdevname.image, devcatname.image);
+		  ModelParameters.inputDistSys.pdevices.put(pdev.name.toLowerCase(), pdev);
+		  })*
+		 <END>)
+		|<PDEVICE> devcatname=ValidDeviceCategoryName() pdevname=PhysicalDeviceName(){
+			PhysicalDevice pdev = new PhysicalDevice(pdevname.image, devcatname.image);
+			ModelParameters.inputDistSys.pdevices.put(pdev.name.toLowerCase(), pdev); }
+}
+
+//VDeviceDef can be refactored to have VDeviceDetail for more readablity
+void VDeviceDef() : { Token devcatname; Token vdevname; }
+{
+	LOOKAHEAD(3)
+		(<VDEVICE>
+		 (devcatname=ValidDeviceCategoryName() vdevname=VirtualDeviceName() {
+		  VirtualDevice vdev = new VirtualDevice(vdevname.image, devcatname.image);
+		  ModelParameters.inputDistSys.vdevices.put(vdev.name.toLowerCase(), vdev);
+		  })*
+		 <END>)
+		|<VDEVICE> devcatname=ValidDeviceCategoryName() vdevname=VirtualDeviceName(){
+			VirtualDevice vdev = new VirtualDevice(vdevname.image, devcatname.image);
+			ModelParameters.inputDistSys.vdevices.put(vdev.name.toLowerCase(), vdev); }
 }
 
 void VariableDef() :  {Variable var; }
 {
 	LOOKAHEAD(4)
-  (<VARIABLE>
-  (var=VariableDetail(){ModelParameters.inputDistributedSystem.variables.add(var);})*
-  <END>)
-  |<VARIABLE> var=VariableDetail(){ModelParameters.inputDistributedSystem.variables.add(var);}
+		(<VARIABLE>
+		 (var=VariableDetail(){ModelParameters.inputDistSys.variables.put(var.name, var);})*
+		 <END>)
+		|<VARIABLE> var=VariableDetail(){ModelParameters.inputDistSys.variables.put(var.name.toLowerCase(), var);}
 }
 
 Variable VariableDetail():  { 	Token name; Token val; }
 {
-    name=VariableName() val=<NUMBER>
-    {return new Variable(name.image,new Double(val.image));}
+	name=VariableName() val=<NUMBER>
+	{return new Variable(name.image,new Double(val.image));}
 }
 
 void LanDef() : { 	Token name; }
 {
 	LOOKAHEAD(3)
-  (<LAN>
-  (name=LanName() {ModelParameters.inputDistributedSystem.lans.add(new Lan(name.image)); })*
-  <END>)
-  |<LAN> name=LanName(){ModelParameters.inputDistributedSystem.lans.add(new Lan(name.image)); }
+		(<LAN>
+		 (name=LanName() {ModelParameters.inputDistSys.lans.put(name.image.toLowerCase(), new Lan(name.image)); })*
+		 <END>)
+		|<LAN> name=LanName(){ModelParameters.inputDistSys.lans.put(name.image, new Lan(name.image)); }
 }
 void LanLinkDef() :
 { 	Token n, name1,name2; 	LanLink l1;Token unit;Variable v;}
 {
-  <LINK> n=LinkName() name1=ValidLanName() name2=ValidLanName()
-   { if(ModelParameters.inputDistributedSystem.isLink(name2.image,name1.image) == true){
-   	  throw new Error("Line no:"+n.beginLine+" link with lan's "+name2.image+" and "+name1.image+" is already defined");
-      }
-   	l1 = new LanLink(n.image,name2.image,name1.image); }
-     (
-         <MTU>
-	         v=Variable()
-	         unit=<BYTES> {l1.addMTU(v,unit.image);}|
-         <PROP>
-         	v=Variable()
-            (unit=<MS>|unit=<PS>|unit=<NS>|unit=<US>) {l1.addPropDelay(v, unit.image);}|
-         <HEADERSIZE>
-         	v=Variable()
-            unit=<BYTES> {l1.addHeaderSize(v, unit.image);}|
-         <TRANS>
-           v=Variable()
-           (unit=<BPS>|unit=<KBPS>|unit=<MBPS>|unit=<GBPS>) {l1.addTransRate(v,unit.image);}
-      )*
-  <END>
-  {ModelParameters.inputDistributedSystem.getLan(name1.image).addConnectedLan(name2.image);
-  ModelParameters.inputDistributedSystem.getLan(name2.image).addConnectedLan(name1.image);
-  ModelParameters.inputDistributedSystem.links.add(l1);}
+	<LINK> n=LinkName() name1=ValidLanName() name2=ValidLanName()
+	{ if(ModelParameters.inputDistSys.isLink(name2.image,name1.image) == true){
+																				  throw new Error("Line no:"+n.beginLine+" link with lan's "+name2.image+" and "+name1.image+" is already defined");
+																			  }
+	l1 = new LanLink(n.image,name2.image,name1.image); }
+	(
+	 <MTU>
+	 v=Variable()
+	 unit=<BYTES> {l1.addMTU(v,unit.image);}|
+	 <PROP>
+	 v=Variable()
+	 (unit=<MS>|unit=<PS>|unit=<NS>|unit=<US>) {l1.addPropDelay(v, unit.image);}|
+	 <HEADERSIZE>
+	 v=Variable()
+	 unit=<BYTES> {l1.addHeaderSize(v, unit.image);}|
+	 <TRANS>
+	 v=Variable()
+	 (unit=<BPS>|unit=<KBPS>|unit=<MBPS>|unit=<GBPS>) {l1.addTransRate(v,unit.image);}
+	)*
+		<END>
+		{ModelParameters.inputDistSys.getLan(name1.image).addConnectedLan(name2.image);
+			ModelParameters.inputDistSys.getLan(name2.image).addConnectedLan(name1.image);
+			ModelParameters.inputDistSys.links.put(l1.name.toLowerCase(), l1);}
 }
-void HostDef()throws DeviceNotFoundException, Exception:{Token name,n;Host h;String hostnme="";}
+void PhysicalMachineDef()throws DeviceNotFoundException, Exception:{Token name,n;PhysicalMachine pm;String pmname="";}
 {
-	<HOST> name=HostName()"["n=<NUMBER>"]"
+	<PHYSICALMACHINE> name=PMName()"["n=<NUMBER>"]"
 	{
-		hostnme=name.image;
-		h=new Host(hostnme,1);
+		pmname=name.image;
+		pm=new PhysicalMachine(pmname,1);
 	}
-	(HostDetail(h))*
-	<END>
-	{
-		ModelParameters.inputDistributedSystem.hosts.add(h);
-		int totHosts =  new Integer(n.image);
-		for(int i=2;i<=totHosts;i++){
-			Host cpy = h.getCopy(hostnme,i);
-			ModelParameters.inputDistributedSystem.hosts.add(cpy);
+	(PhysicalMachineDetail(pm))*
+		<END>
+		{
+			ModelParameters.inputDistSys.pms.put(pm.name.toLowerCase(), pm);
+			int totMachines =  new Integer(n.image);
+			for(int i=2;i<=totMachines;i++){
+				PhysicalMachine pmcpy = pm.getCopy(pmname,i);
+				ModelParameters.inputDistSys.pms.put(pmcpy.name.toLowerCase(), pmcpy);
+			}
 		}
-	}
+}
+
+void PhysicalMachineDetail(PhysicalMachine pm)throws DeviceNotFoundException, Exception:
+{ Token name;  Variable v;	SchedulingPolicy pol; PowerManagementGovernor gov; }	//local variables
+{
+	<VIRTUALIZATION> (<ON> {pm.virtualizationEnabled=true;	   } | <OFF> {pm.virtualizationEnabled=false;} )
+	| 
+	<RAM> <SIZE> v=Variable() {pm.setRamSize(v);}		
+	| 
+		name=ValidPhysicalDeviceName()
+		(      <COUNT>  v=Variable() {pm.addDeviceCount(name.image,v);}
+			   |<BUFFER> v=Variable() {pm.addDeviceBuffer(name.image,v);}
+			   |<SPEEDUP> v=Variable() {pm.addDeviceSpeedUp(name.image,v);}
+			   |<SCHEDP>  pol=SchedPolicy(){pm.addDeviceSchedPol(name.image,pol);}
+			   |<BASESPEED>  v=Variable() {pm.addDeviceBaseSpeed(name.image, v);}
+			   			 	     
+
+			   // PM device associated attributes. These are available only for PM device, added by rakesh
+			   // parses PM device name, governor, speed level is gov is userspace: rakesh
+			   |(<POWERMANAGED> { pm.setDeviceAsPowerManaged(name.image); }
+				   ( <GOVERNOR> gov=PMGovernor() { pm.addPMGovernor(name.image, gov); }
+					 ( <SETSPEEDLEVELINDEX> v=Variable()
+					   { 
+					   if(gov == PowerManagementGovernor.USERSPACE)
+					   {
+					   pm.addSetSpeedLevelIndex(name.image, v); 
+					   }
+					   } 
+					 )?
+				   )?
+				)
+			   // parse probe interval, up_threshold, down_threshold
+			   |<PROBEINTERVAL> v=Variable() { pm.addProbeInterval(name.image, v); }
+			   |<GOVERNOR_UP_THRESHOLD> v=Variable() { pm.addGovernorUpThreshold(name.image, v); }
+			   |<GOVERNOR_DOWN_THRESHOLD> v=Variable() { pm.addGovernorDownThreshold(name.image, v); }
+			   )
 }
 
 
-void HostDetail(Host h)throws DeviceNotFoundException, Exception:
-	{ Token name;  Variable v;	SchedulingPolicy pol; PowerManagementGovernor gov;}	//local variables
+void VirtualMachineDef()throws DeviceNotFoundException, Exception:{Token name,n;VirtualMachine vm;String vmname="";}
 {
-   	//predefined addDeviceBuffer method is used for adding the size of ram.
-   	 <RAM>	v=Variable() 					{h.addDeviceBuffer("ram", v);}
-   |
-   name=ValidDeviceName()
-   (      <COUNT>  v=Variable() {h.addDeviceCount(name.image,v);}
-	 |<BUFFER> v=Variable() {h.addDeviceBuffer(name.image,v);}
- 	 |<SPEEDUP> v=Variable() {h.addDeviceSpeedUp(name.image,v);}
- 	 |<SCHEDP>  pol=SchedPolicy(){h.addDeviceSchedPol(name.image,pol);}
+	<VIRTUALMACHINE> name=VMName()"["n=<NUMBER>"]"
+	{
+		vmname=name.image;
+		vm=new VirtualMachine(vmname,1);
+	}
+	(VirtualMachineDetail(vm))*
+		<END>
+		{
+			ModelParameters.inputDistSys.vms.put(vm.name.toLowerCase(), vm);
+			int totVMachines =  new Integer(n.image);
+			for(int i=2;i<=totVMachines;i++){
+				VirtualMachine vmcpy = vm.getCopy(vmname,i);
+				ModelParameters.inputDistSys.vms.put(vmcpy.name.toLowerCase(), vmcpy);
+			}
+		}
+}
 
-     // PM device associated attributes. These are available only for PM device, added by rakesh
-     // parses PM device name, governor, speed level is gov is userspace: rakesh
- 	 |(<POWERMANAGED> { h.setDeviceAsPowerManaged(name.image); }
-        ( <GOVERNOR> gov=PMGovernor() { h.addPMGovernor(name.image, gov); }
-       	( <SETSPEEDLEVELINDEX> v=Variable()
-       	 { 
-              if(gov == PowerManagementGovernor.USERSPACE)
-               {
-                     h.addSetSpeedLevelIndex(name.image, v); 
-                }
-         } 
-         )?
-        )?
-      )
-     // parse probe interval, up_threshold, down_threshold
-     |<PROBEINTERVAL> v=Variable() { h.addProbeInterval(name.image, v); }
-	 |<GOVERNOR_UP_THRESHOLD> v=Variable() { h.addGovernorUpThreshold(name.image, v); }
-	 |<GOVERNOR_DOWN_THRESHOLD> v=Variable() { h.addGovernorDownThreshold(name.image, v); }
-   )
+
+void VirtualMachineDetail(VirtualMachine vm)throws DeviceNotFoundException, Exception:
+{ Token name;  Variable v;	SchedulingPolicy pol; PowerManagementGovernor gov;}	//local variables
+{
+	<RAM> <SIZE> v=Variable() 					{vm.setRamSize(v);}
+	|
+	<VIRTUALIZATION> (<ON> {vm.virtualizationEnabled=true;	   } | <OFF> {vm.virtualizationEnabled=false;} )
+	| 
+		name=ValidVirtualDeviceName()
+		(      <COUNT>  v=Variable() {vm.addDeviceCount(name.image,v);}
+			   |<BUFFER> v=Variable() {vm.addDeviceBuffer(name.image,v);}
+			   |<SPEEDUP> v=Variable() {vm.addDeviceSpeedUp(name.image,v);}
+			   |<SCHEDP>  pol=SchedPolicy(){vm.addDeviceSchedPol(name.image,pol);}
+		)
 }
 
 /****************************************************************************/
 void PowerManagementDef() throws DeviceNotFoundException: { Token name;} // added by rakesh
 {
-    <POWERMANAGEMENT> name=ValidDeviceName()
+	<POWERMANAGEMENT> name=ValidPhysicalDeviceName()
 	{
 		// we have device name here; Set it's PowerManaged attributes here.
 		// All devices having same device-name will inherit these attributes
-		Device dev = new Device(name.image);
-		ModelParameters.inputDistributedSystem.powerManagedDevicePrototypes.add(dev);
+		PhysicalDevice dev = new PhysicalDevice(name.image);
+		ModelParameters.inputDistSys.powerManagedDevicePrototypes.put(dev.name.toLowerCase(), dev);
 	}
-	 ( PowerManagementDetails(name, dev) )*
-	 <END>
-       {
-            if(dev.totalFrequencyLevels != dev.totalPowerLevels){
-             throw new Error("Please provide the correct pair for Speed and Power levels :  Line:"+name.beginLine+" Column:"+name.beginColumn );
-            }
-            if(dev.totalFrequencyLevels != dev.totalIdlePowerLevels){
-             throw new Error("Please provide the correct pair for Speed and Idle Power levels :  Line:"+name.beginLine+" Column:"+name.beginColumn );
-        	}
-    	}
+	( PowerManagementDetails(name, dev) )*
+		<END>
+		{
+			if(dev.totalFrequencyLevels != dev.totalPowerLevels){
+				throw new Error("Please provide the correct pair for Speed and Power levels :  Line:"+name.beginLine+" Column:"+name.beginColumn );
+			}
+			if(dev.totalFrequencyLevels != dev.totalIdlePowerLevels){
+				throw new Error("Please provide the correct pair for Speed and Idle Power levels :  Line:"+name.beginLine+" Column:"+name.beginColumn );
+			}
+		}
 }
 
-void PowerManagementDetails(Token name, Device d)throws DeviceNotFoundException:
-	{ Variable v;} // SchedulingPolicy pol; PowerManagementGovernor gov; }	//local variables
+void PowerManagementDetails(Token name, PhysicalDevice d)throws DeviceNotFoundException:
+{ Variable v;} // SchedulingPolicy pol; PowerManagementGovernor gov; }	//local variables
 {
-        <SPEEDLEVELS>
-	 (  v=Variable() { d.addSpeedLevels(name.image, v);} )*  <END>
-	 |(<POWERCONSUMEDLEVELS> (v=Variable() {d.addPowerConsumedLevels(name.image, v);} )* <END>
-         <IDLEPOWER> (v=Variable() { d.addIdlePower(name.image, v);} )* <END> )
-	 |<PROBEINTERVAL> v=Variable() { d.addProbeInterval(name.image, v); }
- 	 |<GOVERNOR_UP_THRESHOLD> v=Variable()	 { d.addGovernorUpThreshold(name.image, v);	 }
- 	 |<GOVERNOR_DOWN_THRESHOLD > v=Variable() {	d.addGovernorDownThreshold(name.image, v); } 
+	<SPEEDLEVELS>
+		(  v=Variable() { d.addSpeedLevels(name.image, v);} )*  <END>
+		|(<POWERCONSUMEDLEVELS> (v=Variable() {d.addPowerConsumedLevels(name.image, v);} )* <END>
+				<IDLEPOWER> (v=Variable() { d.addIdlePower(name.image, v);} )* <END> )
+		|<PROBEINTERVAL> v=Variable() { d.addProbeInterval(name.image, v); }
+	|<GOVERNOR_UP_THRESHOLD> v=Variable()	 { d.addGovernorUpThreshold(name.image, v);	 }
+	|<GOVERNOR_DOWN_THRESHOLD > v=Variable() {	d.addGovernorDownThreshold(name.image, v); } 
 }
 
 /**************************************************************************************/
@@ -444,35 +542,36 @@ void PowerManagementDetails(Token name, Device d)throws DeviceNotFoundException:
 Task TaskDef(): { 	Token name; 	Task task; 	}
 {
 	<TASK> name=TaskName() {task = new Task(name.image,name.beginLine);}
-	 (TaskDetail(task))* <END>
-	 {return task;}
+	(TaskDetail(task))* <END>
+	{return task;}
 }
 
-void TaskDetail(Task t): { 	Token name; 	Distribution dist; VirtualResource res;}
+void TaskDetail(Task t): { 	Token devcatname;Token name;	Distribution dist; SoftResource res; Variable basespeed;}
+{
+	(
+	  LOOKAHEAD(2)
+		devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution() <AT> basespeed=Variable()
+			{t.createAndAddSubTaskServiceTime(devcatname.image, dist, basespeed);}
+		|  name=ValidSoftResName() {t.addSoftRes(name.image);}
+	)	
+}
+
+SoftResource SoftResourceDef(): {  	Token name; SoftResource res; }
+{
+	<SOFTRES> name=SoftResName() {res = new SoftResource(name.image);}
+	(SoftResDetail(res))* <END>
+	{return res;}
+}
+
+void SoftResDetail(SoftResource sr): { 	Token devcatname; Distribution dist; SoftResource res;Variable v;SchedulingPolicy pol; Variable basespeed;}
 {
 	LOOKAHEAD(2)
-	name=ValidDeviceName()  <SERVT> dist=Distribution()
-	{t.addDeviceAndServiceTime(name.image,dist);}
-	| name=ValidVirtualResName() {t.addVirtualRes(name.image);}
-	| res=VirtualResourceDef() {t.addVirtualRes(res);}
-
-}
-void VirtualResDetail(VirtualResource t): { 	Token name; 	Distribution dist; VirtualResource res;Variable v;SchedulingPolicy pol;}
-{
-	LOOKAHEAD(2)
-	name=ValidDeviceName()  <SERVT> dist=Distribution()
-	{t.addDeviceAndServiceTime(name.image,dist);}
-	 |<COUNT>  v=Variable() {t.setCount(v);}
-	 |<BUFFER> v=Variable() {t.setBuffer(v);}
- 	 |<SCHEDP>  pol=SchedPolicy(){t.setSchedPolicy(pol);}
-	 |name=ValidVirtualResName(){t.addVirtualRes(name.image);}
-}
-
-VirtualResource VirtualResourceDef(): {  	Token name; VirtualResource res; }
-{
-	<VIRTRES> name=VirtualResName() {res = new VirtualResource(name.image);}
-	 (VirtualResDetail(res))* <END>
-	 {return res;}
+		devcatname=ValidDeviceCategoryName()  <SERVT> dist=Distribution() <AT> basespeed=Variable()
+		{sr.addDeviceAndServiceTime(devcatname.image,dist, basespeed);}
+	|<COUNT>  v=Variable() {sr.setCount(v);}
+	|<BUFFER> v=Variable() {sr.setBuffer(v);}
+	|<SCHEDP>  pol=SchedPolicy(){sr.setSchedPolicy(pol);}
+	//|name=ValidSoftResName(){sr.addSoftRes(name.image);} Commented by Samkit //TODO: Check if it is required
 }
 
 SoftServer ServerDef(): { 	SoftServer serv; 	Token name; }
@@ -483,29 +582,27 @@ SoftServer ServerDef(): { 	SoftServer serv; 	Token name; }
 
 void ServerDetail(SoftServer serv): { Token name;  Variable v; SchedulingPolicy pol; }
 {
-  <STATICSIZE> v=Variable()  {serv.setStaticSize(v);}
-  |
-  <REQUESTSIZE> v=Variable()  {serv.setRequestSize(v);}
-  |
-  <THREAD>
-   (
-       <SIZE>   v=Variable() 		{serv.setThreadSize(v);}
-      |<COUNT>   v=Variable() 		{serv.setThreadCount(v);}
-	  |<BUFFER> v=Variable() 		{serv.setThreadBuffer(v);}
-   	  |<SCHEDP> pol=SchedPolicy()	{serv.setSchedPolicy(pol);}
+	<STATICSIZE> v=Variable()  {serv.setStaticSize(v);}
+	|
+		<THREAD>
+		(
+		 <SIZE>   v=Variable() 		{serv.setThreadSize(v);}
+		 |<COUNT>   v=Variable() 		{serv.setThreadCount(v);}
+		 |<BUFFER> v=Variable() 		{serv.setThreadBuffer(v);}
+		 |<SCHEDP> pol=SchedPolicy()	{serv.setSchedPolicy(pol);}
 
-   )
-  |
-  <TASK> name=ValidTaskName()
-  {
-  	try{
-  	 serv.addTask(ModelParameters.inputDistributedSystem.getTask(name.image));
-  	 ModelParameters.inputDistributedSystem.getTask(name.image).addServer(serv.name);
-  	}catch(Error e)
-  	{
-  		throw new Error("Line no "+name.beginLine+e.getMessage());
-  	}
-  }
+		)
+		|
+		<TASK> name=ValidTaskName()
+		{
+			try{
+				serv.addTask(ModelParameters.inputDistSys.getTask(name.image));
+				ModelParameters.inputDistSys.getTask(name.image).addServer(serv.name);
+			}catch(Error e)
+			{
+				throw new Error("Line no "+name.beginLine+e.getMessage());
+			}
+		}
 }
 
 Scenario ScenarioDef(): { 	Token scename; Variable v;	Scenario sce; Token t; }
@@ -514,30 +611,30 @@ Scenario ScenarioDef(): { 	Token scename; Variable v;	Scenario sce; Token t; }
 	try{
 		<PROB> v=Variable() {sce.setProbability(v);}
 		ScenarioDetails(sce)
-		<END>
-		}catch(Error e){
-			throw new Error("Lineno:"+t.beginLine+" "+e.getMessage());
-		}
+			<END>
+	}catch(Error e){
+		throw new Error("Lineno:"+t.beginLine+" "+e.getMessage());
+	}
 	{return sce;}
 }
-void ScenarioDetails(Scenario sce): { 	Node n2;  }
+void ScenarioDetails(Scenario sce): { 	TaskNode n2;  }
 {
 	{	Variable v = new Variable("local",1);
-		Tree t = new Tree(v); Node n = new Node("root");
+		Tree t = new Tree(v); TaskNode n = new TaskNode("root");
 	}
 	(n=ArcDef(t,n) )+
-	(n2 = BranchDef(n) {t.addBranch(n,n2);})*
-	{sce.rootNodeOfScenario = t.getRootNode();
-	 sce.initialize();
-	}
+		(n2 = BranchDef(n) {t.addBranch(n,n2);})*
+		{sce.rootNode = t.getRootNode();
+			sce.initialize();
+		}
 }
 
-Node ArcDef(Tree t, Node n):{Token src,dest; Variable pktsize;boolean s;}
+TaskNode ArcDef(Tree t, TaskNode n):{Token src,dest; Variable pktsize;boolean s;}
 {
 	src=ValidTaskName() dest=ValidTaskName() pktsize=Variable()	s=IsSync()
 	{
-		String src_server = ModelParameters.inputDistributedSystem.getTask(src.image).getServerName();
-		String dest_server = ModelParameters.inputDistributedSystem.getTask(dest.image).getServerName();
+		String src_server = ModelParameters.inputDistSys.getTask(src.image).getServerName();
+		String dest_server = ModelParameters.inputDistSys.getTask(dest.image).getServerName();
 		return t.addArc(n,src.image,src_server,dest.image,dest_server,pktsize,s);
 	}
 }
@@ -548,130 +645,150 @@ boolean IsSync():{}
 	{return false;}
 }
 
-Node BranchDef(Node nin):{Node n2;Variable v;}
+TaskNode BranchDef(TaskNode nin):{TaskNode n2;Variable v;}
 {
-   <BRANCH> <PROB>	v=Variable()
-   {
- 	  Tree t = new Tree(v);
- 	  Node n = new Node("branch");
-   }
-   (n=ArcDef(t,n) )+
-   (n2 = BranchDef(n) {t.addBranch(n,n2);})*
-   <END>
-   {return t.getRootNode();}
-}
-void DeployDef()throws Exception:{Token name1,name2,n; DeployStmt dply;  String hname="";}
-{
-	<DEPLOY>
-	(
-	    LOOKAHEAD(2)
-		(name1=HostNameDef() name2=<IDENTIFIER>)
-		|
-		(name1=<IDENTIFIER> name2=HostNameDef())
-	)
+	<BRANCH> <PROB>	v=Variable()
 	{
-		try{
-			 dply = new DeployStmt(name1.image,name2.image); dply.deploy();}
-		catch(Error e)
-		{throw new Error("Wrong Deployment!  Line no:"+name1.beginLine+e.getMessage());}
+		Tree t = new Tree(v);
+		TaskNode n = new TaskNode("branch");
 	}
+	(n=ArcDef(t,n) )+
+		(n2 = BranchDef(n) {t.addBranch(n,n2);})*
+		<END>
+		{return t.getRootNode();}
+}
+void DeployDef()throws Exception:{Token name1,name2,n1,n2,id1,id2; DeployStmt dplystmt;  String hname="";}
+{
+
+		<DEPLOY>  name1=MachineNameOrIdentifierDef() name2=MachineNameOrIdentifierDef()
+		{
+			try{
+				dplystmt = new DeployStmt(name1.image,name2.image); dplystmt.deploy();
+			}catch(Error e){
+				throw new Error("Wrong Deployment!  Line no:"+name1.beginLine+e.getMessage());
+			}
+		}
 }
 
-void UnDeployDef()throws Exception:{Token name1,name2,n;UnDeployStmt dply;String hname="";}
+void UnDeployDef()throws Exception:{Token name1,name2,n;UnDeployStmt undplystmt;String hname="";}
 {
-	<UNDEPLOY>
-	(
-	    LOOKAHEAD(2)
-		(name1=HostNameDef() name2=<IDENTIFIER>)
-		|
-		(name1=<IDENTIFIER> name2=HostNameDef())
-	)
-	{
-		try{
-			dply = new UnDeployStmt(name1.image,name2.image); dply.undef();}
-		catch(Error e)
-		{throw new Error("Wrong UnDeploy!  Line no:"+name1.beginLine+e.getMessage());}
-	}
+	<UNDEPLOY>  name1=MachineNameOrIdentifierDef() name2=MachineNameOrIdentifierDef()
+		{
+			try{
+				undplystmt = new UnDeployStmt(name1.image,name2.image); undplystmt.undeploy();
+			}catch(Error e){
+				throw new Error("Wrong Undeploy!  Line no:"+name1.beginLine+e.getMessage());
+			}
+		}
 }
+
+void MigrationPolicyDef() :{MigrationPolicyType type; MigrationTechnique technique;Token vmname, destpmname;Variable v;MigrationPolicyInfo policy;}
+{
+	<MIGRATIONPOLICY> type=ValidMigrationPolicyType(){policy = new MigrationPolicyInfo(type); }
+	<AFTER> v=Variable() {policy.addPolicyArg(v);}
+	<TECHNIQ>  technique=ValidMigrationTechnique() { policy.addMigrationTechnique(technique); }	<VMNAME> vmname=ValidVMName() {policy.addVmName(vmname.image);}
+	<DESTPMNAME> destpmname=ValidPMName() {policy.addDestPmName(destpmname.image);}
+	<END> {ModelParameters.inputDistSys.setMigrationPolicyInfo(policy);}
+	
+}
+
+MigrationPolicyType ValidMigrationPolicyType():{}
+{
+	<TIMEBASED> { return MigrationPolicyType.TimeBased;} 
+}
+
+MigrationTechnique ValidMigrationTechnique():{}
+{
+	<STOPANDCOPY> { return MigrationTechnique.StopAndCopy;}
+	<ITERATIVECOPY> { return MigrationTechnique.IterativeCopy;} 
+}
+
 
 Variable Variable():{Token varname;Token t;}
 {
 	varname=ValidVariableName()
 	{
-		Variable v = ModelParameters.inputDistributedSystem.getVariable(varname.image);
+		Variable v = ModelParameters.inputDistSys.getVariable(varname.image);
 		v.updateUsedInfo();
 		return v;
 	}
 	|
-	t=<NUMBER>
-	{
-	   	Variable var = new Variable("local",new Double(t.image));
-	   	return var;
-	}
+		t=<NUMBER>
+		{
+			Variable var = new Variable("local",new Double(t.image));
+			return var;
+		}
 }
 Distribution Distribution(): { 	Variable var;}
 {
 	{Distribution d = new Distribution();}
 	(
-		 var = Variable() {d.addParam1(var);}
-		 |<EXP> {d.addName("exp");}
+	 var = Variable() {d.addParam1(var);}
+	 |<EXP> {d.addName("exp");}
+	 "("
+	 var = Variable() {d.addParam1(var);}
+	 ")"
+	 |<POI> {d.addName("poi");}
+	 "("
+	 var = Variable() {d.addParam1(var);}
+	 ")"
+	 |<NOR> {d.addName("nor");}
+	 "("
+	 var = Variable() {d.addParam1(var);}
+	 ","
+	 var = Variable() {d.addParam2(var);}
+	 ")"
+	 |<UNI>
+	 "("
+	 var = Variable() {d.addParam1(var);}
+	 ","
+	 var = Variable() {d.addParam2(var);}
+	 ")"
+		 |<BETA>
 		 "("
 		 var = Variable() {d.addParam1(var);}
-		 ")"
-	     |<POI> {d.addName("poi");}
-	     "("
-	      var = Variable() {d.addParam1(var);}
-	     ")"
-	     |<NOR> {d.addName("nor");}
-	     "("
-	     var = Variable() {d.addParam1(var);}
-	     ","
-	     var = Variable() {d.addParam2(var);}
-	     ")"
-	     |<UNI>
-	     "("
-	     var = Variable() {d.addParam1(var);}
-	     ","
-	     var = Variable() {d.addParam2(var);}
-	     ")"
-	     |<BETA>
-	     "("
-	     var = Variable() {d.addParam1(var);}
-	     ","
-	     var = Variable() {d.addParam2(var);}
-	     ")"
-	     |<BINOM>
-	     "("
-	     var = Variable() {d.addParam1(var);}
-	     ","
-	     var = Variable() {d.addParam2(var);}
-	     ")"
-	     |<CHISQR>
-	     "("
-	     var = Variable() {d.addParam1(var);}
-	     ")"
-	     |<GAMMA>
-	     "("
-	     var = Variable() {d.addParam1(var);}
-	     ","
-	     var = Variable() {d.addParam2(var);}
-	     ")"
-             |<CONST>{d.addName("const");}
-             "("
-             var = Variable() {d.addParam1(var);}
-             ")"
-             
-     )
-	 {
-	 	d.calculateMean();
-	 	return d;
-	 }
+	 ","
+		 var = Variable() {d.addParam2(var);}
+	 ")"
+		 |<BINOM>
+		 "("
+		 var = Variable() {d.addParam1(var);}
+	 ","
+		 var = Variable() {d.addParam2(var);}
+	 ")"
+		 |<CHISQR>
+		 "("
+		 var = Variable() {d.addParam1(var);}
+	 ")"
+		 |<GAMMA>
+		 "("
+		 var = Variable() {d.addParam1(var);}
+	 ","
+		 var = Variable() {d.addParam2(var);}
+	 ")"
+		 |<CONST>{d.addName("const");}
+	 "("
+		 var = Variable() {d.addParam1(var);}
+	 ")"
+
+		 )
+		 {
+			 d.calculateMean();
+			 return d;
+		 }
 }
 SchedulingPolicy SchedPolicy():{}
 {
 	<PS> { return SchedulingPolicy.PS;} |
 	<LCFS> { return SchedulingPolicy.LCFS;} |
-	<FCFS> {return SchedulingPolicy.FCFS;}
+	<FCFS> {return SchedulingPolicy.FCFS;} |
+	<XCS> {return SchedulingPolicy.XCS;}	 
+}
+
+DeviceType DevType():{}
+{
+	<CPU> {  return DeviceType.CPU;  } |
+	<NONCPU> {  return DeviceType.NONCPU;  }
 }
 
 //Validations: Checks if name is already defined
@@ -679,79 +796,140 @@ Token ServerName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		if(ModelParameters.inputDistributedSystem.isServer(t.image)==true)
-		throw new Error("Server "+t.image+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		if(ModelParameters.inputDistSys.isServer(t.image)==true)
+			throw new Error("Server "+t.image+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-		return(t);
+			return(t);
 	}
 }
-Token HostNameDef(): { 	Token t,n;String hostnme=""; }
+
+Token MachineNameDef(): { 	Token t,n;String machinename=""; }
 {
-		t=<IDENTIFIER>"["n=<NUMBER>"]"
+	t=<IDENTIFIER>"["n=<NUMBER>"]"
 	{
 		t.image = t.image+"["+n.image+"]";
 		return(t);
 	}
 }
-Token HostName(): { 	Token t,n;String hostnme=""; }
+/*This function accepts Identifier or Machine Name
+ *DeployDef() uses this to accommodate deployment of vm on pm
+ *This Non-terminal also allows for (<Deploy> <IDENTIFIER> <IDENTIFIER>) as valid deploy statement. This needs to be prevented in Deploy() function of DeployStmt  
+ */
+Token MachineNameOrIdentifierDef(): { Token t,n; }
 {
-		t=<IDENTIFIER>
+	(
+	LOOKAHEAD(2)
+		t=<IDENTIFIER>"["n=<NUMBER>"]"
+		{
+			t.image = t.image+"["+n.image+"]";
+			return(t);
+		}
+	  | 
+		t=<IDENTIFIER>{
+			return(t);
+		}
+	)
+}
+
+Token PMName(): { 	Token t,n;String pmname=""; }
+{
+	t=<IDENTIFIER>
 	{
-		hostnme = t.image;
-		if(ModelParameters.inputDistributedSystem.isHost(hostnme)==true)
-		throw new Error("Host "+hostnme+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		pmname = t.image;
+		if(ModelParameters.inputDistSys.isPM(pmname)==true)
+			throw new Error("Physical Machine "+pmname+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-		return(t);
+			return(t);
 	}
 }
+
+Token VMName(): { 	Token t,n;String vmname=""; }
+{
+	t=<IDENTIFIER>
+	{
+		vmname = t.image;
+		if(ModelParameters.inputDistSys.isVM(vmname)==true)
+			throw new Error("Virtual Machine "+vmname+" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		else
+			return(t);
+	}
+}
+
 Token TaskName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		if(ModelParameters.inputDistributedSystem.isTask(t.image)==true)
-		throw new Error("Task \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		if(ModelParameters.inputDistSys.isTask(t.image)==true)
+			throw new Error("Task \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-		return(t);
+			return(t);
 	}
 }
 Token ScenarioName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		if(ModelParameters.inputDistributedSystem.isScenario(t.image)==true)
-		throw new Error("Scenario \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		if(ModelParameters.inputDistSys.isScenario(t.image)==true)
+			throw new Error("Scenario \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-		return(t);
+			return(t);
 	}
 }
-Token DeviceName(): { 	Token t; }
+
+String DeviceCategoryName(): { 	Token t; String devcatname="";}
 {
 	t=<IDENTIFIER>
 	{
-		if(ModelParameters.inputDistributedSystem.isDevice(t.image)==true)
-		throw new Error("Device \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		devcatname = t.image;
+		if(ModelParameters.inputDistSys.isDeviceCategory(devcatname)==true)
+			throw new Error("Device Category\""+devcatname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-		return(t);
+			return(t.image);
 	}
 }
-Token VirtualResName(): { 	Token t; }
+
+Token PhysicalDeviceName(): { 	Token t; String pdevname="";}
 {
 	t=<IDENTIFIER>
 	{
-		if(ModelParameters.inputDistributedSystem.isVirtualRes(t.image)==true)
-			throw new Error("Virtual Resource \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		pdevname = t.image;
+		if(ModelParameters.inputDistSys.isPDevice(pdevname)==true)
+			throw new Error("Device \""+pdevname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-		return(t);
+			return(t);
+	}
+}
+
+Token VirtualDeviceName(): { 	Token t; String vdevname="";}
+{
+	t=<IDENTIFIER>
+	{
+		vdevname = t.image;
+		if(ModelParameters.inputDistSys.isVDevice(vdevname)==true)
+			throw new Error("VDevice \""+ vdevname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		else
+			return(t);
+	}
+}
+
+Token SoftResName(): { 	Token t; }
+{
+	t=<IDENTIFIER>
+	{
+		if(ModelParameters.inputDistSys.isSoftRes(t.image)==true)
+			throw new Error("Soft Resource \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		else
+			return(t);
 	}
 }
 Token VariableName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		if(ModelParameters.inputDistributedSystem.isVariable(t.image)==true)
-		throw new Error("Variable \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
+		if(ModelParameters.inputDistSys.isVariable(t.image)==true)
+			throw new Error("Variable \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-  	     return(t);
+			return(t);
 
 	}
 }
@@ -759,20 +937,20 @@ Token LanName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		if(ModelParameters.inputDistributedSystem.isLan(t.image)==true)
+		if(ModelParameters.inputDistSys.isLan(t.image)==true)
 			throw new Error("Lan \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-		return(t);
+			return(t);
 	}
 }
 Token LinkName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		if(ModelParameters.inputDistributedSystem.isLink(t.image)==true)
+		if(ModelParameters.inputDistSys.isLink(t.image)==true)
 			throw new Error("Link \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn +" already defined!");
 		else
-		return(t);
+			return(t);
 	}
 }
 
@@ -781,32 +959,47 @@ Token ValidServerName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		try{ModelParameters.inputDistributedSystem.getServer(t.image); return(t);}
-  	    catch (Error e)
-  	    	{throw new Error("Undefined server \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		try{ModelParameters.inputDistSys.getServer(t.image); return(t);}
+		catch (Error e)
+		{throw new Error("Undefined server \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 
 	}
 }
-Token ValidHostName(): { 	Token t,n;String hostnme=""; }
+Token ValidPMName(): { 	Token t,n;String pmname=""; }
 {
-		t=<IDENTIFIER>"["n=<NUMBER>"]"
+	t=<IDENTIFIER>"["n=<NUMBER>"]"
 	{
 		try{
-  		    hostnme = t.image+"["+n.image+"]";
-			ModelParameters.inputDistributedSystem.getHost(hostnme);
-			t.image = hostnme;
+			pmname = t.image+"["+n.image+"]";
+			ModelParameters.inputDistSys.getPM(pmname);
+			t.image = pmname;
 			return(t);
 		}catch (Error e)
-  	    	{throw new Error("Undefined host \""+hostnme+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		{throw new Error("Undefined physical machine \""+ pmname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 	}
 }
+
+Token ValidVMName(): { 	Token t,n;String vmname=""; }
+{
+	t=<IDENTIFIER>"["n=<NUMBER>"]"
+	{
+		try{
+			vmname = t.image+"["+n.image+"]";
+			ModelParameters.inputDistSys.getVM(vmname);
+			t.image = vmname;
+			return(t);
+		}catch (Error e)
+		{throw new Error("Undefined vm \""+ vmname+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+	}
+}
+
 Token ValidTaskName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		try{ModelParameters.inputDistributedSystem.getTask(t.image); return(t);}
-  	    catch (Error e)
-  	    	{throw new Error("Undefined task \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		try{ModelParameters.inputDistSys.getTask(t.image); return(t);}
+		catch (Error e)
+		{throw new Error("Undefined task \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 
 	}
 }
@@ -814,32 +1007,62 @@ Token ValidScenarioName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		try{ModelParameters.inputDistributedSystem.getScenario(t.image);return(t);}
-  	    catch (Error e)
-  	    	{throw new Error("Undefined scenario \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		try{ModelParameters.inputDistSys.getScenario(t.image);return(t);}
+		catch (Error e)
+		{throw new Error("Undefined scenario \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 
 	}
 }
-Token ValidDeviceName(): { 	Token t; }
+
+Token ValidDeviceCategoryName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
-	//Code change needed here to accept keyword "ram" as a valid device. If device is ram,
-	//then we should either not check done as below, or we should initialize host declaration with ram
-	//device already added
+		//Code change needed here to accept keyword "ram" as a valid device. If device is ram,
+		//then we should either not check done as below, or we should initialize machine declaration with ram
+		//device already added
 	{
-		try{ModelParameters.inputDistributedSystem.getDevice(t.image);return(t);}
-  	    catch (Error e)
-  	    	{throw new Error("Undefined device \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		try{ModelParameters.inputDistSys.getDeviceCategory(t.image);return(t);}
+		catch (Error e)
+		{throw new Error("Undefined device category \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 
 	}
 }
-Token ValidVirtualResName(): { 	Token t; }
+
+Token ValidPhysicalDeviceName(): { 	Token t; }
+{
+	t=<IDENTIFIER>
+		//Code change needed here to accept keyword "ram" as a valid device. If device is ram,
+		//then we should not check as done below, or we should initialize machine declaration with ram
+		//device already added
+	{
+		try{ModelParameters.inputDistSys.getPDevice(t.image);return(t);}
+		catch (Error e)
+		{throw new Error("Undefined physical device \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+
+	}
+}
+
+Token ValidVirtualDeviceName(): { 	Token t; }
+{
+	t=<IDENTIFIER>
+		//Code change needed here to accept keyword "ram" as a valid device. If device is ram,
+		//then we should either not check done as below, or we should initialize machine declaration with ram
+		//device already added
+	{
+		try{ModelParameters.inputDistSys.getVDevice(t.image);return(t);}
+		catch (Error e)
+		{throw new Error("Undefined virtual device \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+
+	}
+}
+
+Token ValidSoftResName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		try{ModelParameters.inputDistributedSystem.getVirtualRes(t.image);return(t);}
-  	    catch (Error e)
-  	    	{throw new Error("Undefined Virtual Resource \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
+		try{ModelParameters.inputDistSys.getSoftRes(t.image);return(t);}
+		catch (Error e)
+		{throw new Error("Undefined Soft Resource \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );}
 
 	}
 }
@@ -847,27 +1070,27 @@ Token ValidVariableName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		try{ModelParameters.inputDistributedSystem.getVariable(t.image);return(t);}
+		try{ModelParameters.inputDistSys.getVariable(t.image);return(t);}
 		catch (Error e)
-  	    	{throw new Error("Undefined variable \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );	}
+		{throw new Error("Undefined variable \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );	}
 	}
 }
 Token ValidLanName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		try{ModelParameters.inputDistributedSystem.getLan(t.image); return(t);}
+		try{ModelParameters.inputDistSys.getLan(t.image); return(t);}
 		catch (Error e)
-  	    	{throw new Error("Undefined Lan \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );	}
+		{throw new Error("Undefined Lan \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );	}
 	}
 }
 Token ValidLinkName(): { 	Token t; }
 {
 	t=<IDENTIFIER>
 	{
-		try{ModelParameters.inputDistributedSystem.getLink(t.image); return(t);}
+		try{ModelParameters.inputDistSys.getLink(t.image); return(t);}
 		catch (Error e)
-  	    	{throw new Error("Undefined Lan \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );	}
+		{throw new Error("Undefined Lan \""+t.image+"\" Line:"+t.beginLine+" Column:"+t.beginColumn );	}
 	}
 }
 
@@ -887,14 +1110,14 @@ Statement StatementDef() throws Exception:
 {
 	{Statement stmt = new Statement();}
 	(
-		set=SetStm() 	{ stmt.addSetStmt(set);}
-		| prn=PrintStm() {stmt.addPrintStmt(prn);}
-	    | festmt=ForEachDef() {stmt.addForEachStmt(festmt);}
-		| fstmt=ForDef() {stmt.addForStmt(fstmt);}
-		| ifstmt=IfStmt() {stmt.addIfStmt(ifstmt);}
-		| wstmt=WhileStmt() {stmt.addWhileStmt(wstmt);}
-		| exp=Expression() {stmt.addExpression(exp);}
-		|<BREAK>{stmt.addBreakStmt();}
+	 set=SetStm() 	{ stmt.addSetStmt(set);}
+	 | prn=PrintStm() {stmt.addPrintStmt(prn);}
+	 | festmt=ForEachDef() {stmt.addForEachStmt(festmt);}
+	 | fstmt=ForDef() {stmt.addForStmt(fstmt);}
+	 | ifstmt=IfStmt() {stmt.addIfStmt(ifstmt);}
+	 | wstmt=WhileStmt() {stmt.addWhileStmt(wstmt);}
+	 | exp=Expression() {stmt.addExpression(exp);}
+	 |<BREAK>{stmt.addBreakStmt();}
 	)
 	{   return stmt; }
 }
@@ -902,11 +1125,11 @@ Statement StatementDef() throws Exception:
 PrintArgument PrintArg() throws Exception:
 {Token t; Expression aexp;}
 {
-    {PrintArgument parg = new PrintArgument();}
+	{PrintArgument parg = new PrintArgument();}
 	(
-		aexp=Expression() {parg.addExpression(aexp);}
-		|
-		t=<STRING_LITERAL>  {parg.addMessage(t.image);}
+	 aexp=Expression() {parg.addExpression(aexp);}
+	 |
+	 t=<STRING_LITERAL>  {parg.addMessage(t.image);}
 	)
 	{return parg;}
 }
@@ -915,13 +1138,13 @@ PrintStmt PrintStm() throws Exception:
 {
 	t=<PRINT> {PrintStmt prn = new PrintStmt(t.beginLine);}
 	(
-		pa=PrintArg()	{prn.addArgument(pa);}
+	 pa=PrintArg()	{prn.addArgument(pa);}
 	)
-	(
-		"+"
-		pa=PrintArg()	{prn.addArgument(pa);}
-	)*
-	{return prn;}
+		(
+		 "+"
+		 pa=PrintArg()	{prn.addArgument(pa);}
+		)*
+		{return prn;}
 }
 
 SetStmt SetStm():
@@ -934,46 +1157,46 @@ SetStmt SetStm():
 {
 	t=<SET> {SetStmt set = new SetStmt(t.beginLine);}
 	(
-	   LOOKAHEAD(5)
-       (name1=ValidHostName()":"  {set.addHost(name1.image);   }
-         (
-            LOOKAHEAD(3)
-            (name2=ValidServerName()":"<THREAD>":" {set.addServer(name2.image);   }
-              (<COUNT>  num=<NUMBER>  {set.addCount(new Double(num.image));}
-              |<BUFFER>  num=<NUMBER> {set.addBuffer(new Double(num.image));}
-              |<SCHEDP>  pol=SchedPolicy() {set.addSchedulingPolicy(pol);}
-              )
-            )
-            |
-            (name2=ValidDeviceName()":"{set.addDevice(name2.image);   }
-              (<COUNT>  num=<NUMBER>  {set.addCount(new Double(num.image));}
-              |<BUFFER>  num=<NUMBER> {set.addBuffer(new Double(num.image));}
-              |<SCHEDP>  pol=SchedPolicy() {set.addSchedulingPolicy(pol);}
-              |<PROBEINTERVAL> v=Variable() {set.addProbeInterval(v);}
-              |<GOVERNOR_UP_THRESHOLD> v=Variable() {set.addGovUpThreshold(v);}
-              |<GOVERNOR_DOWN_THRESHOLD> v=Variable() {set.addGovDownThreshold(v);}
-              )
-            )
-          )
-       )
-       |
-       LOOKAHEAD(5)
-       (name1=ValidLanName()":" {set.addLan(name1.image);}
-        name2=ValidLanName()":" {set.addLan(name2.image);}
-        (  <MTU>  t1=<NUMBER> t2=<IDENTIFIER> {set.addMTU(new Double(t1.image),t2.image);}
-          |<PROP>   t1=<NUMBER> t2=<IDENTIFIER> {set.addPropDelay(new Double(t1.image),t2.image);}
-          |<TRANS>  t1=<NUMBER> t2=<IDENTIFIER> {set.addTransRate(new Double(t1.image),t2.image);}
-        )
-       )
-       |
-        LOOKAHEAD(5)
-       (name1=ValidTaskName()":" {set.addTask(name1.image);}
-        name2=ValidDeviceName()":"{set.addDevice(name2.image);}
-        <SERVT>  dist=Distribution(){set.addServiceTime(dist);}
-       )
-       |
-       (name1=ValidScenarioName()":"<PROB>  t=<NUMBER>)
-       {set.addScenario(name1.image);set.addProbability(new Double(t.image));}
+	 LOOKAHEAD(5)
+	 (name1=ValidPMName()":"  {set.addPM(name1.image);   }
+	  (
+	   LOOKAHEAD(3)
+	   (name2=ValidServerName()":"<THREAD>":" {set.addServer(name2.image);   }
+		(<COUNT>  num=<NUMBER>  {set.addCount(new Double(num.image));}
+		 |<BUFFER>  num=<NUMBER> {set.addBuffer(new Double(num.image));}
+		 |<SCHEDP>  pol=SchedPolicy() {set.addSchedulingPolicy(pol);}
+		)
+	   )
+	   |
+	   (name2=ValidPhysicalDeviceName()":"{set.addPDevice(name2.image);   }
+		(<COUNT>  num=<NUMBER>  {set.addCount(new Double(num.image));}
+		 |<BUFFER>  num=<NUMBER> {set.addBuffer(new Double(num.image));}
+		 |<SCHEDP>  pol=SchedPolicy() {set.addSchedulingPolicy(pol);}
+		 |<PROBEINTERVAL> v=Variable() {set.addProbeInterval(v);}
+		 |<GOVERNOR_UP_THRESHOLD> v=Variable() {set.addGovUpThreshold(v);}
+		 |<GOVERNOR_DOWN_THRESHOLD> v=Variable() {set.addGovDownThreshold(v);}
+		)
+	   )
+	  )
+	 )
+	 |
+	 LOOKAHEAD(5)
+	 (name1=ValidLanName()":" {set.addLan(name1.image);}
+	  name2=ValidLanName()":" {set.addLan(name2.image);}
+	  (  <MTU>  t1=<NUMBER> t2=<IDENTIFIER> {set.addMTU(new Double(t1.image),t2.image);}
+		 |<PROP>   t1=<NUMBER> t2=<IDENTIFIER> {set.addPropDelay(new Double(t1.image),t2.image);}
+		 |<TRANS>  t1=<NUMBER> t2=<IDENTIFIER> {set.addTransRate(new Double(t1.image),t2.image);}
+	  )
+	 )
+	 |
+	 LOOKAHEAD(5)
+	 (name1=ValidTaskName()":" {set.addTask(name1.image);}
+	  name2=ValidPhysicalDeviceName()":"{set.addPDevice(name2.image);}
+	  <SERVT>  dist=Distribution(){set.addServiceTime(dist);}
+	 )
+	 |
+	 (name1=ValidScenarioName()":"<PROB>  t=<NUMBER>)
+	 {set.addScenario(name1.image);set.addProbability(new Double(t.image));}
 	)
 	{return set;}
 }
@@ -982,106 +1205,106 @@ FunctionDefinition FunctionDef():{Token name1;Token t;}
 {
 	{FunctionDefinition fdef = new FunctionDefinition();}
 	(
-	(LOOKAHEAD(5)
-	(
-	  (t=<PRINTCFG>"()" {fdef.addFunction(t.image);}
+	 (LOOKAHEAD(5)
+	  (
+	   (t=<PRINTCFG>"()" {fdef.addFunction(t.image);}
 
+	   )
+	   |
+	   (t=<RESPT> | t=<TPUT>|t=<BPUT>|t=<GPUT> |t=<BLOCKPROB>|t=<ARATE>|t=<BUFFTIMEOUT>|t=<DROPRATE>)   {fdef.addFunction(t.image);}
+	   (
+		("()" {fdef.addScenario("eters");})
+		|
+		"("
+		(
+		 name1=ValidScenarioName(){fdef.addScenario(name1.image);}
+		)
+		")"
+	   )
+	   ("[" t=<NUMBER>{fdef.addSlot(t.image);} "]")?	)
+	  |
+	  (
+	   (t=<RESPT> | t=<TPUT> | t=<BPUT> |t=<GPUT>|t=<BLOCKPROB>|t=<ARATE>|t=<WAITT> |t=<UTIL> | t=<AVAIL> |t=<QLEN>|t=<AVGSERVT>|t=<QPARMS> |t=<BUFFTIMEOUT>|t=<DROPRATE>|t=<POWER>|t=<EPERR>| t=<PDP> | t=<PEFF> | t=<FREQ> | t=<DOWNTIME> ){fdef.addFunction(t.image);}
+	   (
+
+
+		"("
+
+		(LOOKAHEAD (2) t=MachineNameDef()| t=<IDENTIFIER>) {fdef.addTemp1(t.image);}
+		":" (t=<IDENTIFIER> | t=<RAM>) {fdef.addTemp2(t.image);}
+		( LOOKAHEAD(1) ")" | (":" (t=<IDENTIFIER> | t=<RAM>) {fdef.addTemp3(t.image);} ")" )  )
+
+
+	   )
+	   ("[" (t=<NUMBER>){fdef.addSlot(t.image);} "]")?
+	  )
 	  )
 	  |
-	  (t=<RESPT> | t=<TPUT>|t=<BPUT>|t=<GPUT> |t=<BLOCKPROB>|t=<ARATE>|t=<BUFFTIMEOUT>|t=<DROPRATE>)   {fdef.addFunction(t.image);}
-      (
-	    ("()" {fdef.addScenario("eters");})
-	    |
-	    "("
-	    (
-	      name1=ValidScenarioName(){fdef.addScenario(name1.image);}
-	    )
-	    ")"
-	  )
-	  ("[" t=<NUMBER>{fdef.addSlot(t.image);} "]")?	)
-	|
-	(
-	  (t=<RESPT> | t=<TPUT> | t=<BPUT> |t=<GPUT>|t=<BLOCKPROB>|t=<ARATE>|t=<WAITT> |t=<UTIL> |t=<QLEN>|t=<AVGSERVT>|t=<QPARMS> |t=<BUFFTIMEOUT>|t=<DROPRATE>|t=<POWER>|t=<EPERR>| t=<PDP> | t=<PEFF> | t=<FREQ> ){fdef.addFunction(t.image);}
 	  (
-
-
-	   	"("
-
-	   			(LOOKAHEAD (2) t=HostNameDef()| t=<IDENTIFIER>) {fdef.addTemp1(t.image);}
-	   			":" (t=<IDENTIFIER> | t=<RAM>) {fdef.addTemp2(t.image);}
-	   			( LOOKAHEAD(1) ")" | (":" (t=<IDENTIFIER> | t=<RAM>) {fdef.addTemp3(t.image);} ")" )  )
-
-
+	   (t=<ANALYSE> |t=<BOTTLENECK> ) {fdef.addFunction(t.image);}
+	   (
+		(
+		 "()" {fdef.addNumber(-99.0);}
+		)
+		|
+		"("
+		t=<NUMBER> {fdef.addNumber(new Double(t.image));}
+		")"
+	   )
 	  )
-	  ("[" (t=<NUMBER>){fdef.addSlot(t.image);} "]")?
-	)
-	)
-	|
-	(
-	    (t=<ANALYSE> |t=<BOTTLENECK> ) {fdef.addFunction(t.image);}
-	    (
-	      (
-	        "()" {fdef.addNumber(-99.0);}
-	      )
-	      |
-	      "("
-	         t=<NUMBER> {fdef.addNumber(new Double(t.image));}
-	      ")"
-	    )
-	)
-	)
-    {fdef.lineno=t.beginLine; return fdef;}
+	  )
+	  {fdef.lineno=t.beginLine; return fdef;}
 }
 
 ForEachStmt ForEachDef()throws Exception:{Token name;Statement stmt;Token t;ForEachStmt lstmt;int index=0;}
 {
 	<FOREACH> {lstmt = new ForEachStmt();}
-	   name=ValidVariableName() {lstmt.addVariable(name.image);}
-	   (","name=ValidVariableName() {lstmt.addVariable(name.image);})*
-	   <IN>
-	   "("
-	   (t=<NUMBER> {lstmt.addVarValue(0,new Double(t.image));})
-	   (","t=<NUMBER> {lstmt.addVarValue(0,new Double(t.image));})*
-	   ")"
-	   (
-	   		"," {index++;}
-	   		"("
-	   		(t=<NUMBER> {lstmt.addVarValue(index,new Double(t.image));})
-	   		(","t=<NUMBER> {lstmt.addVarValue(index,new Double(t.image));})*
-	   		")"
-	   )*
-	(stmt=StatementDef(){lstmt.addStatement(stmt);})+
-	<END>
-	{return lstmt;}
+	name=ValidVariableName() {lstmt.addVariable(name.image);}
+	(","name=ValidVariableName() {lstmt.addVariable(name.image);})*
+		<IN>
+		"("
+		(t=<NUMBER> {lstmt.addVarValue(0,new Double(t.image));})
+		(","t=<NUMBER> {lstmt.addVarValue(0,new Double(t.image));})*
+		")"
+		(
+		 "," {index++;}
+		 "("
+		 (t=<NUMBER> {lstmt.addVarValue(index,new Double(t.image));})
+		 (","t=<NUMBER> {lstmt.addVarValue(index,new Double(t.image));})*
+		 ")"
+		)*
+		(stmt=StatementDef(){lstmt.addStatement(stmt);})+
+		<END>
+		{return lstmt;}
 }
 
 ForStmt ForDef() throws Exception:{ForStmt fstmt;Statement stmt;Token t,name;}
 {
 	<FOR> {fstmt = new ForStmt();}
-	   name=ValidVariableName() {fstmt.addVariable(name.image);}
-	   "="
-	   t=<NUMBER> {fstmt.addStartVar(new Double(t.image));}
-	   "to"
-	   t=<NUMBER> {fstmt.addEndVar(new Double(t.image));}
-	   <INCR>  t=<NUMBER> {fstmt.addIncrVal(new Double(t.image));}
+	name=ValidVariableName() {fstmt.addVariable(name.image);}
+	"="
+		t=<NUMBER> {fstmt.addStartVar(new Double(t.image));}
+	"to"
+		t=<NUMBER> {fstmt.addEndVar(new Double(t.image));}
+	<INCR>  t=<NUMBER> {fstmt.addIncrVal(new Double(t.image));}
 	(stmt=StatementDef(){fstmt.addStatement(stmt);})+
-	<END>
-	{ return fstmt;	}
+		<END>
+		{ return fstmt;	}
 }
 IfStmt IfStmt() throws Exception:{Expression exp;Statement stmt;}
 {
 	{IfStmt ifstmt = new IfStmt();}
 	(
-		<IF> "("
-		exp=Expression() {ifstmt.addExpression(exp);}
-		")" <THEN>
-		(stmt=StatementDef() {ifstmt.addStatement(stmt);})*
-		[
-			LOOKAHEAD(2)
-			<ELSE>
-			(stmt=StatementDef() {ifstmt.addElseStatement(stmt);})*
-		]
-		<END>
+	 <IF> "("
+	 exp=Expression() {ifstmt.addExpression(exp);}
+	 ")" <THEN>
+	 (stmt=StatementDef() {ifstmt.addStatement(stmt);})*
+	 [
+	 LOOKAHEAD(2)
+	 <ELSE>
+	 (stmt=StatementDef() {ifstmt.addElseStatement(stmt);})*
+	 ]
+	 <END>
 	)
 	{return ifstmt;}
 }
@@ -1089,11 +1312,11 @@ WhileStmt WhileStmt() throws Exception:{Expression exp;Statement stmt;}
 {
 	{WhileStmt wstmt = new WhileStmt();}
 	(
-		<WHILE> "("
-		exp=Expression() {wstmt.addExpression(exp);}
-		")"
-		(stmt=StatementDef() {wstmt.addStatement(stmt);})*
-		<END>
+	 <WHILE> "("
+	 exp=Expression() {wstmt.addExpression(exp);}
+	 ")"
+	 (stmt=StatementDef() {wstmt.addStatement(stmt);})*
+	 <END>
 	)
 	{return wstmt;}
 }
@@ -1103,25 +1326,25 @@ Expression Expression()throws Exception:
 {
 	{Expression aexp = new Expression();}
 	(
-		LOOKAHEAD(ValidVariableName() "=")
-		name=ValidVariableName() {Variable v=ModelParameters.inputDistributedSystem.getVariable(name.image);
-	                          aexp.addVariable(v);}
-		"="
-		a=Expression() {aexp.addExpression(a);}
-		|
-		lexp=LogicalExpression() {aexp.addLogicalExpression(lexp);}
-    )
+	 LOOKAHEAD(ValidVariableName() "=")
+	 name=ValidVariableName() {Variable v=ModelParameters.inputDistSys.getVariable(name.image);
+	 aexp.addVariable(v);}
+	 "="
+	 a=Expression() {aexp.addExpression(a);}
+	 |
+	 lexp=LogicalExpression() {aexp.addLogicalExpression(lexp);}
+	)
 	{return aexp;}
 }
 LogicalExpression LogicalExpression() throws Exception: {LogicalANDExpression land; LogicalExpression l;}
 {
 	{LogicalExpression lexp = new LogicalExpression();}
 	(
-	   land=LogicalANDExpression() {lexp.addLogicalANDExpression(land);}
-	   [
-	      "||" {lexp.addOperation("||");}
-	      l=LogicalExpression() {lexp.addLogicalExpression(l);}
-	   ]
+	 land=LogicalANDExpression() {lexp.addLogicalANDExpression(land);}
+	 [
+	 "||" {lexp.addOperation("||");}
+	 l=LogicalExpression() {lexp.addLogicalExpression(l);}
+	 ]
 	)
 	{return lexp;}
 }
@@ -1130,10 +1353,10 @@ LogicalANDExpression LogicalANDExpression() throws Exception: {EqualityExpressio
 {
 	{LogicalANDExpression lexp = new LogicalANDExpression();}
 	(
-	  eexp=EqualityExpression() {lexp.addEqualityExpression(eexp);}
-	  [ "&&" {lexp.addOperation("&&");}
-	     l=LogicalANDExpression() {lexp.addLogicalANDExpression(l);}
-	  ]
+	 eexp=EqualityExpression() {lexp.addEqualityExpression(eexp);}
+	 [ "&&" {lexp.addOperation("&&");}
+	 l=LogicalANDExpression() {lexp.addLogicalANDExpression(l);}
+	 ]
 	)
 	{return lexp;}
 }
@@ -1142,14 +1365,14 @@ EqualityExpression EqualityExpression() throws Exception: {RelationalExpression 
 {
 	{EqualityExpression eex = new EqualityExpression();}
 	(
-		rex=RelationalExpression() {eex.addRelationalExpression(rex);}
-		[
-		  (
-		   "=="  {eex.addOperation("==");}
-		   | "!=" {eex.addOperation("!=");}
-		   )
-		   e=EqualityExpression() {eex.addEqualityExpression(e);}
-		 ]
+	 rex=RelationalExpression() {eex.addRelationalExpression(rex);}
+	 [
+	 (
+	  "=="  {eex.addOperation("==");}
+	  | "!=" {eex.addOperation("!=");}
+	 )
+	 e=EqualityExpression() {eex.addEqualityExpression(e);}
+	 ]
 	)
 	{return eex;}
 }
@@ -1158,15 +1381,15 @@ RelationalExpression RelationalExpression() throws Exception: {AdditiveExpressio
 {
 	{RelationalExpression rex = new RelationalExpression();}
 	(
-		a=AdditiveExpression() {rex.addAdditiveExpression(a);}
-		[
-			( "<" {rex.addOperation("<");}
-			| ">" {rex.addOperation(">");}
-			| "<=" {rex.addOperation("<=");}
-			| ">=" {rex.addOperation(">=");}
-			)
-			r=RelationalExpression() {rex.addRelationalExpression(r);}
-		]
+	 a=AdditiveExpression() {rex.addAdditiveExpression(a);}
+	 [
+	 ( "<" {rex.addOperation("<");}
+	   | ">" {rex.addOperation(">");}
+	   | "<=" {rex.addOperation("<=");}
+	   | ">=" {rex.addOperation(">=");}
+	 )
+	 r=RelationalExpression() {rex.addRelationalExpression(r);}
+	 ]
 	)
 	{return rex;}
 }
@@ -1174,41 +1397,41 @@ RelationalExpression RelationalExpression() throws Exception: {AdditiveExpressio
 AdditiveExpression AdditiveExpression()throws Exception: {MultiplicativeExpression mex;AdditiveExpression a;}
 {
 	{AdditiveExpression aex = new AdditiveExpression();}
-    (
-	    mex=MultiplicativeExpression()   {aex.addMultiplicativeExpression(mex);}
-	    [
-	    	LOOKAHEAD(2)
-	    	(
-	    		"-"    {aex.addOperation("-");}
-		    	|   "+"    	{aex.addOperation("+");}
-		    )
-	     	a=AdditiveExpression() {aex.addAdditiveExpression(a);}
-	    ]
-    )
-   { return aex; }
+	(
+	 mex=MultiplicativeExpression()   {aex.addMultiplicativeExpression(mex);}
+	 [
+	 LOOKAHEAD(2)
+	 (
+	  "-"    {aex.addOperation("-");}
+	  |   "+"    	{aex.addOperation("+");}
+	 )
+	 a=AdditiveExpression() {aex.addAdditiveExpression(a);}
+	 ]
+	)
+	{ return aex; }
 }
 
 MultiplicativeExpression MultiplicativeExpression()throws Exception:{UnaryExpression uex;MultiplicativeExpression m;}
 {
 	{MultiplicativeExpression mex = new MultiplicativeExpression();}
 	(
-	    uex=UnaryExpression()    {mex.addUnaryExpression(uex);}
-	    [
-	       (     "*"    {mex.addOperation("*");}
-	       |   "/"    	{mex.addOperation("/");}
-	       )
-	    	m=MultiplicativeExpression() {mex.addMultiplicativeExpression(m);}
-	    ]
-    )
-    { return mex; }
+	 uex=UnaryExpression()    {mex.addUnaryExpression(uex);}
+	 [
+	 (     "*"    {mex.addOperation("*");}
+		   |   "/"    	{mex.addOperation("/");}
+	 )
+	 m=MultiplicativeExpression() {mex.addMultiplicativeExpression(m);}
+	 ]
+	)
+	{ return mex; }
 }
 
 UnaryExpression UnaryExpression()throws Exception:{ PrimaryExpression pex;}
 {
 	{UnaryExpression uex = new UnaryExpression();}
 	(
-    "-" pex=PrimaryExpression()     { uex.addPrimaryExpression(pex); uex.addNegate(); }
-	|   pex=PrimaryExpression()         { uex.addPrimaryExpression(pex); }
+	 "-" pex=PrimaryExpression()     { uex.addPrimaryExpression(pex); uex.addNegate(); }
+	 |   pex=PrimaryExpression()         { uex.addPrimaryExpression(pex); }
 	)
 	{return uex;}
 }
@@ -1218,15 +1441,15 @@ PrimaryExpression PrimaryExpression() throws Exception:
 {
 	{PrimaryExpression pex = new PrimaryExpression();}
 	(
-	   	name=ValidVariableName()
-	   	{	Variable v= ModelParameters.inputDistributedSystem.getVariable(name.image);
-	   		pex.addVariable(v);
-	   	}
-	   	|t=<NUMBER> { pex.addNumber(new Double(t.image));}
-	   	|
-	   	LOOKAHEAD(3)
-	   	func=FunctionDef() {pex.addFuncDef(func);}
-		| "(" a=Expression() ")"    { pex.addExpression(a); }
+	 name=ValidVariableName()
+	 {	Variable v= ModelParameters.inputDistSys.getVariable(name.image);
+	 pex.addVariable(v);
+	 }
+	 |t=<NUMBER> { pex.addNumber(new Double(t.image));}
+	 |
+	 LOOKAHEAD(3)
+	 func=FunctionDef() {pex.addFuncDef(func);}
+	 | "(" a=Expression() ")"    { pex.addExpression(a); }
 	)
 	{return pex;}
 }
@@ -1234,90 +1457,90 @@ PrimaryExpression PrimaryExpression() throws Exception:
 void ModelParamDef() : { Variable var;	Token t;boolean res; Distribution dis;}
 {
 
-  (<MODELPARAMS>
-   (
-   	<TYPE>			  	(t=<OPEN>|t=<CLOSED>)
-   	{if(t.image.compareToIgnoreCase("open")==0)
-   		{ModelParameters.setSystemType(SystemType.OPEN);}
-   	 else {ModelParameters.setSystemType(SystemType.CLOSED);}
-   	}
-   	|
-   	<METHOD>			(t=<ANALYTICAL>|t=<SIMULATION>)
-   	{if(t.image.compareToIgnoreCase("analytical")==0)
-   		{ModelParameters.setSolutionMethod(SolutionMethod.ANALYTICAL);
-//   		logger.info("Method:Analytical");
-		}
-   	 else {ModelParameters.setSolutionMethod(SolutionMethod.SIMULATION);
-//   	 	   logger.info("Method:Simulation");
-   	      }
-   	}
-   	|
-   	<WARNINGS>			(t=<ENABLE>|t=<DISABLE>)
-   	{if(t.image.compareToIgnoreCase("enable")==0)
-   		{ModelParameters.setWarnings(Warnings.ENABLE);
-//   		logger.info("Warnings:enable");
-		}
-   	 else {ModelParameters.setWarnings(Warnings.DISABLE);
-//   	 	   logger.info("Warnings:disable");
-   	      }
-   	}
-   	|
-	<NOOFREQUESTS>		t=<NUMBER> {ModelParameters.addNoOfRequests(new Double(t.image));}|
-         <SIMENDTIME>           var = Variable() {ModelParameters.addSimulationEndTime(var);}   |
-	<CONFINT>			res=IsBool() {ModelParameters.setConfIntervalsEnabled(res);}	|
-	<REPLICATIONNO>		t=<NUMBER> {ModelParameters.addNoOfReplications(new Double(t.image));}	|
-//	<SAMPLENO>			t=<NUMBER>{ModelParameters.addTotalNumSamples(new Double(t.image));}|
-	<STARTUPSAMPLENO>	t=<NUMBER>{ModelParameters.addStartUpSampleNo(new Double(t.image));}		|
-//	<COOLDOWNSAMPLENO>	t=<NUMBER> {ModelParameters.addCoolDownSampleNo(new Double(t.image));}  |
-	<QLEN>				t=<NUMBER>{ModelParameters.addQlencilevel(new Double(t.image));}  |
-        <TPUT>				t=<NUMBER>{ModelParameters.addTputcilevel(new Double(t.image));}  |
-	<UTIL>				t=<NUMBER>{ModelParameters.addUtilcilevel(new Double(t.image));}  |
-	<RESPT>				t=<NUMBER>{ModelParameters.addResptcilevel(new Double(t.image));} |
-	<OUTPUT>            t=<FILENAME>{ModelParameters.addOutputFile(t.image);}
+	(<MODELPARAMS>
+	 (
+	  <TYPE>			  	(t=<OPEN>|t=<CLOSED>)
+	  {if(t.image.compareToIgnoreCase("open")==0)
+	  {ModelParameters.setSystemType(SystemType.OPEN);}
+	  else {ModelParameters.setSystemType(SystemType.CLOSED);}
+	  }
+	  |
+	  <METHOD>			(t=<ANALYTICAL>|t=<SIMULATION>)
+	  {if(t.image.compareToIgnoreCase("analytical")==0)
+	  {ModelParameters.setSolutionMethod(SolutionMethod.ANALYTICAL);
+	  //   		logger.info("Method:Analytical");
+	  }
+	  else {ModelParameters.setSolutionMethod(SolutionMethod.SIMULATION);
+	  //   	 	   logger.info("Method:Simulation");
+	  }
+	  }
+	  |
+	  <WARNINGS>			(t=<ENABLE>|t=<DISABLE>)
+	  {if(t.image.compareToIgnoreCase("enable")==0)
+	  {ModelParameters.setWarnings(Warnings.ENABLE);
+	  //   		logger.info("Warnings:enable");
+	  }
+	  else {ModelParameters.setWarnings(Warnings.DISABLE);
+		  //   	 	   logger.info("Warnings:disable");
+	  }
+	  }
+	|
+		<NOOFREQUESTS>		t=<NUMBER> {ModelParameters.addNoOfRequests(new Double(t.image));}|
+		<SIMENDTIME>           var = Variable() {ModelParameters.addSimulationEndTime(var);}   |
+		<CONFINT>			res=IsBool() {ModelParameters.setConfIntervalsEnabled(res);}	|
+		<REPLICATIONNO>		t=<NUMBER> {ModelParameters.addNoOfReplications(new Double(t.image));}	|
+		//	<SAMPLENO>			t=<NUMBER>{ModelParameters.addTotalNumSamples(new Double(t.image));}|
+		<STARTUPSAMPLENO>	t=<NUMBER>{ModelParameters.addStartUpSampleNo(new Double(t.image));}		|
+		//	<COOLDOWNSAMPLENO>	t=<NUMBER> {ModelParameters.addCoolDownSampleNo(new Double(t.image));}  |
+		<QLEN>				t=<NUMBER>{ModelParameters.addQlencilevel(new Double(t.image));}  |
+		<TPUT>				t=<NUMBER>{ModelParameters.addTputcilevel(new Double(t.image));}  |
+		<UTIL>				t=<NUMBER>{ModelParameters.addUtilcilevel(new Double(t.image));}  |
+		<RESPT>				t=<NUMBER>{ModelParameters.addResptcilevel(new Double(t.image));} |
+		<OUTPUT>            t=<FILENAME>{ModelParameters.addOutputFile(t.image);}
 
-   )*
-   <END>
-  )
+	)*
+		<END>
+		)
 
 }
 
 //Workload type parsing added by yogesh
 void ModelWorkLoad() : { Variable var; Token t;}
 {
-    (<WORKLOAD> t=<CYCLIC>
-         (WorkloadDetails())*
-        <END>
-      )  
+	(<WORKLOAD> t=<CYCLIC>
+	 (WorkloadDetails())*
+	 <END>
+	)  
 }
 
 void WorkloadDetails() :{Variable var;}
 {
-         <ARATE> (var=Variable() {ModelParameters.addArrivalRates(var);})* <END>
-           | <NOOFUSERS> (var=Variable() {ModelParameters.addNumberOfUsers(var);})* <END>
-     
-           | <INTERVAL> (var=Variable() {ModelParameters.addIntervalSlots(var);})* <END>
+	<ARATE> (var=Variable() {ModelParameters.addArrivalRates(var);})* <END>
+		| <NOOFUSERS> (var=Variable() {ModelParameters.addNumberOfUsers(var);})* <END>
+
+		| <INTERVAL> (var=Variable() {ModelParameters.addIntervalSlots(var);})* <END>
 }
 
 void LoadParamDef() : { Variable var;	Token t;boolean res; Distribution dis;}
 {
 
-  (<LOADPARAMS>
-   (
-    <THINKTIME>         dis=Distribution(){ModelParameters.addThinkTime(dis);}|
-    <TIMEOUT>         dis=Distribution(){ModelParameters.addTimeout(dis);}|
-    <RETRYPROB>		   var=Variable() {ModelParameters.addRetryProbability(var);}|
-	<ARATE>		         var=Variable() {ModelParameters.addArrivalRate(var);}|
-	<NOOFUSERS>		    var=Variable() {ModelParameters.addNoOfUsers(var);}|
-       <MAXRETRY>              var=Variable(){ModelParameters.addMaxRetry(var);}
-   )*
-   {ModelParameters.isModified=true;}
-   <END>
-  )
+	(<LOADPARAMS>
+	 (
+	  <THINKTIME>         dis=Distribution(){ModelParameters.addThinkTime(dis);}|
+	  <TIMEOUT>         dis=Distribution(){ModelParameters.addTimeout(dis);}|
+	  <RETRYPROB>		   var=Variable() {ModelParameters.addRetryProbability(var);}|
+	  <ARATE>		         var=Variable() {ModelParameters.addArrivalRate(var);}|
+	  <NOOFUSERS>		    var=Variable() {ModelParameters.addNoOfUsers(var);}|
+	  <MAXRETRY>              var=Variable(){ModelParameters.addMaxRetry(var);}
+	 )*
+	 {ModelParameters.isModified=true;}
+	 <END>
+	)
 
 }
 
 boolean IsBool():{}
 {
 	<TRUE> {return true;}|
-	<FALSE> {return false;}
+		<FALSE> {return false;}
 }

@@ -1,0 +1,89 @@
+variable
+	nusers 5
+end
+
+devicecategory
+	cpu intel
+	noncpu disk
+end
+
+pdevice 
+	intel cpu1
+	disk disk1
+end
+
+vdevice
+	intel vcpu1
+	disk vdisk1
+end
+
+task wt1 
+	intel servt 0.004 at 2.8
+end
+
+physicalmachine pm[2]
+	cpu1 count 2
+	cpu1 buffer 999999
+	cpu1 schedP fcfs
+	cpu1 basespeed 2.8
+	disk1 count 1
+	disk1 buffer 10
+	disk1 schedP fcfs
+	virtualization on
+end
+
+virtualmachine vm[1]
+	vcpu1 count 1
+	vcpu1 buffer 999999
+	vcpu1  schedP fcfs
+	vdisk1 count 1
+	vdisk1 buffer 999999
+	vdisk1 schedP fcfs
+end
+
+server web
+	thread count 20
+	thread buffer 100
+	thread schedP fcfs
+	task wt1
+end
+
+scenario sc1 prob 1.0
+	user wt1 300
+end
+
+lan 
+    lan1
+    lan2
+end
+
+link link1 lan1 lan2
+	trans 10 Mbps
+	mtu 256 bytes
+	prop 2.3 us
+	headersize 40 bytes
+end
+
+deploy web vm[1]
+deploy vm[1] pm[1]
+deploy pm[1] lan1
+deploy pm[2] lan2
+
+loadparams
+	noofusers nusers
+	thinktime 1
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 1
+    noofrequests 2000
+	warnings disable
+end
+
+print "Number of Users, Throughput, Downtime"
+while(nusers < 100)
+print nusers + "," + tput() + "," + downtime(vm[1]:aa)
+nusers = nusers + 5
+end

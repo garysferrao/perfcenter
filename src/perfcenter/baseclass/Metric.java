@@ -17,7 +17,7 @@ public class Metric {
 	/** mean value of the metric, array size equal to cyclic workload's cycle length */
 	private double[] value;
 	/** confidence interval levels of metric, array size equal to cyclic workload's cycle length */
-	private double[] confidenceInterval;
+	public double[] confidenceInterval;
 	/** confidence probability of the computed values, e.g. 95% etc */
 	private double confidenceProbability;
 
@@ -151,7 +151,7 @@ public class Metric {
 	 * 
 	 * @author nadeesh 
 	 */
-	public void setConfidenceInterval(int slot, String serverName, double confidenceInterval) {
+	public void setConfIval(int slot, String serverName, double confidenceInterval) {
 		if (this.slotwisePerServerCI.containsKey(slot)) {
 			this.slotwisePerServerCI.get(slot).put(serverName, confidenceInterval);
 
@@ -182,7 +182,7 @@ public class Metric {
 		if(slot == -1) {
 			return toString();
 		} else {
-			return (ModelParameters.confIntervalsEnabled && ModelParameters.solutionMethod != SolutionMethod.ANALYTICAL) ? value[slot] + "+-" + confidenceInterval[slot] : Double.toString(value[slot]);
+			return (ModelParameters.confIvalsEnabled && ModelParameters.solutionMethod != SolutionMethod.ANALYTICAL) ? value[slot] + "+-" + confidenceInterval[slot] : Double.toString(value[slot]);
 		}
 	}
 
@@ -193,10 +193,10 @@ public class Metric {
 		} else {
 			double print_time = 0;
 			Variable[] loadDetails = null;
-			loadDetails = SystemType.CLOSED == ModelParameters.getSystemType() ? ModelParameters.numberofUsers : ModelParameters.arrivalRates;
+			loadDetails = SystemType.CLOSED == ModelParameters.getSystemType() ? ModelParameters.noOfUsersCyclic : ModelParameters.arrivalRatesCyclic;
 			StringBuilder returnString = new StringBuilder(1000);
 			for (int slot = 0; slot < value.length; slot++) {
-				print_time += ModelParameters.intervalSlotDurations[slot].value;
+				print_time += ModelParameters.ivalSlotDurCyclic[slot].value;
 				print(print_time, slot, loadDetails[slot].value, returnString);
 			}
 			returnString.deleteCharAt(returnString.length()-1); //remove the last newline
@@ -217,7 +217,7 @@ public class Metric {
 				value = "" + this.slotwisePerServerValue.get(slot).get(serverName).doubleValue();
 			}
 		}
-		if (ModelParameters.confIntervalsEnabled) {
+		if (ModelParameters.confIvalsEnabled) {
 			if (this.slotwisePerServerCI.containsKey(slot)) {
 				if (this.slotwisePerServerCI.get(slot).containsKey(serverName)) {
 					ci = "" + this.slotwisePerServerCI.get(slot).get(serverName).doubleValue();
@@ -236,10 +236,10 @@ public class Metric {
 		} else {
 			double print_time = 0;
 			Variable[] loadDetails = null;
-			loadDetails = SystemType.CLOSED == ModelParameters.getSystemType() ? ModelParameters.numberofUsers : ModelParameters.arrivalRates;
+			loadDetails = SystemType.CLOSED == ModelParameters.getSystemType() ? ModelParameters.noOfUsersCyclic : ModelParameters.arrivalRatesCyclic;
 			StringBuilder returnString = new StringBuilder(1000);
 			for (int slot = 0; slot < value.length; slot++) {
-				print_time += ModelParameters.intervalSlotDurations[slot].value;
+				print_time += ModelParameters.ivalSlotDurCyclic[slot].value;
 				returnString.append(print_time + " " + toString(slot, serverName) + " " + loadDetails[slot].value + "\n");
 			}
 			

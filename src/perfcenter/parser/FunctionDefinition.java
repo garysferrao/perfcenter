@@ -29,7 +29,7 @@ public class FunctionDefinition {
 
 	public void addTemp2(String name) {
 		tempname2 = name;
-		tempname3 = ")"; // if further the value if tempname3 is changed then we can recognised that third paramter is specified.
+		tempname3 = ")"; //if tempname3 is changed then we can recognize that third parameter is specified.
 	}
 
 	public void addTemp3(String name) {
@@ -64,22 +64,18 @@ public class FunctionDefinition {
 	public String execute() throws Exception {
 		try {
 
-			// error checking for memory model.
-			if (tempname2 != null) {
-				if (tempname3 != null) {
-					if ((tempname2.compareToIgnoreCase("ram") == 0 || tempname3.compareToIgnoreCase("ram") == 0)
-							&& name_.compareToIgnoreCase("util") != 0) {
-						return (" WARNING: '" + name_.toUpperCase() + "' IS AN INVALID OPERATION ON RAM !!!");
-					}
-				} else if (tempname2.compareToIgnoreCase("ram") == 0 && name_.compareToIgnoreCase("util") != 0) {
-					return (" WARNING: '" + name_.toUpperCase() + "' IS AN INVALID OPERATION ON RAM !!!");
-				}
+			// error checking for memory model	
+			if (((tempname2 != null && tempname2.compareToIgnoreCase("ram") == 0) 
+			  || (tempname3 != null && tempname3.compareToIgnoreCase("ram") == 0))
+  			  && name_.compareToIgnoreCase("util") != 0) {
+				
+				return ("ERROR: '" + name_.toUpperCase() + "' is not supported on ram");
 			}
 
 			Output o = new Output();
 			
 			if (name_.compareTo("printcfg") == 0) {
-				ModelParameters.inputDistributedSystem.printConfiguration();
+				ModelParameters.inputDistSys.printConfiguration();
 				return "";
 			} else if (name_.compareTo("respt") == 0) {
 				if (scenario != null) {
@@ -148,6 +144,8 @@ public class FunctionDefinition {
 				return o.findWaitingTime(slot, tempname1, tempname2, tempname3);
 			} else if (name_.compareTo("util") == 0) {
 				return o.findUtilization(slot, tempname1, tempname2, tempname3);
+			} else if (name_.compareTo("downtime") == 0) {
+				return o.findDownTime(slot, tempname1, tempname2, tempname3);
 			} else if (name_.compareTo("qlen") == 0) {
 				return o.findQueueLength(slot, tempname1, tempname2, tempname3);
 			} else if (name_.compareTo("avgservt") == 0) {

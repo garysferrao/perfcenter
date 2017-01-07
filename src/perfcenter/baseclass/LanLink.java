@@ -25,7 +25,7 @@ import perfcenter.baseclass.enums.SchedulingPolicy;
  * @author akhila
  */
 public class LanLink {
-	protected String name;
+	public String name;
 	public String srclan;
 	public String destlan;
 
@@ -158,9 +158,9 @@ public class LanLink {
 			return;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			linkQforward.averageArrivalRate.setValue(arate);
+			linkQforward.avgArrivalRate.setValue(arate);
 		} else {
-			linkQreverse.averageArrivalRate.setValue(arate);
+			linkQreverse.avgArrivalRate.setValue(arate);
 		}
 	}
 
@@ -169,9 +169,9 @@ public class LanLink {
 			return 0;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			return linkQforward.averageArrivalRate.getValue();
+			return linkQforward.avgArrivalRate.getValue();
 		} else {
-			return linkQreverse.averageArrivalRate.getValue();
+			return linkQreverse.avgArrivalRate.getValue();
 		}
 	}
 
@@ -180,9 +180,9 @@ public class LanLink {
 			return 0;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			return linkQforward.averageResponseTime.getValue();
+			return linkQforward.avgRespTime.getValue();
 		} else {
-			return linkQreverse.averageResponseTime.getValue();
+			return linkQreverse.avgRespTime.getValue();
 		}
 	}
 
@@ -191,9 +191,9 @@ public class LanLink {
 			return;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			linkQforward.averageThroughput.setValue(thru);
+			linkQforward.avgThroughput.setValue(thru);
 		} else {
-			linkQreverse.averageThroughput.setValue(thru);
+			linkQreverse.avgThroughput.setValue(thru);
 		}
 	}
 
@@ -202,9 +202,9 @@ public class LanLink {
 			return 0;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			return linkQforward.averageThroughput.getValue();
+			return linkQforward.avgThroughput.getValue();
 		} else {
-			return linkQreverse.averageThroughput.getValue();
+			return linkQreverse.avgThroughput.getValue();
 		}
 	}
 
@@ -224,9 +224,9 @@ public class LanLink {
 			return;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			linkQforward.averageUtilization.setValue(util);
+			linkQforward.avgUtil.setValue(util);
 		} else {
-			linkQreverse.averageUtilization.setValue(util);
+			linkQreverse.avgUtil.setValue(util);
 		}
 	}
 
@@ -235,9 +235,9 @@ public class LanLink {
 			return 0;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			return linkQforward.averageUtilization.getValue();
+			return linkQforward.avgUtil.getValue();
 		} else {
-			return linkQreverse.averageUtilization.getValue();
+			return linkQreverse.avgUtil.getValue();
 		}
 	}
 
@@ -246,9 +246,9 @@ public class LanLink {
 			return;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			linkQforward.averageWaitingTime.setValue(wtime);
+			linkQforward.avgWaitingTime.setValue(wtime);
 		} else {
-			linkQreverse.averageWaitingTime.setValue(wtime);
+			linkQreverse.avgWaitingTime.setValue(wtime);
 		}
 	}
 
@@ -257,9 +257,9 @@ public class LanLink {
 			return 0;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			return linkQforward.averageWaitingTime.getValue();
+			return linkQforward.avgWaitingTime.getValue();
 		} else {
-			return linkQreverse.averageWaitingTime.getValue();
+			return linkQreverse.avgWaitingTime.getValue();
 		}
 	}
 
@@ -268,9 +268,9 @@ public class LanLink {
 			return 0;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			return linkQforward.averageServiceTime.getValue();
+			return linkQforward.avgServiceTime.getValue();
 		} else {
-			return linkQreverse.averageServiceTime.getValue();
+			return linkQreverse.avgServiceTime.getValue();
 		}
 	}
 
@@ -279,9 +279,9 @@ public class LanLink {
 			return;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			linkQforward.averageServiceTime.setValue(t);
+			linkQforward.avgServiceTime.setValue(t);
 		} else {
-			linkQreverse.averageServiceTime.setValue(t);
+			linkQreverse.avgServiceTime.setValue(t);
 		}
 	}
 
@@ -294,9 +294,9 @@ public class LanLink {
 			return;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			linkQforward.averageQueueLength.setValue(qlen);
+			linkQforward.avgQueueLen.setValue(qlen);
 		} else {
-			linkQreverse.averageQueueLength.setValue(qlen);
+			linkQreverse.avgQueueLen.setValue(qlen);
 		}
 	}
 
@@ -305,9 +305,9 @@ public class LanLink {
 			return 0;
 		}
 		if (isForwardLink(lan1, lan2) == true) {
-			return linkQforward.averageQueueLength.getValue();
+			return linkQforward.avgQueueLen.getValue();
 		} else {
-			return linkQreverse.averageQueueLength.getValue();
+			return linkQreverse.avgQueueLen.getValue();
 		}
 	}
 

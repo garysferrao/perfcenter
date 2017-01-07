@@ -17,271 +17,315 @@ public interface PerfParserConstants {
   /** RegularExpression Id. */
   int VARIABLE = 9;
   /** RegularExpression Id. */
-  int DEVICE = 10;
+  int PDEVICE = 10;
   /** RegularExpression Id. */
-  int PS = 11;
+  int DEVICECATEGORY = 11;
   /** RegularExpression Id. */
-  int FCFS = 12;
+  int VDEVICE = 12;
   /** RegularExpression Id. */
-  int LCFS = 13;
+  int CPU = 13;
   /** RegularExpression Id. */
-  int DEPLOY = 14;
+  int NONCPU = 14;
   /** RegularExpression Id. */
-  int UNDEPLOY = 15;
+  int VCPU = 15;
   /** RegularExpression Id. */
-  int HOST = 16;
+  int VSTORAGE = 16;
   /** RegularExpression Id. */
-  int SERVER = 17;
+  int PS = 17;
   /** RegularExpression Id. */
-  int COUNT = 18;
+  int FCFS = 18;
   /** RegularExpression Id. */
-  int PROB = 19;
+  int LCFS = 19;
   /** RegularExpression Id. */
-  int SYNC = 20;
+  int XCS = 20;
   /** RegularExpression Id. */
-  int SERVT = 21;
+  int DEPLOY = 21;
   /** RegularExpression Id. */
-  int THREAD = 22;
+  int UNDEPLOY = 22;
   /** RegularExpression Id. */
-  int TASK = 23;
+  int PHYSICALMACHINE = 23;
   /** RegularExpression Id. */
-  int BUFFER = 24;
+  int VIRTUALMACHINE = 24;
   /** RegularExpression Id. */
-  int VIRTRES = 25;
+  int SERVER = 25;
   /** RegularExpression Id. */
-  int SCHEDP = 26;
+  int COUNT = 26;
   /** RegularExpression Id. */
-  int SPEEDUP = 27;
+  int PROB = 27;
   /** RegularExpression Id. */
-  int TRUE = 28;
+  int SYNC = 28;
   /** RegularExpression Id. */
-  int FALSE = 29;
+  int SERVT = 29;
   /** RegularExpression Id. */
-  int RAM = 30;
+  int AT = 30;
   /** RegularExpression Id. */
-  int STATICSIZE = 31;
+  int THREAD = 31;
   /** RegularExpression Id. */
-  int REQUESTSIZE = 32;
+  int TASK = 32;
   /** RegularExpression Id. */
-  int SIZE = 33;
+  int BUFFER = 33;
   /** RegularExpression Id. */
-  int WARNINGS = 34;
+  int BASESPEED = 34;
   /** RegularExpression Id. */
-  int POWERMANAGED = 35;
+  int SOFTRES = 35;
   /** RegularExpression Id. */
-  int GOVERNOR = 36;
+  int SCHEDP = 36;
   /** RegularExpression Id. */
-  int CONSERVATIVE = 37;
+  int SPEEDUP = 37;
   /** RegularExpression Id. */
-  int ONDEMAND = 38;
+  int TRUE = 38;
   /** RegularExpression Id. */
-  int PERFORMANCE = 39;
+  int FALSE = 39;
   /** RegularExpression Id. */
-  int POWERSAVE = 40;
+  int RAM = 40;
   /** RegularExpression Id. */
-  int USERSPACE = 41;
+  int STATICSIZE = 41;
   /** RegularExpression Id. */
-  int POWERMANAGEMENT = 42;
+  int SIZE = 42;
   /** RegularExpression Id. */
-  int SPEEDLEVELS = 43;
+  int WARNINGS = 43;
   /** RegularExpression Id. */
-  int POWERCONSUMEDLEVELS = 44;
+  int POWERMANAGED = 44;
   /** RegularExpression Id. */
-  int IDLEPOWER = 45;
+  int GOVERNOR = 45;
   /** RegularExpression Id. */
-  int SETSPEEDLEVELINDEX = 46;
+  int CONSERVATIVE = 46;
   /** RegularExpression Id. */
-  int PROBEINTERVAL = 47;
+  int ONDEMAND = 47;
   /** RegularExpression Id. */
-  int PROBEINTERVALDOWNFACTOR = 48;
+  int PERFORMANCE = 48;
   /** RegularExpression Id. */
-  int GOVERNOR_UP_THRESHOLD = 49;
+  int POWERSAVE = 49;
   /** RegularExpression Id. */
-  int GOVERNOR_DOWN_THRESHOLD = 50;
+  int USERSPACE = 50;
   /** RegularExpression Id. */
-  int LAN = 51;
+  int POWERMANAGEMENT = 51;
   /** RegularExpression Id. */
-  int LINK = 52;
+  int SPEEDLEVELS = 52;
   /** RegularExpression Id. */
-  int PROP = 53;
+  int POWERCONSUMEDLEVELS = 53;
   /** RegularExpression Id. */
-  int TRANS = 54;
+  int IDLEPOWER = 54;
   /** RegularExpression Id. */
-  int HEADERSIZE = 55;
+  int SETSPEEDLEVELINDEX = 55;
   /** RegularExpression Id. */
-  int BYTES = 56;
+  int PROBEINTERVAL = 56;
   /** RegularExpression Id. */
-  int MS = 57;
+  int PROBEINTERVALDOWNFACTOR = 57;
   /** RegularExpression Id. */
-  int US = 58;
+  int GOVERNOR_UP_THRESHOLD = 58;
   /** RegularExpression Id. */
-  int NS = 59;
+  int GOVERNOR_DOWN_THRESHOLD = 59;
   /** RegularExpression Id. */
-  int KBPS = 60;
+  int LAN = 60;
   /** RegularExpression Id. */
-  int BPS = 61;
+  int LINK = 61;
   /** RegularExpression Id. */
-  int MBPS = 62;
+  int PROP = 62;
   /** RegularExpression Id. */
-  int GBPS = 63;
+  int TRANS = 63;
   /** RegularExpression Id. */
-  int MTU = 64;
+  int HEADERSIZE = 64;
   /** RegularExpression Id. */
-  int EXP = 65;
+  int BYTES = 65;
   /** RegularExpression Id. */
-  int NOR = 66;
+  int MS = 66;
   /** RegularExpression Id. */
-  int POI = 67;
+  int US = 67;
   /** RegularExpression Id. */
-  int UNI = 68;
+  int NS = 68;
   /** RegularExpression Id. */
-  int BETA = 69;
+  int KBPS = 69;
   /** RegularExpression Id. */
-  int BINOM = 70;
+  int BPS = 70;
   /** RegularExpression Id. */
-  int CHISQR = 71;
+  int MBPS = 71;
   /** RegularExpression Id. */
-  int GAMMA = 72;
+  int GBPS = 72;
   /** RegularExpression Id. */
-  int CONST = 73;
+  int MTU = 73;
   /** RegularExpression Id. */
-  int RESPT = 74;
+  int EXP = 74;
   /** RegularExpression Id. */
-  int WAITT = 75;
+  int NOR = 75;
   /** RegularExpression Id. */
-  int UTIL = 76;
+  int POI = 76;
   /** RegularExpression Id. */
-  int QLEN = 77;
+  int UNI = 77;
   /** RegularExpression Id. */
-  int POWER = 78;
+  int BETA = 78;
   /** RegularExpression Id. */
-  int EPERR = 79;
+  int BINOM = 79;
   /** RegularExpression Id. */
-  int PDP = 80;
+  int CHISQR = 80;
   /** RegularExpression Id. */
-  int PEFF = 81;
+  int GAMMA = 81;
   /** RegularExpression Id. */
-  int TPUT = 82;
+  int CONST = 82;
   /** RegularExpression Id. */
-  int BPUT = 83;
+  int RESPT = 83;
   /** RegularExpression Id. */
-  int GPUT = 84;
+  int WAITT = 84;
   /** RegularExpression Id. */
-  int BUFFTIMEOUT = 85;
+  int UTIL = 85;
   /** RegularExpression Id. */
-  int DROPRATE = 86;
+  int QLEN = 86;
   /** RegularExpression Id. */
-  int AVGSERVT = 87;
+  int AVAIL = 87;
   /** RegularExpression Id. */
-  int QPARMS = 88;
+  int POWER = 88;
   /** RegularExpression Id. */
-  int BOTTLENECK = 89;
+  int EPERR = 89;
   /** RegularExpression Id. */
-  int BLOCKPROB = 90;
+  int PDP = 90;
   /** RegularExpression Id. */
-  int PRINTCFG = 91;
+  int PEFF = 91;
   /** RegularExpression Id. */
-  int ARATE = 92;
+  int TPUT = 92;
   /** RegularExpression Id. */
-  int ANALYSE = 93;
+  int BPUT = 93;
   /** RegularExpression Id. */
-  int INTERVAL = 94;
+  int GPUT = 94;
   /** RegularExpression Id. */
-  int FREQ = 95;
+  int BUFFTIMEOUT = 95;
   /** RegularExpression Id. */
-  int FOREACH = 96;
+  int DROPRATE = 96;
   /** RegularExpression Id. */
-  int FOR = 97;
+  int AVGSERVT = 97;
   /** RegularExpression Id. */
-  int TO = 98;
+  int QPARMS = 98;
   /** RegularExpression Id. */
-  int INCR = 99;
+  int BOTTLENECK = 99;
   /** RegularExpression Id. */
-  int DECR = 100;
+  int BLOCKPROB = 100;
   /** RegularExpression Id. */
-  int SET = 101;
+  int PRINTCFG = 101;
   /** RegularExpression Id. */
-  int PRINT = 102;
+  int ARATE = 102;
   /** RegularExpression Id. */
-  int IN = 103;
+  int ANALYSE = 103;
   /** RegularExpression Id. */
-  int AND = 104;
+  int INTERVAL = 104;
   /** RegularExpression Id. */
-  int IF = 105;
+  int FREQ = 105;
   /** RegularExpression Id. */
-  int THEN = 106;
+  int DOWNTIME = 106;
   /** RegularExpression Id. */
-  int ELSE = 107;
+  int FOREACH = 107;
   /** RegularExpression Id. */
-  int WHILE = 108;
+  int FOR = 108;
   /** RegularExpression Id. */
-  int BREAK = 109;
+  int TO = 109;
   /** RegularExpression Id. */
-  int BRANCH = 110;
+  int INCR = 110;
   /** RegularExpression Id. */
-  int MODELPARAMS = 111;
+  int DECR = 111;
   /** RegularExpression Id. */
-  int LOADPARAMS = 112;
+  int SET = 112;
   /** RegularExpression Id. */
-  int ANALYTICAL = 113;
+  int PRINT = 113;
   /** RegularExpression Id. */
-  int SIMULATION = 114;
+  int IN = 114;
   /** RegularExpression Id. */
-  int THINKTIME = 115;
+  int AND = 115;
   /** RegularExpression Id. */
-  int TIMEOUT = 116;
+  int IF = 116;
   /** RegularExpression Id. */
-  int RETRYPROB = 117;
+  int THEN = 117;
   /** RegularExpression Id. */
-  int OPEN = 118;
+  int ELSE = 118;
   /** RegularExpression Id. */
-  int TYPE = 119;
+  int WHILE = 119;
   /** RegularExpression Id. */
-  int METHOD = 120;
+  int BREAK = 120;
   /** RegularExpression Id. */
-  int CLOSED = 121;
+  int BRANCH = 121;
   /** RegularExpression Id. */
-  int NOOFUSERS = 122;
+  int MODELPARAMS = 122;
   /** RegularExpression Id. */
-  int NOOFREQUESTS = 123;
+  int LOADPARAMS = 123;
   /** RegularExpression Id. */
-  int SIMENDTIME = 124;
+  int ANALYTICAL = 124;
   /** RegularExpression Id. */
-  int CONFINT = 125;
+  int SIMULATION = 125;
   /** RegularExpression Id. */
-  int REPLICATIONNO = 126;
+  int THINKTIME = 126;
   /** RegularExpression Id. */
-  int STARTUPSAMPLENO = 127;
+  int TIMEOUT = 127;
   /** RegularExpression Id. */
-  int OUTPUT = 128;
+  int RETRYPROB = 128;
   /** RegularExpression Id. */
-  int COOLDOWNSAMPLENO = 129;
+  int OPEN = 129;
   /** RegularExpression Id. */
-  int ENABLE = 130;
+  int TYPE = 130;
   /** RegularExpression Id. */
-  int DISABLE = 131;
+  int METHOD = 131;
   /** RegularExpression Id. */
-  int MAXRETRY = 132;
+  int CLOSED = 132;
   /** RegularExpression Id. */
-  int WORKLOAD = 133;
+  int NOOFUSERS = 133;
   /** RegularExpression Id. */
-  int CYCLIC = 134;
+  int NOOFREQUESTS = 134;
   /** RegularExpression Id. */
-  int CONSTANT = 135;
+  int SIMENDTIME = 135;
   /** RegularExpression Id. */
-  int NUMBER = 136;
+  int CONFINT = 136;
   /** RegularExpression Id. */
-  int STRING_LITERAL = 137;
+  int REPLICATIONNO = 137;
   /** RegularExpression Id. */
-  int FILENAME = 138;
+  int STARTUPSAMPLENO = 138;
   /** RegularExpression Id. */
-  int IDENTIFIER = 139;
+  int OUTPUT = 139;
   /** RegularExpression Id. */
-  int DIGITS = 140;
+  int COOLDOWNSAMPLENO = 140;
   /** RegularExpression Id. */
-  int LETTER = 141;
+  int ENABLE = 141;
   /** RegularExpression Id. */
-  int DIGIT = 142;
+  int DISABLE = 142;
+  /** RegularExpression Id. */
+  int MAXRETRY = 143;
+  /** RegularExpression Id. */
+  int WORKLOAD = 144;
+  /** RegularExpression Id. */
+  int CYCLIC = 145;
+  /** RegularExpression Id. */
+  int VIRTUALIZATION = 146;
+  /** RegularExpression Id. */
+  int ON = 147;
+  /** RegularExpression Id. */
+  int OFF = 148;
+  /** RegularExpression Id. */
+  int MIGRATIONPOLICY = 149;
+  /** RegularExpression Id. */
+  int TIMEBASED = 150;
+  /** RegularExpression Id. */
+  int TECHNIQ = 151;
+  /** RegularExpression Id. */
+  int STOPANDCOPY = 152;
+  /** RegularExpression Id. */
+  int ITERATIVECOPY = 153;
+  /** RegularExpression Id. */
+  int AFTER = 154;
+  /** RegularExpression Id. */
+  int VMNAME = 155;
+  /** RegularExpression Id. */
+  int DESTPMNAME = 156;
+  /** RegularExpression Id. */
+  int CONSTANT = 157;
+  /** RegularExpression Id. */
+  int NUMBER = 158;
+  /** RegularExpression Id. */
+  int STRING_LITERAL = 159;
+  /** RegularExpression Id. */
+  int FILENAME = 160;
+  /** RegularExpression Id. */
+  int IDENTIFIER = 161;
+  /** RegularExpression Id. */
+  int DIGITS = 162;
+  /** RegularExpression Id. */
+  int LETTER = 163;
+  /** RegularExpression Id. */
+  int DIGIT = 164;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -298,29 +342,38 @@ public interface PerfParserConstants {
     "\"scenario\"",
     "\"end\"",
     "\"variable\"",
-    "\"device\"",
+    "\"pdevice\"",
+    "\"devicecategory\"",
+    "\"vdevice\"",
+    "\"cpu\"",
+    "\"noncpu\"",
+    "\"vcpu\"",
+    "\"vstorage\"",
     "\"ps\"",
     "\"fcfs\"",
     "\"lcfs\"",
+    "\"xcs\"",
     "\"deploy\"",
     "\"undeploy\"",
-    "\"host\"",
+    "\"physicalmachine\"",
+    "\"virtualmachine\"",
     "\"server\"",
     "\"count\"",
     "\"prob\"",
     "\"sync\"",
     "\"servt\"",
+    "\"at\"",
     "\"thread\"",
     "\"task\"",
     "\"buffer\"",
-    "\"virtres\"",
+    "\"basespeed\"",
+    "\"softres\"",
     "\"schedp\"",
     "\"speedup\"",
     "\"true\"",
     "\"false\"",
     "\"ram\"",
     "\"staticsize\"",
-    "\"requestsize\"",
     "\"size\"",
     "\"warnings\"",
     "\"power_managed\"",
@@ -366,6 +419,7 @@ public interface PerfParserConstants {
     "\"waitt\"",
     "\"util\"",
     "\"qlen\"",
+    "\"avail\"",
     "\"power\"",
     "\"eperr\"",
     "\"pdp\"",
@@ -384,6 +438,7 @@ public interface PerfParserConstants {
     "\"analyse\"",
     "\"interval\"",
     "\"freq\"",
+    "\"downtime\"",
     "\"foreach\"",
     "\"for\"",
     "\"to\"",
@@ -423,6 +478,17 @@ public interface PerfParserConstants {
     "\"maxretry\"",
     "\"workload\"",
     "\"cyclic\"",
+    "\"virtualization\"",
+    "\"ON\"",
+    "\"OFF\"",
+    "\"migrationpolicy\"",
+    "\"timebased\"",
+    "\"techniq\"",
+    "\"stopandcopy\"",
+    "\"iterativecopy\"",
+    "\"after\"",
+    "\"vmname\"",
+    "\"destpmname\"",
     "\"constant\"",
     "<NUMBER>",
     "<STRING_LITERAL>",

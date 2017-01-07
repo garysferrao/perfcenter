@@ -23,6 +23,6 @@ package perfcenter.baseclass.enums;
  * @author akhila
  */
 public enum SchedulingPolicy {
-	PS, FCFS, LCFS, 
+	PS, FCFS, LCFS, XCS
 
 }
