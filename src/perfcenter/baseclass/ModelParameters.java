@@ -194,9 +194,7 @@ public class ModelParameters {
 	public static DistributedSystem inputDistSys;
 	public static boolean isTransformed = false;
 	
-	/*
-	 * Next few member variables are used for virtualization support
-	 */
+	
 	/* Input (Non)Virtual distributed system is transformed to its equivalent PerfCenter non-virtual distributed system */
 	public static DistributedSystem transformedInputDistSys;
 	
