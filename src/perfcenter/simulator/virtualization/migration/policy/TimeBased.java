@@ -1,11 +1,8 @@
-package perfcenter.simulator.virtualization;
+package perfcenter.simulator.virtualization.migration.policy;
 
 import perfcenter.baseclass.enums.MigrationTechnique;
-import perfcenter.simulator.virtualization.MigrationPolicy;
-import perfcenter.simulator.virtualization.MigrationTechniqueIface;
+import perfcenter.simulator.virtualization.migration.policy.MigrationPolicy;
 import perfcenter.simulator.SimulationParameters;
-import perfcenter.simulator.SoftServerSim;
-import perfcenter.simulator.queue.QueueSim;
 
 public class TimeBased extends MigrationPolicy{
 	private double nextMigrationTs;

@@ -44,7 +44,7 @@ import perfcenter.simulator.metric.ManuallyComputedMetric;
 import perfcenter.simulator.metric.MetricSim;
 import perfcenter.simulator.metric.TimeAverageMetric;
 import perfcenter.simulator.queue.QueueSim;
-import perfcenter.simulator.virtualization.MigrationPolicy;
+import perfcenter.simulator.virtualization.migration.policy.MigrationPolicy;
 
 /**
  * This has all the distributed system parameters as given in input file. It uses inherited class HostAna for Host and ServerAna for server.
@@ -55,7 +55,7 @@ public class DistributedSystemSim extends DistributedSystem {
 
 	Logger logger = Logger.getLogger("DistSysSim");
 	public int cycleSamples = 1;
-
+	
 	//bhavin: added for scalability
 	public HashMap<String, ScenarioSim> scenarioMap = new HashMap<String, ScenarioSim>();
 	public HashMap<String, PhysicalMachineSim> machineMap = new HashMap<String, PhysicalMachineSim>();
@@ -154,7 +154,7 @@ public class DistributedSystemSim extends DistributedSystem {
 		MigrationPolicy policy = null;
 		//policyinfo.print();
 		try {
-			Class c = Class.forName("perfcenter.simulator.virtualization." + policyinfo.type.toString());
+			Class c = Class.forName("perfcenter.simulator.virtualization.migration.policy." + policyinfo.type.toString());
 
 			Class[] proto = new Class[4];
 			proto[0] = Double.class;

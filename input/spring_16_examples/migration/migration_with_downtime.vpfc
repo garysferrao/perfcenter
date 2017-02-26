@@ -32,7 +32,7 @@ physicalmachine pm[2]
 	virtualization on
 end
 
-virtualmachine vm[1]
+virtualmachine vm[2]
 	vcpu1 count 1
 	vcpu1 buffer 999999
 	vcpu1  schedP fcfs
@@ -50,7 +50,7 @@ end
 
 scenario sc1 prob 1.0
 	user wt1 300
-	wt1 user
+	wt1 user 300
 end
 
 lan 
@@ -87,33 +87,31 @@ modelparams
 	method simulation
     type closed
     replicationno 1
-    noofrequests 2000
+    noofrequests 200
 	warnings disable
 end
 
+print "Utilization(vm[1]:web):" + util(vm[1]:web)
 print "downtime(vm[1]):" + downtime(vm[1]:aa)
 print "downtime(vm[2]):" + downtime(vm[2]:aa)
 print "Number of Users:" + nusers
 print "Response Time:" + respt()
 print "Throughput:" + tput()
 print "Utilization(vm[1]:web):" + util(vm[1]:web)
-print "Utilization(vm[2]:db):" + util(vm[2]:db)
 print "Utilization(vm[1]:vm1_vcpu1_server):" + util(vm[1]:vm1_vcpu1_server)
 print "Utilization(vm[2]:vm2_vcpu1_server):" + util(vm[2]:vm2_vcpu1_server)
 
-print "Utilization(vm[2]:db):" + util(vm[2]:db)
 print "Utilization(pm[1]:cpu1): " + util(pm[1]:cpu1)
 print "Utilization(pm[2]:cpu1): " + util(pm[2]:cpu1)
 print "Utilization(pm[1]:ram): " + util(pm[1]:ram)
 print "Utilization(pm[1]:pm1_hypervisor:ram):" + util(pm[1]:pm1_hypervisor:ram)
 print "Utilization(vm[1]:ram): " + util(vm[1]:ram)
-print "Utilization(pm[1]:vm1_vcpu1_server:ram):" + util(pm[1]:vm1_vcpu1_server:ram)
-print "Utilization(pm[1]:web:ram): " + util(pm[1]:web:ram)
+
+print "Utilization(pm[2]:web:ram): " + util(pm[2]:web:ram)
 print "Utilization(pm[2]:ram): " + util(pm[2]:ram)
 print "Utilization(pm[2]:pm2_hypervisor:ram):" + util(pm[2]:pm2_hypervisor:ram)
 print "Utilization(vm[2]:ram): " + util(vm[2]:ram)
 print "Utilization(pm[2]:vm2_vcpu1_server:ram):" + util(pm[2]:vm2_vcpu1_server:ram)
-print "Utilization(pm[2]:db:ram): " + util(pm[2]:db:ram)
 print "Throughput(link1): " + tput(lan1:lan2)
 print "Throughput(link1_reverse): " + tput(lan2:lan1)
 print "Utilization(link1): " + util(lan1:lan2)

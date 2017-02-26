@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -424,7 +425,7 @@ public class Output {
 
 	/** finds util of device/ link or softserver or virtual resource */
 	public String findUtilization(int slot, String name1, String name2, String name3) throws DeviceNotFoundException, Exception {
-		//System.out.println("findUtilization-name1:" + name1 + " name2:" + name2 + " name3:" + name3);
+		logger.debug("name1:" + name1 + " name2:" + name2 + " name3:" + name3);
 		if (resultantDistSys.isLan(name1) == true) {
 			return resultantDistSys.getLink(name1, name2).getResourceQueue(name1, name2).avgUtil.toString(slot);
 		} else if (resultantDistSys.isPM(name1) == true) {
@@ -457,14 +458,17 @@ public class Output {
 				}
 			}
 		}else if (ModelParameters.transformedInputDistSys.isVM(name1) == true) {
-			PhysicalMachine pm = resultantDistSys.getPM(ModelParameters.inputDistSys.getActualHostName(name1));
+			String vservername = ModelParameters.transformedInputDistSys.vservers.get(name1).get(0).name;
+			//User Resultant Distributed System to take care of any migration
+			PhysicalMachine pm = resultantDistSys.getPM(ModelParameters.resultantDistSys.getServer(vservername).machines.get(0));
 			VirtualMachine vm = ModelParameters.inputDistSys.getVM(name1);
+			logger.debug("VM:" + name1 + "PM:" + pm.name);
 			if (name3 == ")") {// third parameter is not specified in utilization function
 				if (pm.isServerDeployed(name2)) {
 					return pm.getServer(name2).resourceQueue.avgUtil.toString(slot);
 				} else if (vm.isDeviceDeployed(name2)) {
 					if(vm.devices.get(name2).category.type == DeviceType.NONCPU){
-						throw new Error("Utilization of NonCpu type device on virtual machine is not supported yet. second parameter to util \"" + name2 + "\" is invalid");
+						throw new Error("Utilization of " + DeviceType.NONCPU.toString() + " type device on virtual machine is not supported yet. second parameter to util \"" + name2 + "\" is invalid");
 					}
 					ArrayList<SoftServer> vservlist = ModelParameters.transformedInputDistSys.vservers.get(name1);
 					for(SoftServer vserv : vservlist){

@@ -278,7 +278,7 @@ public class PhysicalMachineSim extends PhysicalMachine {
 	public void updateRamUtil(Request req){
 		double ramutil = 0.0;
 		for(SoftServerSim srvrsim : softServerMap.values()){
-			ramutil += srvrsim.currRamUtil;
+			ramutil += srvrsim.getCurrRamUtil();
 		}
 		currRamUtil = ramutil;
 		ramUtilSim.recordValue(req, ramutil);
@@ -286,10 +286,10 @@ public class PhysicalMachineSim extends PhysicalMachine {
 			for(String vmname : vservers.keySet()){
 				double temp = 0.0;
 				for(SoftServer server : vservers.get(vmname)){
-					temp += softServerMap.get(server.name).currRamUtil;
+					temp += softServerMap.get(server.name).getCurrRamUtil();
 				}
 				for(SoftServer server : serversDeployedOnVm.get(vmname)){
-					temp += softServerMap.get(server.name).currRamUtil;
+					temp += softServerMap.get(server.name).getCurrRamUtil();
 				}
 				currVmRamUtil.put(vmname, temp);
 				vmRamUtilSim.get(vmname).recordValue(req, temp);

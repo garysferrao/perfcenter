@@ -1,6 +1,6 @@
-package perfcenter.simulator.virtualization;
+package perfcenter.simulator.virtualization.migration.policy;
 
-import perfcenter.simulator.virtualization.MigrationTechniqueIface;
+import perfcenter.simulator.virtualization.migration.technique.MigrationTechniqueIface;
 import perfcenter.simulator.SoftServerSim;
 
 import java.lang.reflect.Constructor;
@@ -14,7 +14,7 @@ abstract public class MigrationPolicy {
 	private MigrationTechniqueIface technique;
 	public void loadMigrationTechnique(MigrationTechnique techniquename){
 		try {
-			Class c = Class.forName("perfcenter.simulator.virtualization." + techniquename.toString());
+			Class c = Class.forName("perfcenter.simulator.virtualization.migration.technique." + techniquename.toString());
 
 			Constructor cons = c.getConstructor();
 			technique = (MigrationTechniqueIface) cons.newInstance();

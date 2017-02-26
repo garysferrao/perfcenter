@@ -41,7 +41,7 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 	
 	public ArrayList<PhysicalMachineSim> hostObjects = new ArrayList<PhysicalMachineSim>();
 	
-	public double currRamUtil = 0.0;
+	private double currRamUtil = 0.0;
 	
 	TimeAverageMetric avgRamUtilSim = new TimeAverageMetric(0.95);
 	static int count = 0;
@@ -67,6 +67,10 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 
 	public SoftServerSim(String name) {
 		super(name);
+	}
+	
+	public double getCurrRamUtil(){
+		return currRamUtil;
 	}
 
 	/**
