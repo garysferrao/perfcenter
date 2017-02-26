@@ -1,0 +1,185 @@
+variable
+nusr 1
+end
+
+device
+cpu cpu1
+cpu cpu2 
+storage disk1
+storage disk2
+end
+
+lan
+lan1
+end
+
+task web_show_home_page
+cpu servt 0.004 at 2.1
+end
+
+task web_process_login_req
+cpu servt 0.004 at 2.1
+end
+
+task web_show_login_status_page
+cpu servt 0.004 at 2.1
+end
+
+task web_query_catalog
+cpu servt 0.004 at 2.1
+end
+
+task web_show_catalog_page
+cpu servt 0.004 at 2.1
+end
+
+task web_process_order_req
+cpu servt 0.004 at 2.1
+end
+
+task web_show_order_status_page
+cpu servt 0.004 at 2.1
+end
+
+task web_process_payment_req
+cpu servt 0.004 at 2.1
+end
+
+task web_show_payment_status_page
+cpu servt 0.004 at 2.1
+end
+
+task db_return_catalog
+cpu servt 0.008 at 2.1
+storage servt 0.024 at 300
+end
+
+task db_check_for_conf
+cpu servt 0.008 at 2.1
+storage servt 0.017 at 300
+end
+
+task auth_check_credentials
+cpu servt 0.008 at 2.1
+storage servt 0.017 at 300
+end
+
+task pg_process_payment
+cpu servt 0.008 at 2.1
+storage servt 0.017 at 300
+end
+
+host host1[1]
+cpu1 count 1
+cpu1 buffer 1000 
+cpu1 schedP fcfs
+disk1 count 1 
+disk1 buffer 99999
+disk1 schedP fcfs
+end
+
+host host2[1]
+cpu2 count 1
+cpu2 buffer 1000 
+cpu2 schedP fcfs
+disk2 count 1 
+disk2 buffer 99999
+disk2 schedP fcfs
+end
+
+server WebServer
+thread count 1000 
+thread buffer 10 
+thread schedP fcfs
+task web_show_home_page
+task web_process_login_req
+task web_show_login_status_page
+task web_query_catalog
+task web_show_catalog_page
+task web_process_order_req
+task web_show_order_status_page
+task web_process_payment_req
+task web_show_payment_status_page
+end
+
+server DatabaseServer
+thread count 1000 
+thread buffer 10
+thread schedP fcfs
+task db_return_catalog 
+task db_check_for_conf
+end
+
+server AuthServer
+thread count 1000
+thread buffer 10 
+thread schedP fcfs
+task auth_check_credentials
+end
+
+server PaymentGateway
+thread count 1000 
+thread buffer 10
+thread schedP fcfs
+task pg_process_payment
+end
+
+scenario HOME prob 0.30 
+	user web_show_home_page 200
+	web_show_home_page user 4000
+end
+
+
+scenario LOGIN prob 0.25
+	web_process_login_req auth_check_credentials 400
+	auth_check_credentials web_show_login_status_page 800
+end
+
+scenario SHOW_CATALOG prob 0.20
+	web_query_catalog  db_return_catalog 300 
+	db_return_catalog   web_show_catalog_page 40000
+end
+
+scenario BOOK_ORDER prob 0.15 
+	web_process_order_req db_check_for_conf 300
+	db_check_for_conf web_show_order_status_page 300
+end
+
+scenario MAKE_PAYMENT prob 0.10
+	web_process_payment_req pg_process_payment 400
+	pg_process_payment web_show_payment_status_page 400
+end
+
+deploy WebServer host1[1]
+deploy DatabaseServer host1[1]
+deploy AuthServer host2[1]
+deploy PaymentGateway host2[1]
+
+deploy host1[1] lan1
+deploy host2[1] lan1
+
+loadparams
+	noofusers nusr 
+	thinktime 3
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 1 
+    noofrequests 10000 
+	warnings disable
+end
+
+
+while( nusr < 100)
+print "Number of users: " + nusr
+print "Overall Response Time:" + respt()
+print "Overall Throughput:" + tput()
+print "Disk1 Util: " + util(host1[1]:disk1) + " Average Service Time: " + avgservt(host1[1]:disk1)
+print "Disk2 Util: " + util(host2[1]:disk2) + " Average Service Time: " + avgservt(host2[1]:disk2)
+print "CPU1 Util: " + util(host1[1]:cpu1) + " Average Service Time: " + avgservt(host1[1]:cpu1)
+print "CPU2 Util: " + util(host2[1]:cpu2)+ " Average Service Time: " + avgservt(host2[1]:cpu2)
+print ""
+nusr = nusr + 20 
+end

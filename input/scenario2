@@ -1,0 +1,78 @@
+variable
+nusr 90
+ccount 2
+end
+
+device
+cpu
+end
+
+lan
+lan1
+end
+
+host machine[2]
+cpu count ccount
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+task t1
+cpu servt 0.01
+end
+
+task t2
+cpu servt 0.1
+end
+ 
+
+task t3
+cpu servt 0.01
+end
+
+server s1
+thread count 10
+thread buffer 99999
+thread schedP fcfs
+task t1
+task t3
+end
+
+
+server s2
+thread count 5
+thread buffer 99999
+thread schedP fcfs
+task t2
+end
+
+deploy s1 machine[1]
+deploy s2 machine[2]
+
+deploy machine[1] lan1
+deploy machine[2] lan1
+
+scenario sc1 prob 1
+    t1  t2 200 SYNC
+    t2  t3 200
+end
+
+
+loadparams
+   noofusers    nusr
+   thinktime    exp(5)
+end
+
+modelparams
+    method simulation
+    type closed
+    confint true
+    replicationno 1
+    noofrequests 200000
+end
+
+while(nusr < 151)
+print "Number of Users: " + nusr + "Scenarion1 Response Time: " + respt(sc1) + "Throughput of Server 1 :  " + tput(machine[1]:s1) 
+print "Server 1 Util " + util(machine[1]:s1) + "Server2 Util : " + util(machine[2]:s2) + "Util of Machine 1 :  " + util(machine[1]:cpu) + "Util of Machine 2: " + util(machine[2]:cpu)
+nusr = nusr + 10
+end

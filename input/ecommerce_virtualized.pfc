@@ -1,0 +1,282 @@
+device
+cpu1
+cpu2 
+disk1
+disk2
+end
+
+lan
+lan1
+end
+
+task h1_dom0_network_call 
+cpu1 servt 0.001
+end
+
+task h1_dom0_disk_return_catalog_op
+disk1 servt 0.024
+end
+
+task h1_dom0_disk_check_for_conf_op
+disk1 servt 0.017
+end 
+
+task h1_dom0_receive_request
+cpu1 servt 0.001
+end
+
+task h1_dom0_send_request
+cpu1 servt 0.001
+end
+
+task web_show_home_page
+cpu1 servt 0.004
+end
+
+task web_process_login_req
+cpu1 servt 0.004
+end
+
+task web_show_login_status_page
+cpu1 servt 0.004
+end
+
+task web_query_catalog
+cpu1 servt 0.004
+end
+
+task web_show_catalog_page
+cpu1 servt 0.004
+end
+
+task web_process_order_req
+cpu1 servt 0.004
+end
+
+task web_show_order_status_page
+cpu1 servt 0.004
+end
+
+task web_process_payment_req
+cpu1 servt 0.004
+end
+
+task web_show_payment_status_page
+cpu1 servt 0.004
+end
+
+task db_return_catalog_1
+cpu1 servt 0.004
+end
+
+task db_return_catalog_2
+cpu1 servt 0.004
+end
+
+task db_check_for_conf_1
+cpu1 servt 0.004
+end
+
+task db_check_for_conf_2
+cpu1 servt 0.004
+end
+
+task h2_dom0_network_call
+cpu2 servt 0.001
+end
+
+task h2_dom0_disk_process_payment_op
+disk2 servt 0.017
+end
+
+task h2_dom0_disk_check_credentials_op
+disk2 servt 0.017
+end
+
+task auth_check_credentials_1
+cpu2 servt 0.004
+end
+
+task auth_check_credentials_2
+cpu2 servt 0.004
+end
+
+task pg_process_payment_1
+cpu2 servt 0.004
+end
+
+task pg_process_payment_2
+cpu2 servt 0.004
+end
+
+host host1[1]
+cpu1 count 4
+cpu1 buffer 4
+cpu1 schedP fcfs
+disk1 count 2
+disk1 buffer 99999
+disk1 schedP fcfs
+end
+
+host host2[1]
+cpu2 count 4
+cpu2 buffer 4
+cpu2 schedP fcfs
+disk2 count 2
+disk2 buffer 99999
+disk2 schedP fcfs
+end
+
+server h1_dom0
+thread count 2
+thread buffer 10
+thread schedP fcfs
+task h1_dom0_disk_check_for_conf_op
+task h1_dom0_disk_return_catalog_op
+task h1_dom0_network_call
+task h1_dom0_receive_request
+task h1_dom0_send_request
+end
+
+server WebServer
+thread count 2
+thread buffer 10
+thread schedP fcfs
+task web_show_home_page
+task web_process_login_req
+task web_show_login_status_page
+task web_query_catalog
+task web_show_catalog_page
+task web_process_order_req
+task web_show_order_status_page
+task web_process_payment_req
+task web_show_payment_status_page
+end
+
+server DatabaseServer
+thread count 2
+thread buffer 10
+thread schedP fcfs
+task db_return_catalog_1
+task db_return_catalog_2
+task db_check_for_conf_1
+task db_check_for_conf_2
+end
+
+server h2_dom0
+thread count 2 
+thread buffer 10 
+thread schedP fcfs
+task h2_dom0_disk_check_credentials_op
+task h2_dom0_disk_process_payment_op
+task h2_dom0_network_call
+end
+
+server AuthServer
+thread count 2
+thread buffer 10 
+thread schedP fcfs
+task auth_check_credentials_1
+task auth_check_credentials_2
+end
+
+server PaymentGateway
+thread count 2
+thread buffer 10 
+thread schedP fcfs
+task pg_process_payment_1
+task pg_process_payment_2
+end
+
+scenario HOME prob 0.30
+	h1_dom0_receive_request web_show_home_page 200
+	web_show_home_page h1_dom0_send_request 4000
+end
+
+scenario LOGIN prob 0.25
+	h1_dom0_receive_request web_process_login_req 400
+	web_process_login_req h1_dom0_network_call 400
+	h1_dom0_network_call h2_dom0_network_call 400
+	h2_dom0_network_call auth_check_credentials_1 400
+	auth_check_credentials_1 h2_dom0_disk_check_credentials_op 400
+	h2_dom0_disk_check_credentials_op auth_check_credentials_2 800
+	auth_check_credentials_2 h2_dom0_network_call 800
+	h2_dom0_network_call h1_dom0_network_call 800
+	h1_dom0_network_call web_show_login_status_page 800
+	web_show_login_status_page h1_dom0_send_request 800
+end
+
+scenario SHOW_CATALOG prob 0.2
+	h1_dom0_receive_request web_query_catalog 300
+	web_query_catalog db_return_catalog_1 300
+	db_return_catalog_1 h1_dom0_disk_return_catalog_op 300
+	h1_dom0_disk_return_catalog_op db_return_catalog_2 40000
+	db_return_catalog_2 web_show_catalog_page 40000
+	web_show_catalog_page h1_dom0_send_request 40000
+end
+
+scenario BOOK_ORDER prob 0.15
+	h1_dom0_receive_request web_process_order_req 300
+	web_process_order_req db_check_for_conf_1 300
+	db_check_for_conf_1 h1_dom0_disk_check_for_conf_op 300
+	h1_dom0_disk_check_for_conf_op db_check_for_conf_2 300
+	db_check_for_conf_2 web_show_order_status_page 300
+	web_show_order_status_page h1_dom0_send_request 300
+end
+
+scenario MAKE_PAYMENT prob 0.10
+	user h1_dom0_receive_request 400
+	h1_dom0_receive_request web_process_payment_req 400
+	web_process_payment_req h1_dom0_network_call 400
+	h1_dom0_network_call h2_dom0_network_call 400
+	h2_dom0_network_call pg_process_payment_1 400
+	pg_process_payment_1 h2_dom0_disk_process_payment_op 400
+	h2_dom0_disk_process_payment_op pg_process_payment_2 400
+	pg_process_payment_2 h2_dom0_network_call 400
+	h2_dom0_network_call h1_dom0_network_call 400
+	h1_dom0_network_call web_show_payment_status_page 400
+	web_show_payment_status_page h1_dom0_send_request 400
+	h1_dom0_send_request user 400
+end
+
+deploy h1_dom0 host1[1]
+deploy WebServer host1[1]
+deploy DatabaseServer host1[1]
+deploy h2_dom0 host2[1]
+deploy AuthServer host2[1]
+deploy PaymentGateway host2[1]
+
+deploy host1[1] lan1
+deploy host2[1] lan1
+
+loadparams
+	noofusers 200
+	thinktime exp(2)
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 1
+    noofrequests 5000
+	warnings disable
+end
+
+print "HOST1:cpu1: Throughput = " + tput(host1[1]:cpu1) + " Utilization = " + util(host1[1]:cpu1) + " Queue length " + qlen(host1[1]:cpu1) + " Waiting time " + waitt(host1[1]:cpu1) + " Arrival Rate " + arate(host1[1]:cpu1) + " Average Service Time " + avgservt(host1[1]:cpu1) + " Block Probability " + blockprob(host1[1]:cpu1)
+
+print "HOST2:cpu2: Throughput = " + tput(host2[1]:cpu2) + " Utilization = " + util(host2[1]:cpu2) + " Queue length " + qlen(host2[1]:cpu2) + " Waiting time " + waitt(host2[1]:cpu2) + " Arrival Rate " + arate(host2[1]:cpu2) + " Average Service Time " + avgservt(host2[1]:cpu2) + " Block Probability " + blockprob(host2[1]:cpu2)
+
+print "HOST1:DISK1: Throughput = " + tput(host1[1]:disk1) + " Utilization = " + util(host1[1]:disk1) + " Queue length " + qlen(host1[1]:disk1) + " Waiting time " + waitt(host1[1]:disk1) + " Arrival Rate " + arate(host1[1]:disk1) + " Average Service Time " + avgservt(host1[1]:disk1) + " Block Probability " + blockprob(host1[1]:disk1)
+
+print "HOST2:DISK2: Throughput = " + tput(host2[1]:disk2) + " Utilization = " + util(host2[1]:disk2) + " Queue length " + qlen(host2[1]:disk2) + " Waiting time " + waitt(host2[1]:disk2)+ " Arrival Rate " + arate(host2[1]:disk2) + " Average Service Time " + avgservt(host2[1]:disk2) + " Block Probability " + blockprob(host2[1]:disk2)
+
+print "HOME Scenario: Response Time = " + respt(HOME) + " Droprate: " + droprate(HOME)
+print "LOGIN Scenario: Response Time = " + respt(LOGIN) + " Droprate: " + droprate(LOGIN)
+print "SHOW_CATALOG Scenario: Response Time = " + respt(SHOW_CATALOG) + " Droprate: " + droprate(SHOW_CATALOG)
+print "BOOK_ORDER Scenario: Response Time = " + respt(BOOK_ORDER) + " Droprate: " + droprate(BOOK_ORDER)
+print "MAKE_PAYMENT Scenario: Response Time = " + respt(MAKE_PAYMENT)+ " Droprate: " + droprate(MAKE_PAYMENT)
+
+print "Overall Response Time : " + respt()
+print "Overall Throughput : " + tput()
+print "Overall Badput : " + bput()
+print "Overall Goodput : " + gput()

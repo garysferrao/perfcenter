@@ -1,0 +1,176 @@
+variable
+nusr 1
+end
+
+devicecategory
+	cpu intel
+	noncpu disk
+end
+
+pdevice
+	intel cpu1
+	disk disk1
+end
+
+physicalmachine pmp[1]
+cpu1 count  2
+cpu1 buffer 99999
+cpu1 schedP fcfs
+disk1 count  1
+disk1 buffer 99999
+disk1 schedP fcfs
+end
+
+physicalmachine pmi[1]
+	cpu1 count  2
+	cpu1 buffer 99999
+	cpu1 schedP fcfs
+	disk1 count  1
+	disk1 buffer 99999
+	disk1 schedP fcfs
+end
+
+physicalmachine pmh[1]
+	cpu1 count  8
+	cpu1 buffer 99999
+	cpu1 schedP fcfs
+	disk1 count  1
+	disk1 buffer 99999
+	disk1 schedP fcfs
+end
+
+physicalmachine pms[1]
+	cpu1 count  2
+	cpu1 buffer 99999
+	cpu1 schedP fcfs
+	disk1 count  1
+	disk1 buffer 99999
+	disk1 schedP fcfs
+end
+
+task pt1
+	intel servt 0.000001 at 3.2
+end
+
+task pt2
+	intel servt 0.000001 at 3.2
+end
+
+task it1
+	intel servt 0.000001 at 3.2
+end
+
+task it2
+	intel servt 0.0002 at 3.2
+end
+
+task it3
+	intel servt 0.00001 at 3.2
+end
+
+task ht1
+	intel servt 0.030 at 3.2
+end
+
+task ht2
+	intel servt 0.025 at 3.2
+end
+
+task st1
+	intel servt 0.0005 at 3.2
+end
+
+task st2
+	intel servt 0.0005 at 3.2
+end
+
+server p //sip - pcscf
+	thread count  1000
+	thread buffer 99999
+	thread schedP fcfs
+	task pt1
+	task pt2 
+end
+
+server i //icscf
+	thread count  1000
+	thread buffer 99999
+	thread schedP fcfs
+	task it1 
+	task it2
+	task it3
+end
+
+server h //hss
+	thread count  1000
+	thread buffer 99999
+	thread schedP fcfs
+	task ht1
+	task ht2
+end
+
+server s //scscf
+	thread count  1000
+	thread buffer 99999
+	thread schedP fcfs
+	task st1
+	task st2
+end
+
+//add more servers here for handling effect  of kvm on performance
+
+deploy p pmp[1]
+deploy i pmi[1] 
+deploy h pmh[1]
+deploy s pms[1]
+
+/*workload cyclic
+arate 	 100 	100 	100 	100 	100 	100 	end
+interval 1 	2 	1 	2 	1 	2 	end
+end*/
+
+
+scenario Registration prob 1
+	pt1 it1 10 SYNC
+	it1 ht1 10 SYNC
+	ht1 it2 10 
+	it2 st1 10 SYNC
+	st1 ht2 10 SYNC
+	ht2 st2 10 
+	st2 it3 10 
+	it3 pt2 10 
+end
+
+/*scenario CallSetup prob 0.4
+	pt1cs it1cs 10
+	it1cs pt1cs 10
+end
+*/
+
+
+loadparams
+	arate 50
+end
+
+modelparams
+	method simulation
+	type open
+	noofrequests 10000
+	warnings disable
+end
+
+//print  "Users,respt,tput,util(pm[1]:cpu),util(pm[2]:cpu)"
+//print  nusr+","+respt()+","+tput()+","+util(pm[1]:cpu)+","+util(pm[2]:cpu)
+
+
+print "respt():"
+print respt()
+print ""
+
+print "tput()"
+print tput()
+print ""
+
+print "util(pmh[1]:cpu)"
+print util(pmh[1]:cpu)
+print ""

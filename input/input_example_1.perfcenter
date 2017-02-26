@@ -1,0 +1,173 @@
+variable
+nusr 1
+end
+
+device
+intel_xeon_cpu
+raid_disk
+disk_array
+end
+
+host server_host[2]
+intel_xeon_cpu count 1
+intel_xeon_cpu buffer 99999
+intel_xeon_cpu schedP fcfs
+raid_disk count 1
+raid_disk buffer 99999
+raid_disk schedP fcfs
+end
+
+task verify_session
+intel_xeon_cpu servt 0.010
+end
+
+task verify_credentials
+intel_xeon_cpu servt 0.020
+raid_disk servt 0.040
+end
+
+task send_calendar
+intel_xeon_cpu servt 0.010
+raid_disk servt 0.040
+end
+
+task send_calendar_event
+intel_xeon_cpu servt 0.010
+raid_disk servt 0.040
+end
+
+task prepare_calendar_page
+intel_xeon_cpu servt 0.030
+end
+
+task delete_event
+intel_xeon_cpu servt 0.010
+raid_disk servt 0.030
+end
+
+task save_event
+intel_xeon_cpu servt 0.010
+raid_disk servt 0.025
+end
+
+task display_success_message
+intel_xeon_cpu servt 0.010
+end
+
+task display_error_message
+intel_xeon_cpu servt 0.010
+end
+
+server web
+thread count 150
+thread buffer 0
+thread schedP fcfs
+task verify_credentials
+task prepare_calendar_page
+task verify_session
+task display_success_message
+task display_error_message
+end
+
+server db
+thread count 150
+thread buffer 0
+thread schedP fcfs
+task send_calendar_event
+task send_calendar
+task delete_event
+task save_event
+end
+
+deploy web server_host[1]
+deploy db server_host[2]
+
+lan
+	lan1
+end
+
+deploy server_host[1] lan1
+deploy server_host[2] lan1
+
+scenario Login prob 0.05
+	user verify_credentials 100 SYNC
+	branch prob 0.05
+		verify_credentials display_error_message 100 SYNC
+	end
+	branch prob 0.95
+		verify_credentials send_calendar 100 SYNC
+		send_calendar prepare_calendar_page 30000 SYNC
+	end
+end
+
+scenario Add prob 0.23
+	user verify_session 100 SYNC
+	branch prob 0.05
+		verify_session display_error_message 100 SYNC
+	end
+	branch prob 0.95
+		verify_session save_event 100 SYNC
+		save_event display_success_message 30000 SYNC
+	end
+end
+
+scenario Save prob 0.24
+	user verify_session 100 SYNC
+	branch prob 0.05
+		verify_session display_error_message 100 SYNC
+	end
+	branch prob 0.95
+		verify_session save_event 100 SYNC
+		save_event display_success_message 30000 SYNC
+	end
+end
+
+scenario Delete prob 0.24
+	user verify_session 100 SYNC
+	branch prob 0.05
+		verify_session display_error_message 100 SYNC
+	end
+	branch prob 0.95
+		verify_session delete_event 100 SYNC
+		delete_event display_success_message 30000 SYNC
+	end
+end
+
+scenario View prob 0.24
+	user verify_session 100 SYNC
+	branch prob 0.05
+		verify_session display_error_message 100 SYNC
+	end
+	branch prob 0.95
+		verify_session send_calendar_event 100 SYNC
+		send_calendar_event prepare_calendar_page 30000 SYNC
+	end
+end
+
+loadparams
+noofusers nusr
+thinktime exp(2)
+end
+
+modelparams
+method simulation
+type closed
+noofrequests 40000
+end
+
+print "Users,respt,tput,util(server_host[1]:intel_xeon_cpu),util(server_host[2]:intel_xeon_cpu)"
+for nusr = 5 to 100 incr 5
+print nusr+","+respt()+","+tput()+","+util(server_host[1]:intel_xeon_cpu)+","+util(server_host[2]:intel_xeon_cpu)
+nusr=nusr+5
+end
+
+undeploy db server_host[2]
+deploy db server_host[1]
+
+print " "
+print "With both servers on the same host:"
+print "Users,respt,tput,util(server_host[1]:intel_xeon_cpu)"
+for nusr = 5 to 100 incr 5
+print nusr+","+respt()+","+tput()+","+util(server_host[1]:intel_xeon_cpu)
+nusr=nusr+5
+end

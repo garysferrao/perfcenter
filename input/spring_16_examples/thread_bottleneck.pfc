@@ -1,0 +1,60 @@
+variable
+	nusers 1
+end
+
+devicecategory 
+	cpu intel
+end
+
+pdevice 
+	intel cpu1
+end
+
+task t1
+	intel servt 0.004 at 2.8
+end
+
+physicalmachine pm[1]
+	cpu1 count 4
+	cpu1 buffer 999999
+	cpu1 schedP fcfs
+	cpu1 basespeed 2.8
+end
+
+server srvr1
+	thread count 1
+	thread buffer 999999
+	thread schedP fcfs
+	task t1
+end
+
+scenario sc1 prob 1.0
+	user t1 300
+	t1 user 400
+end
+
+lan 
+    lan1
+end
+
+deploy srvr1 pm[1]
+deploy pm[1] lan1
+
+loadparams
+	noofusers nusers
+	thinktime 0.1
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 2
+    noofrequests 2000
+	warnings disable
+end
+
+print "Number of Users, Response Time, Throughput, Utilization:srvr1:cpu1, Utilization:srvr1, Utilization:pm[1]"
+while(nusers < 100)
+print nusers + "," + respt() + "," + tput() + "," + util(pm[1]:srvr1:cpu1) + "," + util(pm[1]:srvr1) + "," + util(pm[1]:cpu1)
+nusers = nusers + 5
+end

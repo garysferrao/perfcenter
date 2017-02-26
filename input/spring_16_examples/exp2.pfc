@@ -1,0 +1,85 @@
+variable
+	nusers 1
+end
+
+devicecategory 
+	cpu intel
+	noncpu disk
+end
+
+pdevice 
+	intel cpu1
+	disk disk1
+	
+end
+
+task wt_1 
+	intel servt 0.004 at 2.8
+end
+
+task wt_2
+	intel servt 0.004 at 2.8
+end
+
+task dt 
+	intel servt 0.002 at 2.8
+	disk servt 0.006 at 2.8
+end
+
+physicalmachine pm[2]
+	cpu1 count 1
+	cpu1 buffer 999999
+	cpu1 schedP fcfs
+	cpu1 basespeed 2.8
+	disk1 count 1
+	disk1 buffer 999999
+	disk1 schedP fcfs
+end
+
+server web
+	thread count 4
+	thread buffer 999999
+	thread schedP fcfs
+	task wt_1
+	task wt_2
+end
+
+server db
+	thread count 4
+	thread buffer 999999
+	thread schedP fcfs
+	task dt
+end
+
+scenario sc1 prob 1.0
+	wt_1 dt 300
+	dt wt_2 300
+end
+
+lan 
+    lan1
+end
+
+deploy web pm[1]
+deploy db pm[2]
+deploy pm[1] lan1
+deploy pm[2] lan1
+
+loadparams
+	noofusers nusers
+	thinktime 0.1
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 3
+    noofrequests 2000
+	warnings disable
+end
+
+print "Number of Users, Response Time, Throughput"
+while(nusers < 150)
+print nusers + "," + respt() + "," + tput()
+nusers = nusers + 2
+end

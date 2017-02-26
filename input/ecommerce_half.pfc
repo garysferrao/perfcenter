@@ -1,0 +1,93 @@
+device
+vcpu1
+vcpu2 
+disk1
+end
+
+
+lan
+lan1
+end
+
+task show_html_page
+vcpu1 servt 0.004
+end
+
+task receive_login_request
+vcpu1 servt 0.004
+end
+
+task receive_order_detail
+vcpu1 servt 0.004
+end
+
+task get_catalog
+vcpu2 servt 0.008
+disk1 servt 0.024
+end
+
+task check_for_confirmation
+vcpu2 servt 0.008
+disk1 servt 0.017
+end
+
+
+
+host vm1[1]
+vcpu1 count 2 
+vcpu1 buffer 99999
+vcpu1 schedP fcfs
+vcpu2 buffer 99999
+vcpu2 count 2
+vcpu2 schedP fcfs
+disk1 count 1
+disk1 buffer 99999
+disk1 schedP fcfs
+end
+
+server WebServer
+thread count 12
+thread buffer 99999
+thread schedP fcfs
+task show_html_page
+task receive_login_request
+task receive_order_detail
+end
+
+server CatalogServer
+thread count 12
+thread buffer 99999
+thread schedP fcfs
+task get_catalog 
+task check_for_confirmation
+end
+
+scenario LOGIN prob 1
+	show_html_page receive_login_request 200 SYNC
+end
+
+deploy WebServer vm1[1]
+deploy CatalogServer vm1[1]
+
+deploy vm1[1] lan1
+
+
+loadparams
+	noofusers 200
+	thinktime exp(2)
+end
+
+modelparams
+	method simulation
+    type closed
+    confint true
+    replicationno 3
+    noofrequests 200000
+end
+
+
+print "Throughput: " + tput()
+print "Response Time: " + respt()
+print "Utilization of vm1[1]:vcpu1 " + util(vm1[1]:vcpu1)
+print "Utilization of vm1[1]:vcpu2 " + util(vm1[1]:vcpu2)
+

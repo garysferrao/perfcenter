@@ -1,0 +1,53 @@
+device
+cpu 
+end
+
+task t1
+cpu servt 0.002
+end
+
+task t2
+cpu servt 0.003
+end
+
+host machine[1]
+cpu count 2
+cpu buffer 99999
+cpu schedP fcfs
+end
+
+server s1
+thread count 10
+thread buffer 99999
+thread schedP fcfs
+task t1
+task t2
+end
+
+deploy s1 machine[1]
+
+scenario sc1 prob 0.3
+t1 t2 200 SYNC
+t2 t1 300 
+end
+
+scenario sc2 prob 0.7
+t2 t1 400 SYNC
+t1 t2 500
+end
+
+loadparams
+	noofusers 200
+	thinktime exp(2)
+end
+
+modelparams
+	method simulation
+    type closed
+    confint true
+    replicationno 3
+    noofrequests 200000
+end
+
+print "NumberofUsers	SC-1ResponseTime	s1-Throughput	s1-Utilization	s2-Throughput	s2-Utilization	Machine1CPU-Utilization	Machine2CPU-Utilization"
+print  "200	"+ respt(sc1) + "	" + tput(machine[1]:s1) + "	" + util(machine[1]:s1)

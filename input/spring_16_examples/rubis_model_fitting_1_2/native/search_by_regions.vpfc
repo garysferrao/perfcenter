@@ -1,0 +1,98 @@
+variable 
+	nusers 1
+end
+
+devicecategory
+	cpu intelxeon
+	noncpu disk
+end
+
+pdevice 
+	intelxeon cpu1
+	disk disk1
+end
+
+vdevice
+	intelxeon vcpu1
+	disk vdisk1
+end
+
+task apache_sbr_1
+	intelxeon servt 0.0005 at 2.8
+end
+
+task apache_sbr_2
+	intelxeon servt 0.0005 at 2.8
+end
+
+task mysql_sbr
+	intelxeon servt 0.00025 at 2.8
+end
+
+physicalmachine pollaczek[1]
+	cpu1 count 1
+	cpu1 buffer 999999
+	cpu1 schedP fcfs
+	cpu1 basespeed 2.8
+	disk1 count 1
+	disk1 buffer 999999
+	disk1 schedP fcfs
+	virtualization on
+end
+
+physicalmachine khinchin[1]
+	cpu1 count 1
+	cpu1 buffer 999999
+	cpu1 schedP fcfs
+	cpu1 basespeed 2.8
+	disk1 count 1
+	disk1 buffer 10
+	disk1 schedP fcfs
+	virtualization on
+end
+
+server apache
+	thread count 22
+	thread buffer 10000
+	thread schedP fcfs
+	task apache_sbr_1
+	task apache_sbr_2
+end
+
+server mysql
+	thread count 151
+	thread buffer 10000
+	thread schedP fcfs
+	task mysql_sbr
+end
+
+scenario browse_regions prob 1.0
+	apache_sbr_1 mysql_sbr 300
+	mysql_sbr apache_sbr_2 300
+end
+
+lan 
+    lan1
+end
+
+deploy apache khinchin[1]
+deploy mysql pollaczek[1]
+
+loadparams
+	noofusers nusers
+	thinktime 0.1
+end
+
+modelparams
+	method simulation
+    type closed
+    replicationno 3
+    noofrequests 20000
+	warnings disable
+end
+
+print "Number of Users,Response Time, Throughput"
+while(nusers < 50)
+	print nusers + "," + respt() + "," + tput() 
+	nusers = nusers + 2
+end

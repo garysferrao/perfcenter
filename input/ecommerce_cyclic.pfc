@@ -1,0 +1,173 @@
+device
+vcpu1
+vcpu2 
+vcpu3
+vcpu4
+disk1
+disk2
+end
+
+
+lan
+lan1
+lan2
+end
+
+//link between lan1 and lan2 is defined
+link lk1 lan1 lan2
+	trans 10 Mbps
+	mtu 256 bytes
+	prop 2.3 us
+	headersize 40 bytes
+end
+
+workload cyclic
+noofusers 10 30 40 90 10 end
+interval 20 20 20 20 20 end
+end
+
+task show_html_page
+vcpu1 servt 0.004
+end
+
+task receive_login_request
+vcpu1 servt 0.004
+end
+
+task receive_order_detail
+vcpu1 servt 0.004
+end
+
+task check_credentials
+vcpu3 servt 0.008
+disk2 servt 0.017
+end
+
+task get_catalog
+vcpu2 servt 0.008
+disk1 servt 0.024
+end
+
+task check_for_confirmation
+vcpu2 servt 0.008
+disk1 servt 0.017
+end
+
+task make_payment
+vcpu4 servt 0.008
+end
+
+task process_payment
+vcpu4 servt 0.008
+disk2 servt 0.017
+end
+
+host vm1[1]
+vcpu1 count 2 
+vcpu1 buffer 99999
+vcpu1 schedP fcfs
+vcpu2 count 2
+vcpu2 buffer 99999
+vcpu2 schedP fcfs
+disk1 count 1
+disk1 buffer 99999
+disk1 schedP fcfs
+end
+
+host vm2[1]
+vcpu3 count 2
+vcpu3 buffer 99999
+vcpu3 schedP fcfs
+vcpu4 count 2
+vcpu4 buffer 99999
+vcpu4 schedP fcfs
+disk2 count 1
+disk2 buffer 99999
+disk2 schedP fcfs
+end
+
+server WebServer
+thread count 12
+thread buffer 99999
+thread schedP fcfs
+task show_html_page
+task receive_login_request
+task receive_order_detail
+end
+
+server CatalogServer
+thread count 12
+thread buffer 99999
+thread schedP fcfs
+task get_catalog 
+task check_for_confirmation
+end
+
+server AuthServer
+thread count 12
+thread buffer 99999
+thread schedP fcfs
+task check_credentials
+end
+
+server PaymentGateway
+thread count 12
+thread buffer 99999
+thread schedP fcfs
+task make_payment
+task process_payment
+end
+
+scenario LOGIN prob 0.3
+	show_html_page receive_login_request 200 SYNC
+	receive_login_request check_credentials 200 SYNC
+	check_credentials show_html_page 200
+end
+
+scenario BOOK_ORDER prob 0.7
+	get_catalog show_html_page 500
+	show_html_page receive_order_detail 200 
+	receive_order_detail check_for_confirmation 200
+	branch prob 0.25
+		check_for_confirmation show_html_page 200
+	end
+	branch prob 0.75
+		check_for_confirmation make_payment 200
+		make_payment process_payment 200 SYNC
+		process_payment show_html_page 300
+	end
+end
+
+loadparams
+	thinktime const(2)
+end
+
+deploy WebServer vm1[1]
+deploy CatalogServer vm1[1]
+deploy AuthServer vm2[1]
+deploy PaymentGateway vm2[1]
+
+deploy vm1[1] lan1
+deploy vm2[1] lan1
+
+modelparams
+	method simulation
+	type closed
+	replicationno 5
+	confint true
+	simendtime 1000
+	warnings enable
+end
+
+
+print "HOST1:vCPU1: Throughput = " + tput(vm1[1]:vcpu1) + " Utilization = " + util(vm1[1]:vcpu1)
+print "HOST1:vCPU2: Throughput = " + tput(vm1[1]:vcpu2) + " Utilization = " + util(vm1[1]:vcpu2)
+print "HOST2:vCPU3: Throughput = " + tput(vm2[1]:vcpu3) + " Utilization = " + util(vm2[1]:vcpu3)
+print "HOST2:vCPU4: Throughput = " + tput(vm2[1]:vcpu4) + " Utilization = " + util(vm2[1]:vcpu4)
+print "HOST1:DISK1: Throughput = " + tput(vm1[1]:disk1) + " Utilization = " + util(vm1[1]:disk1)
+print "HOST2:DISK2: Throughput = " + tput(vm2[1]:disk2) + " Utilization = " + util(vm2[1]:disk2)
+
+print "Scenario1 Response Time = " + respt(LOGIN)
+print "Scenario2 Response Time = " + respt(BOOK_ORDER) 
+print "Overall Response Time : " + respt()
+print "Overall Throughput : " + tput()

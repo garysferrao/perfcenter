@@ -1,0 +1,179 @@
+//perfcenter configuration for moodle
+devicecategory 
+	cpu intel
+end
+
+pdevice
+	intel cpu1
+	intel cpu2
+	intel cpu3
+end
+
+lan
+lan1
+lan2
+end
+
+//link between lan1 and lan2 is defined
+link lk1 lan1 lan2
+	trans 10 Mbps
+	mtu 256 bytes
+	prop 2.3 us
+	headersize 40 bytes
+end
+
+workload cyclic
+noofusers 10 30 40 90 10 end
+interval 20 20 20 20 20 end
+end
+
+//frequency supported by cpu1... 1.2,1.6,2.2
+powermanagement cpu1 
+speed_levels 1 1.37 1.83 end
+power_consumed 40 45 50 end
+idlepower 40 40 40 end
+probe_interval 0.90
+governor_up_threshold 40 
+governor_down_threshold 15
+end
+
+//frequency supported by cpu2... 1.6,2.2,2.8,3.2
+powermanagement cpu2
+speed_levels 1 1.37 1.75 2 end
+power_consumed 45 50 55 60 end
+idlepower 40 40 40 40 end
+probe_interval 2
+governor_up_threshold 80 
+governor_down_threshold 20
+end
+
+//frequency supported by cpu3... 1.6,2.2,2.8,3.2
+powermanagement cpu3
+speed_levels 1 1.37 1.75 2 end
+power_consumed 45 50 55 60 end
+idlepower 45 45 45 45 end
+probe_interval 1
+governor_up_threshold 80 
+governor_down_threshold 20
+end
+
+task request_to_smtp
+intel servt 0.002 at 2.8
+end
+
+task reply_from_smtp
+intel servt 0.02 at 2.8
+end
+
+task request_to_auth
+intel servt 0.002 at 2.8
+end
+
+task reply_from_auth
+intel servt 0.01 at 2.8
+end
+
+task request_to_db
+intel servt 0.004 at 2.8
+end
+
+task reply_from_db
+intel servt 0.01 at 2.8
+end
+
+task change_to_html
+intel servt 0.02 at 2.8
+end
+
+physicalmachine hpmachine[1]
+cpu1 count 1
+cpu1 buffer 999999
+cpu1 schedP fcfs
+cpu1 power_managed governor conservative
+end
+
+physicalmachine ibmmachine[3]
+cpu2 count 1
+cpu2 buffer 999999
+cpu2 schedP fcfs
+cpu2 power_managed governor conservative
+end
+
+server web
+thread count 6
+thread buffer 99999
+thread schedP fcfs
+task request_to_smtp
+task request_to_auth
+task request_to_db
+task change_to_html
+end
+
+server auth
+thread count 6
+thread buffer 99999
+thread schedP fcfs
+task reply_from_auth
+end
+
+server db
+thread count 6
+thread buffer 99999
+thread schedP fcfs
+task reply_from_db
+end
+
+server smtp
+thread count 6
+thread buffer 99999
+thread schedP fcfs
+task reply_from_smtp
+end
+
+scenario SLOT_BOOK prob 0.4
+	request_to_auth reply_from_auth  100 SYNC
+	branch prob 0.1
+		reply_from_auth change_to_html 100
+	end
+	branch prob 0.9
+		reply_from_auth request_to_db 100
+		request_to_db reply_from_db 100
+		reply_from_db change_to_html 100
+	end
+end
+
+scenario SEND prob 0.6
+	request_to_auth reply_from_auth  100 SYNC
+	branch prob 0.1
+		reply_from_auth change_to_html 100
+	end
+	branch prob 0.9
+		reply_from_auth request_to_smtp 100
+		request_to_smtp reply_from_smtp 100
+		reply_from_smtp change_to_html 100
+	end
+end
+
+
+loadparams 
+	thinktime const(1.2)
+end
+
+deploy web hpmachine[1]
+deploy auth ibmmachine[1]
+deploy db ibmmachine[2]
+deploy smtp ibmmachine[2]
+deploy hpmachine[1] lan1
+deploy ibmmachine[1] lan1
+deploy ibmmachine[2] lan1
+deploy ibmmachine[3] lan1
+
+
+modelparams
+    method simulation
+    type closed
+	replicationno 3
+	simendtime 100
+	confint true
+	warnings disable
+end
