@@ -56,16 +56,15 @@ public class Lan {
 		hosts.remove(name);
 	}
 
-	// Prints the lan parameters
-	public void print() {
-		System.out.println("Lan:" + name);
+	public String toString() {
+		StringBuilder builder = new StringBuilder("Lan:").append(name).append("\n");
 		for (String host : hosts) {
-			System.out.println(" Host:" + host);
+			builder.append(" Host:").append(host).append("\n");
 		}
 		for (String l : lans) {
-			System.out.println(" Connected to:" + l);
+			builder.append(" Connected to:").append(l).append("\n");
 		}
-
+		return builder.toString();
 	}
 
 	/** validate lan parameters */

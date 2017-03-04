@@ -155,23 +155,24 @@ public class SoftServer extends QueuingResource {
 			logger.warn("Warning:Server \"" + name + "\" does not have tasks defined ");
 	}
 
-	public void print() {
-		System.out.println("ServerName " + name);
-		System.out.println(" Thread Count " + thrdCount.name + ":" + thrdCount.value);
-		System.out.println(" Thread Buffer " + thrdBuffer.name + ":" + thrdBuffer.value);
-		System.out.println(" Static Size " + size.name + ":" + size.value);
-		System.out.println(" SchedPolicy " + schedp.toString());
-		System.out.println(" Server Tasks:");
+	public String toString() {
+		StringBuilder builder = new StringBuilder("ServerName:").append(name);
+		builder.append(" Thread Count ").append(thrdCount);
+		builder.append(" Thread Buffer ").append(thrdBuffer);
+		builder.append(" Static Size ").append(size);
+		builder.append(" SchedPolicy ").append(schedp.toString());
+		builder.append(" Server Tasks:");
 		for (Task task : tasks) {
-			task.print();
+			builder.append(task.toString());
 		}
-		System.out.println(" Deployed on ");
+		builder.append(" Deployed on ");
 		for (String machineName : machines) {
 			if(ModelParameters.inputDistSys.isVM(machineName))
-				System.out.println("   Virtual Machine: " + machineName);
+				builder.append("   Virtual Machine: " + machineName);
 			else if(ModelParameters.inputDistSys.isVM(machineName))
-				System.out.println("   Physical Machine: " + machineName);
+				builder.append("   Physical Machine: " + machineName);
 		}
+		return builder.toString();
 	}
 
 	/** add host name on which this server is deployed */

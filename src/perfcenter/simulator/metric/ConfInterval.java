@@ -60,15 +60,6 @@ public class ConfInterval { //ARCHITECTURE: merge this class with MetricSim
 	 * 
 	 */
 	public void calculateConfidenceIntervals() {
-//		for(int i=0;i<data.length;i++) {
-//			for(int j=0;j<data[i].length;j++) {
-//				String value = Double.toString(data[i][j]);
-//				int dot = value.indexOf('.');
-//				value = value.substring(0, dot+2);
-//				System.out.print(value+ ",");
-//			}
-//			System.out.println("\n");
-//		}
 		DoubleArrayList dataMeanVector = new DoubleArrayList();
 
 		// use welches procedure to decide the data vector over which confidence

@@ -83,11 +83,13 @@ public class SoftResource extends QueuingResource {
 		pol = sp;
 	}
 
-	public void print() {
-		System.out.println("Soft Res : " + name);
+	public String toString() {
+		String softRes = "Soft Res:" + name + "\n";
 		for (ServiceTime servt : deviceServiceTimes) {
-			servt.print();
+			softRes += servt.toString();
 		}
+		softRes += "\n";
+		return softRes;
 	}
 
 	SoftResource getCopy() {

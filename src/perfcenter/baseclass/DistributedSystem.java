@@ -101,6 +101,8 @@ public class DistributedSystem {
 
 	public MigrationPolicyInfo migrationPolicyInfo;
 	
+	private Logger logger = Logger.getLogger("DistributedSystem");
+	
 	public DistributedSystem() {
 		pms = new HashMap<String, PhysicalMachine>();
 		vms = new HashMap<String, VirtualMachine>();
@@ -156,12 +158,12 @@ public class DistributedSystem {
 	}
 
 	public void printConfiguration() {
-		System.out.println("---printcfg start----");
+		logger.debug("---printcfg start----");
 		for (Machine machine : pms.values()) {
-			System.out.println("---MachineDef----");
-			machine.print();
+			logger.debug("---MachineDef----");
+			logger.debug(machine.toString());
 		}
-		System.out.println("---printcfg end----");
+		logger.debug("---printcfg end----");
 	}
 
 	public Task getTask(String name) {
@@ -412,59 +414,57 @@ public class DistributedSystem {
 	}
 
 	public void print(){
-		System.out.println("====Distributed System====");
-		System.out.println("===PhysicalDevices===");
+		logger.debug("====Distributed System====");
+		logger.debug("===PhysicalDevices===");
 		for(PhysicalDevice pd : pdevices.values()){
-			System.out.println("\t" + pd.name);
+			logger.debug("\t" + pd.name);
 		}
-		System.out.println("===VirtualDevices===");
+		logger.debug("===VirtualDevices===");
 		for(VirtualDevice vd : vdevices.values()){
-			System.out.println("\t" + vd.name);
+			logger.debug("\t" + vd.name);
 		}
-		System.out.println("===PhysicalMachines===");
+		logger.debug("===PhysicalMachines===");
 		for(PhysicalMachine pm : pms.values()){
-			System.out.println("\t" + pm.name);
-			System.out.print("Servers: ");
+			logger.debug("\t" + pm.name);
+			logger.debug("Servers: ");
 			for(SoftServer server : pm.softServers.values()){
-				System.out.print(server.name + " ");
+				logger.debug(server.name + " ");
 			}
-			System.out.println();
 		}
 		
-		System.out.println("===VirtualMachines===");
+		logger.debug("===VirtualMachines===");
 		for(VirtualMachine vm : vms.values()){
-			System.out.print("\t" + vm.name);
+			logger.debug("\t" + vm.name);
 			if(vm.host == null){
-				System.out.println(" not deployed");
+				logger.debug(" not deployed");
 			}else{
-				System.out.println(" deployed on " + vm.host.name);
+				logger.debug(" deployed on " + vm.host.name);
 			}
 		}
-		System.out.println("===Tasks===");
+		logger.debug("===Tasks===");
 		for(Task task : tasks.values()){
-			System.out.println("\t" + task.name);
+			logger.debug("\t" + task.name);
 			for(int i=0;i<task.subtaskServiceTimes.size();i++){
 				ServiceTime st = task.subtaskServiceTimes.get(i);
-				System.out.println("\t\t" + st.devCategory.name + " servt " + st.dist.name_ + "(" + st.dist.value1_.getName() + ":" + st.dist.value1_.getValue() + ") at " + st.basespeed);
+				logger.debug("\t\t" + st.devCategory.name + " servt " + st.dist.name_ + "(" + st.dist.value1_.getName() + ":" + st.dist.value1_.getValue() + ") at " + st.basespeed);
 			}
 		}
-		System.out.println("===SoftServers===");
+		logger.debug("===SoftServers===");
 		for(SoftServer server : softServers.values()){
-			System.out.print("\t" + server.name);
+			logger.debug("\t" + server.name);
 			if(server.machines.size() > 0)
-				System.out.println(" deployed on " + server.machines.get(0) + " size:" + server.machines.size());
+				logger.debug(" deployed on " + server.machines.get(0) + " size:" + server.machines.size());
 			else
-				System.out.println(" not deployed");
-			System.out.print("\t\tTasks:");
+				logger.debug(" not deployed");
+			logger.debug("\t\tTasks:");
 			for(Task task : server.tasks)
 			{
-				System.out.print(task.name + ", ");
+				logger.debug(task.name + ", ");
 			}
-			System.out.println();
 		}
-		System.out.println("======Scenarios=====");
+		logger.debug("======Scenarios=====");
 		for(Scenario scenario : scenarios.values()){
-			scenario.print();
+			logger.debug(scenario.toString());
 		}
 	}
 	
@@ -572,9 +572,6 @@ public class DistributedSystem {
 	 * To copy original tasknode attributes to single tasknode, keep toStartNode and toEndNode same
 	 */
 	private void copyNodeInfo(TaskNode from, TaskNode toStartNode, TaskNode toEndNode){
-		/*System.out.print("********copyNodeInfo(" + from.name + "-prob:" + from.prob.value +  ",");
-		System.out.print(toStartNode.name + ",");
-		System.out.print(toEndNode.name + ")*******"); */  
 		toStartNode.pktsize = from.pktsize;
 		toStartNode.arrate = from.arrate;
 		toStartNode.belongsToCT = from.belongsToCT;
@@ -833,7 +830,6 @@ public class DistributedSystem {
 		/* For each vm which is not deployed directly on Physical Machine, create two start and end tasks for its vcpu server */ 
 		for(VirtualMachine vm : origVms.values()){
 			if(origVms.containsKey(vm.host.name)){
-				//System.out.println("Vm.name:" + vm.name + " pm.name:" + getActualHostName(vm.name));
 				PhysicalMachine pm = transformedPms.get(getActualHostName(vm.name));
 				DeviceCategory cpudevcat = pm.getCpuDevCategory();
 				Distribution constDist = new Distribution("const", 0); 
@@ -1042,7 +1038,6 @@ public class DistributedSystem {
 					/* Processing children of each element in current level and adding them to next level */
 					for(int j=0;j<elem.children.size();j++){
 						TaskNode child = elem.children.get(j);
-						//System.out.println("oldchild:" + oldchild.name);
 						
 						/* Special case handling involving user task
 						 * User task can only happen in tree with structure user-another_task_node-user
@@ -1080,22 +1075,11 @@ public class DistributedSystem {
 							/* Synchronous call handling  */
 							if(child.isSync()){
 								TaskNode endprevchild = newchildstart.parent;
-								//System.out.println("oldchild.parent:" + child.parent.name + " endprevchild:" + endprevchild.name + " parent:" + endprevchild.parent.name);
 								endprevchild.parent.children.clear();
 								for(TaskNode tnode : endprevchild.children){
 									endprevchild.parent.children.add(tnode);
 								}
 								
-								/*
-								System.out.println("Child.name:"+ child.name);
-								for(Integer key : scenario.syncpairs.keySet()){
-									System.out.print(key + ":");
-									for(Integer val : scenario.syncpairs.get(key)){
-										System.out.print("," + val);
-									}
-									System.out.println();
-								}
-								*/
 								for(int k=0;k<scenario.syncpairs.get(child.index).size();k++){
 									syncresponses.add(scenario.syncpairs.get(child.index).get(k));
 								}
@@ -1158,8 +1142,6 @@ public class DistributedSystem {
 						TaskNode tonode = fromnode.children.get(j);
 						_level.add(tonode);
 						SoftServer toserver = transformedServers.get(transformedTasks.get(tonode.name).softServerName);
-						//System.out.println("fromtask:" + fromnode.name + " fromserver: " + fromserver.name + " frompm:" + frompm.name);
-						//System.out.println("totask:" + tonode.name + " toserver: " + toserver.name );
 						PhysicalMachine topm = transformedPms.get(toserver.machines.get(0));
 						
 						/* Check whether source and destination PMs are same or not 
@@ -1197,8 +1179,6 @@ public class DistributedSystem {
 								to_nwtasknode.children.add(tonode);
 								tonode.parent = to_nwtasknode;
 								to_nwtasknode.prob.value = tonode.prob.value;
-							}else{
-								//System.out.println("Kuch nahi hua");
 							}
 							
 						}

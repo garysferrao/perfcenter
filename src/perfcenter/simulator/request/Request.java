@@ -171,30 +171,30 @@ public class Request {
 		inService = another.inService;
 	}
 
-	public void printRequest() {
-		System.out.println("=============================================");
-		System.out.println("Printing Request with id:" + id);
-		System.out.println("Number Of Retries:" +  numberOfRetries);
-		System.out.println("Current Node:" + currentTaskNode.name );
-        System.out.println("Next Node: " + nextTaskNode.name);
-		System.out.println("Device Instance: " + devInstance + " Device Index:" + subTaskIdx );
-		System.out.println("From server: " + fromServer );
-		System.out.println("Is request from task: " + requestFromTask );
-		System.out.println("Is request from virtual resource: " + requestFromSoftRes) ;
-		System.out.println("Device Name: " + devName );
-		System.out.println("Host Object: " + machineName);
-		System.out.println("Scenario Name: " + scenario.getName() );
-		System.out.println("Thread Number: " + threadNum );
-		System.out.println("Scenario Arrival Time: " + scenarioArrivalTime + " Scenario Timeout: " + scenarioTimeout);
-		System.out.println("Sync req vector size: " + synReqVector.size());
-		System.out.println("Service Started Time: " + serviceStarted );
-		System.out.println("Task Name: " + taskName );
-		System.out.println("Timeout Flag after service: " + timeoutFlagAfterService );
-		System.out.println("Timeout Flag in Buffer: " + timeoutFlagInBuffer );
-		System.out.println("Software server name: " + softServName + " Software server arrival time: " + softServArrivalTime + " Software Server Start Time: " + softServStartTime );
-		System.out.println("Software Resource Name: " + softResName + "index: " + softResIdx + " instance : " + softResInstance );
-		System.out.println("=============================================");
+	public String toString() {
+		StringBuilder builder = new StringBuilder("Request id:").append(id).append("\n");
+		builder.append("Number Of Retries:").append(numberOfRetries);
+		builder.append("Current Node:").append(currentTaskNode.name );
+		builder.append("Next Node: ").append(nextTaskNode.name);
+		builder.append("Device Instance: ").append(devInstance).append(" Device Index:").append(subTaskIdx );
+		builder.append("From server: ").append(fromServer );
+		builder.append("Is request from task: ").append(requestFromTask );
+		builder.append("Is request from virtual resource: ").append(requestFromSoftRes) ;
+		builder.append("Device Name: ").append(devName );
+		builder.append("Host Object: ").append(machineName);
+		builder.append("Scenario Name: ").append(scenario.getName() );
+		builder.append("Thread Number: ").append(threadNum );
+		builder.append("Scenario Arrival Time: ").append(scenarioArrivalTime).append(" Scenario Timeout: ").append(scenarioTimeout);
+		builder.append("Sync req vector size: ").append(synReqVector.size());
+		builder.append("Service Started Time: ").append(serviceStarted );
+		builder.append("Task Name: ").append(taskName );
+		builder.append("Timeout Flag after service: ").append(timeoutFlagAfterService );
+		builder.append("Timeout Flag in Buffer: ").append(timeoutFlagInBuffer );
+		builder.append("Software server name: ").append(softServName).append(" Software server arrival time: ").append(softServArrivalTime).append(" Software Server Start Time: ").append(softServStartTime );
+		builder.append("Software Resource Name: ").append(softResName).append("index: ").append(softResIdx).append( " instance : ").append(softResInstance );
+		return builder.toString();
 	}
+	
 	public Request(int rid, ScenarioSim sce_name, double arrivalTime) {
 		synReqVector = new Vector<SyncRequest>();
 		scenario = sce_name;
@@ -216,17 +216,10 @@ public class Request {
 			return false;
 		}
 		SyncRequest sr = synReqVector.get(synReqVector.size() - 1);
-		//System.out.print("SyncRequest Vector:");
-		//for(int i=0;i<synReqVector.size();i++){
-			//System.out.print(synReqVector.get(i).softServerName + ",");
-		//}
-		//System.out.print("--Current ss_name:" + ss_name);
 		if ((sr.softServerName.compareToIgnoreCase(ss_name) == 0) && (sr.taskName.compareToIgnoreCase(task_name) == 0) && sr.threadNum == thrdNum
 				&& sr.swServerArrivalTime == servArrTime && sr.swServerStartTime == servStartTime) {
-			//System.out.println(" isSyncRequest:true");
 			return true;
 		} else {
-			//System.out.println(" isSyncRequest:false");
 			return false;
 		}
 	}
@@ -247,7 +240,7 @@ public class Request {
 			i--;
 		}
 		if (flag == 0) {
-			System.out.println("Error in SYNC VECTORservarr");
+			logger.debug("Error in SYNC VECTORservarr");
 			System.exit(0);
 		}
 		return servArrTime;
@@ -462,7 +455,7 @@ public class Request {
 		if(SimulationParameters.distributedSystemSim.serverMigrated(softServName)){
 			String newname = SimulationParameters.distributedSystemSim.softServerMap.get(softServName).machines.get(0);
 			if(newname.compareTo(machineName) != 0){
-				System.out.println("getNextDeviceName:ReqObj.id:" + id + " servername:" + softServName + " oldMachineName:" + machineName + " machineName:" + machineName + " scenarioname:" + scenario.name + " tasknodename:" + taskName);
+				logger.debug("getNextDeviceName:ReqObj.id:" + id + " servername:" + softServName + " oldMachineName:" + machineName + " machineName:" + machineName + " scenarioname:" + scenario.name + " tasknodename:" + taskName);
 				machineName = newname;
 			}
 		}
@@ -506,7 +499,6 @@ public class Request {
 	public void setSubTaskIdx(int deviceIndex, String methodAndClassName) {
 		int temp = this.subTaskIdx;
 		this.subTaskIdx = deviceIndex;
-		//System.out.println(methodAndClassName + " set deviceIndex from " + temp + " to " + deviceIndex);
 		changeLog.add(methodAndClassName);
 	}
 

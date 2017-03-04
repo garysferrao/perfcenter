@@ -56,7 +56,6 @@ public class Scenario {
 	/** Arrival rate during simulation is different than what is specified */
 	public Metric arateToScenarioDuringSimulation = new Metric();
 	
-	/* This is used to warn user when proper synchronous request-response pairs are not used */ 
 	private Logger logger = Logger.getLogger("Scenario");
 	
 	public boolean isValidated = false;
@@ -72,17 +71,19 @@ public class Scenario {
 	}
 	
 	public void printFullInfo(){
-       	System.out.println("Scenario Name:" + name);
-       	System.out.println("Scenario Prob:" + getProbability());
-        System.out.println("Tree");
+       	logger.debug("Scenario Name:" + name);
+       	logger.debug("Scenario Prob:" + getProbability());
+        logger.debug("Tree");
         rootNode.printFullInfo();
 	}
 	
-	public void print(){
-       	System.out.println("Scenario Name:" + name);
-       	System.out.println("Scenario Prob:" + getProbability());
-        System.out.println("Tree");
-        rootNode.print();
+	public String toString(){
+		StringBuilder builder = new StringBuilder("");
+		builder.append("Scenario Name:" + name + "\n");
+       	builder.append("Scenario Prob:" + getProbability() + "\n");
+        builder.append("Tree" + "\n");
+        builder.append(rootNode.toString() + "\n");
+        return builder.toString();
 	}
 
 	public void setAverageResponseTime(double rtime) {
@@ -164,7 +165,7 @@ public class Scenario {
 			/* Traversing current level */
 			for(int i=0;i<level.size();i++){
 				TaskNode elem = level.get(i);
-				//System.out.println("Tasknode Name:" + elem.name + " server:" + elem.servername + " Idx:" + elem.index);
+				logger.debug("Tasknode Name:" + elem.name + " server:" + elem.servername + " Idx:" + elem.index);
 				if(elem.issync){
 					syncReqServerPair.put(elem.servername, elem.parent.servername);
 				}
@@ -173,7 +174,7 @@ public class Scenario {
 					TaskNode tempnode = elem.children.get(j);
 					tempnode.index = idx++;
 					nextlevel.add(tempnode);
-					//System.out.println(syncReqServerPair.get(elem.getServerName()) + " tempnode.servername:" + tempnode.servername);
+					logger.debug(syncReqServerPair.get(elem.getServerName()) + " tempnode.servername:" + tempnode.servername);
 					if(syncReqServerPair.containsKey(elem.getServerName()) && syncReqServerPair.get(elem.getServerName()) == tempnode.servername){
 						if(list.containsKey(elem.servername)){
 							list.get(elem.servername).add(tempnode.servername);
@@ -193,40 +194,11 @@ public class Scenario {
 			}
 			level = nextlevel;
 		}
-		/* For debugging
-		for(String toServerName : list.keySet()){
-			System.out.print(toServerName + ":");
-			for(String fromServerName: list.get(toServerName)){
-				System.out.print(fromServerName + " ");
-			}
-			System.out.println();
-		} */
-		/*
-		for(Integer toTasknodeIdx : syncpairs.keySet()){
-			System.out.print(toTasknodeIdx + ":");
-			for(Integer fromTasknodeIdx: syncpairs.get(toTasknodeIdx)){
-				System.out.print(fromTasknodeIdx + " ");
-			}
-			System.out.println();
-		}
-		*/
-		/* For debugging
-		for(String toServerName : syncReqServerPair.keySet()){
-			System.out.println(toServerName + ":" + syncReqServerPair.get(toServerName));
-		}
-		*/
+		
 		for(String toServerName : syncReqServerPair.keySet()){
 			if(!list.containsKey(toServerName)){
 				logger.warn("Warning:Scenario: There is no corresponding response to server \"" + toServerName + "\" from server \"" + syncReqServerPair.get(toServerName) + "\"");
 			}
-			/*
-			else{
-				System.out.print(toServerName + ":");
-				for(String fromServerName: list.get(toServerName)){
-					System.out.print(fromServerName + " ");
-				}
-				System.out.println();
-			} */
 		}
 	}
 

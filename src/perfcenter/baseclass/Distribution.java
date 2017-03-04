@@ -106,8 +106,8 @@ public class Distribution {
 		value1_.value = servtime;
 	}
 
-	void print() {
-		System.out.println(name_ + value1_.getValue());
+	public String toString() {
+		return new StringBuilder(name_).append(value1_.getValue()).toString();
 	}
 
 	public void calculateMean() {
@@ -160,9 +160,6 @@ public class Distribution {
 		if (name_.compareToIgnoreCase("exp") == 0) {
 			// parameter list for distribution is (mean)
 			ExponentialDistribution exp = new ExponentialDistribution();
-			// double d = exp.nextExp(value1_.getValue() / procspeed);
-			// System.out.println("\n**************** "+procspeed+ " : " + d);
-			// return d;
 			return exp.nextExp(value1_.getValue() / procspeed);
 
 		}

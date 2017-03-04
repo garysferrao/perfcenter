@@ -191,12 +191,10 @@ public class PerfSim {
 				break;
 
 			case NETWORK_TASK_STARTS:
-				//System.out.println("NETWORK_TASK_STARTS");
 				currentEventToBeHandled.networkTaskStarts();
 				break;
 
 			case NETWORK_TASK_ENDS:
-				//System.out.println("NETWORK_TASK_ENDS");
 				currentEventToBeHandled.networkTaskEnds();
 				break;
 
@@ -226,7 +224,6 @@ public class PerfSim {
 				SimulationParameters.recordIntervalSlotRunTime();
 				SimulationParameters.distributedSystemSim.recordCISampleAtTheEndOfSimulation();
 				logger.debug("Sim end at : " + SimulationParameters.currTime);
-				//System.out.println("Sim TotalReq Processed : " + SimulationParameters.getTotalRequestProcessed());
 				return;
 
 			default:
@@ -303,7 +300,6 @@ public class PerfSim {
 
 			generateScenarioArrivalEvent(sce, interArrivalTimeNext);
 			logger.debug("scenario name: " + sce + "\t scenario_ID: " + i + "\t\t  scenario arrival time: " + interArrivalTimeNext);
-            //System.out.println("No of users: "  + i + " scenario name: " + sce.getName() + "\t scenario_ID: " + i + "\t\t  scenario arrival time: " + interArrivalTimeNext);
 		}
 
 		// If device type id powermanaged then create events and add then to global eventList: rakesh
@@ -324,7 +320,6 @@ public class PerfSim {
 		 ***/
 		// add event to event list
 		// probeIntervalDownFactor = 1 for ONDEMAND; it can have different value for CONSERVATIVE
-		// System.out.println("Prob invent is generated");
 		double event_time = device.deviceProbeInterval;
 		Event ev = new Event(event_time, EventType.DEVICE_PROBE, host, device);
 
@@ -336,7 +331,6 @@ public class PerfSim {
 	void generateScenarioArrivalEvent(ScenarioSim sceName, double time) {
 
 		logger.debug("reqID: " + SimulationParameters.reqIdGenerator + " Time : " + time);
-		//System.out.println("reqID: " + SimulationParameters.reqIdGenerator + " Time : " + time);
 		Request req = new Request(SimulationParameters.reqIdGenerator++, sceName, time);
 		// req.scenarioArrivalTime = time;
 

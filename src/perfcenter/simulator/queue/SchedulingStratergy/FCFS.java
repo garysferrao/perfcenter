@@ -63,7 +63,6 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 //			startService_Device(req, idleDeviceId, currTime);
 //			// update the average waiting time for this resource
 //			averageWaitingTimeSim.recordValue(req,qServerInstances.get(idleDeviceId).reqStartTime - qServerInstances.get(idleDeviceId).reqArrivalTime);
-//			// System.out.println("======================>>>>>>>>>>>>>>>>>>>  : Instance id in FCFS: " + idleDev);
 //		}
 //	}
 
@@ -72,7 +71,6 @@ public class FCFS extends QueueSim { // ARCHITECTURE: this should not extend que
 		int idleDeviceId = getIdleInstanceId();
 		// mark time when request enters the system
 		bookkeepRequestArrival(req, idleDeviceId, currTime);
-		//System.out.println("!!!!!!!!!" + req.id + ":" + req.currentTaskNode.name + ":" + req.softServName + ":" + req.machineName);
 		if (idleDeviceId == -1) {
 			
 			// no instance of device free

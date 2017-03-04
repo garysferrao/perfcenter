@@ -140,8 +140,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		
 		/* Add Ram Utilization by buffered threads */
 		ramutil += (threadSize.getValue() * (((QueueSim)resourceQueue).getBuffersize()));
-		//if(req != null)
-		//System.out.println("Name:" + name + " request.nwDataSize:" + req.currentTaskNode.pktsize.getValue() +" size:" + size.getValue() + " threadSize:" + threadSize.getValue() +" Ram Util:" + ramutil);
 		
 		currRamUtil = ramutil;
 		avgRamUtilSim.recordValue(this.currRamUtil);
@@ -181,7 +179,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 			req.setRequestFromTask();
 			
 			Task t = getTaskObject(req.taskName);
-			//System.out.println("Softserversim.offerRequestToDevice() TaskName:" + req.taskName );
 			DeviceCategory nextDevCat = t.getNextDeviceCategory(req.getSubTaskIdx());
 			//if next device does not exist return -1
 			if(nextDevCat == null)
@@ -198,7 +195,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 			req.devName = nextDeviceName;
 			
 			// Keeps track of the current request is for which server. Nikhil
-			// System.out.println("Req Id:"+req.id+" ,m assigned to:"+name);
 			req.fromServer = name;
 			
 			// get to the device queue
@@ -245,7 +241,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 
 	// This function processes Software Task Ends event
 	public void processTaskEndEvent(Request rq, int instanceId, double currTime) throws Exception {
-		//System.out.println("In SoftServerSim.processTaskEndEvent(): Before: "  + name + " : " + ((QueueSim)resourceQueue).qServerInstances.size() + " : " + ((QueueSim)resourceQueue).freeQServerInstances.size());
 		SoftResVector sr1 = rq.virtResStack.pop();
 		if (sr1.softResName_.compareToIgnoreCase(rq.taskName) != 0) {
 			throw new Exception("wrong stack");
@@ -288,7 +283,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		} else {
 			offerRequestToNextNode(rq);
 		}
-		//System.out.println("In SoftServerSim.processTaskEndEvent(): After: "  + name + " : " + ((QueueSim)resourceQueue).qServerInstances.size() + " : " + ((QueueSim)resourceQueue).freeQServerInstances.size());
 	}
 
 	// request is offered to the hardware device
@@ -305,7 +299,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 
 		// offer request to the first device belonging to task
 		int retval = offerRequestToDevice(r, currTime);
-		//System.out.println("In processTaskStartEvent():" + retval);
 		if (retval == -1) {
 			// throw new Exception("No devices found for task " + r.taskName); //Not sure whether this is correct
 			// FIXME: why the check is here? remove it after "appropriate" inspection
@@ -323,7 +316,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 		if(SimulationParameters.distributedSystemSim.serverMigrated(rq.softServName)){
 			String newname = SimulationParameters.distributedSystemSim.softServerMap.get(rq.softServName).machines.get(0);
 			if(newname.compareTo(rq.machineName) != 0){
-				System.out.println("offerRequestToLink():servername:" + rq.softServName + " oldMachineName:" + rq.machineName + " machineName:" + newname  + " tasknodename:" + rq.taskName);
 				rq.machineName = newname;
 			}
 		}
@@ -356,7 +348,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 
 		rq.currentTaskNode = rq.nextTaskNode;
 		rq.nextTaskNode = SimulationParameters.distributedSystemSim.findNextTaskNode(rq.currentTaskNode);
-		//System.out.println("While handling software task starts event of request " + rq.toString() +" setting currentTaskNode " + rq.currentTaskNode.name + " to " + rq.nextTaskNode.name);
 		rq.taskName = rq.currentTaskNode.name;
 		rq.setSubTaskIdx(0, "SoftServerSim:offerRequestToNextNode");
 		rq.devInstance = 0;
@@ -401,7 +392,6 @@ public class SoftServerSim extends SoftServer implements QueueServer {
 				
 				if(newmname.compareTo(rq.machineName) != 0){
 					rq.machineName = newmname;
-					//System.out.println("AFTER:ReqObj.id:" + reqObj.id + " servername:" + reqObj.softServName + " machineName:" + reqObj.machineName);
 				}
 			}
 			rq.machineName = SimulationParameters.distributedSystemSim.getServer(rq.softServName).getRandomHostObject().name;

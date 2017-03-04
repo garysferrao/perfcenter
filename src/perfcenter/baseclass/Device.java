@@ -140,14 +140,12 @@ public class Device extends QueuingResource {
 		this();
 		name = _name;
 		category = _category;
-		//System.out.println("For 1-device " + name + " setting baseline speed " + basespeed.value);
 	}
 	
 	public Device(String _name, String _catname) {
 		this();
 		name = _name;
 		category = ModelParameters.inputDistSys.getDeviceCategory(_catname);
-		//System.out.println("For 2-device " + name + " setting baseline speed " + basespeed.value);
 	}
 	
 	public Device(String _name, DeviceCategory _category, double _baselineSpeed){
@@ -155,7 +153,6 @@ public class Device extends QueuingResource {
 		name = _name;
 		category = _category;
 		basespeed.value = _baselineSpeed;
-		//System.out.println("For 3-device " + name + " setting baseline speed " + basespeed.value);
 	}
 	
 	public Device(String _name, String _catname, double _baselineSpeed){
@@ -163,11 +160,9 @@ public class Device extends QueuingResource {
 		name = _name;
 		category = ModelParameters.inputDistSys.getDeviceCategory(_catname);
 		basespeed.value = _baselineSpeed;
-		//System.out.println("For 4-device " + name + " setting baseline speed " + basespeed.value);
 	}
 /*
 	public Device(Device anotherDevice){
-		System.out.println("In device copy constructor.");
 		schedulingPolicy = anotherDevice.schedulingPolicy;
 		name = anotherDevice.name;
 		category = anotherDevice.category;
@@ -197,13 +192,13 @@ public class Device extends QueuingResource {
 		userspaceSpeedIndex = anotherDevice.userspaceSpeedIndex;
 		governor = anotherDevice.governor;
 	} */
-	/** Print device and its values */
-	public void print() {
-		System.out.println("----StartDevice:" + name + " Sched pol " + schedulingPolicy);
-		System.out.println("count--" + count.getName() + " " + count.getValue());
-		System.out.println("buffer--" + buffer.getName() + " " + buffer.getValue());
-		System.out.println("speedupfactor--" + speedUpFactor.getName() + " " + speedUpFactor.getValue());
-		System.out.println("----EndDevice:" + name);
+	
+	public String toString() {
+		StringBuilder builder = new StringBuilder("Device:").append(name).append(" Sched pol ").append(schedulingPolicy).append(")\n");
+		builder.append("count(").append(count.getName()).append(":").append(count.getValue()).append(")\n");
+		builder.append("buffer(").append(buffer.getName()).append(":").append(buffer.getValue()).append(")\n");
+		builder.append("speedupfactor(").append(speedUpFactor.getName()).append(":").append(speedUpFactor.getValue()).append(")\n");
+		return builder.toString();
 	}
 
 	public Device getCopy() {
@@ -293,20 +288,13 @@ public class Device extends QueuingResource {
 		avgDeviceSpeedup = 0;
 		double qsi_util = 0.0;
 		int i = 0;
-		System.out.println("\n============== Host Machine: " + host.name);
 		for (QServerInstance qsi : ((QueueSim) resourceQueue).qServerInstances) // devQ has devices of type cpu
 		{
-			System.out.println("------>>   device name: " + name + "\t instance: " + i + "\t Device instance util:" + qsi.totalBusyTime.getTotalValue()
-					/ SimulationParameters.currTime + "\t Device instance speedup: " + qsi.avgSpeedup);
-
 			// sum(qsi.util * qsi.avg_speedup)
 			avgDeviceSpeedup += (qsi.totalBusyTime.getTotalValue() / SimulationParameters.currTime) * qsi.avgSpeedup;
 			qsi_util += qsi.totalBusyTime.getTotalValue() / SimulationParameters.currTime;
 			i++;
 		}
-		avgDeviceSpeedup = avgDeviceSpeedup / qsi_util;
-		
-		System.out.println(">>>>>>>> Device Name: " + name + "  Active governor: " + this.governor + "  Device Speedup: " + avgDeviceSpeedup);
-		System.out.println(" probe interval: " + this.deviceProbeInterval + "   up_threshold: " + this.upThreshold);
+		avgDeviceSpeedup = avgDeviceSpeedup / qsi_util;		
 	}
 }

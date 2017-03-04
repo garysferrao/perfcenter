@@ -75,7 +75,6 @@ public class PhysicalMachineSim extends PhysicalMachine {
 		}
 
 		for (Device dev : m.devices.values()) {
-			//System.out.println("In MachineSim constructor:Device Name:" + dev.name + " basespeed:" + dev.basespeed);
 			DeviceSim devs = new DeviceSim(dev);
 			devices.put(devs.name, devs);
 			deviceMap.put(devs.getDeviceName(), devs);
@@ -256,7 +255,6 @@ public class PhysicalMachineSim extends PhysicalMachine {
 			// get the service time for the device
 			if (req.isRequestFromTask()) {
 				Task t = ((SoftServerSim) getServer(req.softServName)).getTaskObject(req.taskName);
-				//System.out.println("Machine:" + req.machineRef.name + t.name+"Request SubTask Index:" + req.getSubTaskIdx() );
 				// set the value for total service demand on hw resource
 				req.serviceTimeRemaining = t.getServiceTimeDist(req.getSubTaskIdx()).nextRandomVal(dev.speedUpFactor.getValue());
 			} else if (req.isRequestFromSoftRes()) {
@@ -266,7 +264,6 @@ public class PhysicalMachineSim extends PhysicalMachine {
 			}
 
 			// add to request to device queue
-			//System.out.println("MachineSim.offerReqToNextDevice():Enqueuing request, name of device:" + this.name);
 			dev.enqueue(req, currTime);
 			return true;
 		} catch (DeviceNotFoundException e) {
@@ -310,7 +307,6 @@ public class PhysicalMachineSim extends PhysicalMachine {
 		computeConfIvalForMetric(avgRamUtil, ramUtilSim);
 		if(vmRamUtilSim != null){
 			for(String vmname : vmRamUtilSim.keySet()){
-				//System.out.println("Vmname:" + vmname + " utils.size:" + avgVmRamUtils.size() );//+ " utilsim.size:" + vmRamUtilSim.size());
 				computeConfIvalForMetric(avgVmRamUtils.get(vmname), vmRamUtilSim.get(vmname));
 			}
 		}

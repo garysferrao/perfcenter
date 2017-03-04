@@ -87,8 +87,8 @@ public class DeviceSim extends Device implements QueueServer {
 		super(name);
 	}
 
-	public void print() {
-		super.print();
+	public String toString() {
+		return super.toString();
 	}
 
 	// this generates hardware task starts event
@@ -186,7 +186,6 @@ public class DeviceSim extends Device implements QueueServer {
 				// Option 3
 				// As there are no more soft resources
 				SimulationParameters.offerEvent(new Event(SimulationParameters.currTime, EventType.SOFTWARE_TASK_ENDS, request));
-				//System.out.println("Software Task Ends offered");
 			} else if (request.isRequestFromSoftRes()) {
 				// Option 4
 				boolean nextLayerSoftResFound = machineObject.offerRequestToNextLayerSoftRes(request, SimulationParameters.currTime);
@@ -212,19 +211,16 @@ public class DeviceSim extends Device implements QueueServer {
 
 		// change servt based on device instance speed
 		QServerInstance qserverInstance = ((QueueSim) resourceQueue).qServerInstances.get(request.devInstance);
-		//System.out.println(name + "'s processTaskStartEvent(): devInstance:"+request.devInstance + " qServerInstanceId:" + qserverInstance.id );
 		// get new service time for this PM device instance.
 		double serviceTime = request.serviceTimeRemaining * availableSpeedLevels[0] / availableSpeedLevels[qserverInstance.currentSpeedLevelIndex];
 		
 		double taskBaseSpeed = SimulationParameters.distributedSystemSim.getTask(request.currentTaskNode.name).getSubTaskServt(request.getSubTaskIdx()).basespeed;
 		
 		if(isDevicePowerManaged){
-			//System.out.println("Current task basespeed:" + taskBaseSpeed + " device speed:" + availableSpeedLevels[qserverInstance.currentSpeedLevelIndex]);
 			serviceTime *= ((taskBaseSpeed)/availableSpeedLevels[qserverInstance.currentSpeedLevelIndex]);
 		}else{
 			//If device is not power managed, then availableSpeedLevels will be 1 so no point in using them. Instead use device's basespeed
 			if(basespeed.value != -1){
-				//System.out.println("Current task basespeed:" + taskBaseSpeed + " device speed:" + basespeed.value);
 				serviceTime *= ((taskBaseSpeed)/basespeed.value);
 			}
 		}
@@ -237,9 +233,7 @@ public class DeviceSim extends Device implements QueueServer {
 		logger.debug("[In h/w_task_starts]service time: " + serviceTime + "   end_time: " + endTime);
 
 		Event event = new Event(endTime, EventType.HARDWARE_TASK_ENDS, request);
-		//System.out.println("HW TASK ENDS event being added. Before EventQueue Size:" + SimulationParameters.eventQueue.size());
 		SimulationParameters.offerEvent(event);
-		//System.out.println("After EventQueue Size:" + SimulationParameters.eventQueue.size());
 		qserverInstance.deviceInstanceAssociatedEventList.add(event);
 	}
 
@@ -465,7 +459,6 @@ public class DeviceSim extends Device implements QueueServer {
 			// for(Event ev: deviceAssociatedEventList)
 			for (Event ev : deviceInstanceAssociatedEventList) {
 				// if(SimParams.eventList.size() > 1)
-				// System.out.println(" ************ DevInstance list contains more than one event ************");
 
 				if (newDeviceSpeedFactor != 1) {
 					// Step 1: remove associated events from eventList

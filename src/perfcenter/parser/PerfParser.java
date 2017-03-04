@@ -28,11 +28,9 @@
                                 arg = args[i++];
                                 if (arg.equals("-a")) {
                                         m=SolutionMethod.ANALYTICAL;
-                                        //System.out.println("Analytical solution");
                                 }else
                                         if (arg.equals("-s")) {
                                                 m=SolutionMethod.SIMULATION;
-                                                //System.out.println("Simulation ");
                                         }else
                                                 if (arg.equals("-o")) {
                                                         t=SystemType.OPEN;

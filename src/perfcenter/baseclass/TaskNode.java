@@ -19,6 +19,8 @@ package perfcenter.baseclass;
 
 import java.util.ArrayList;
 
+import org.apache.log4j.Logger;
+
 /**
  * This is used to make tree for a scenario
  * 
@@ -59,6 +61,8 @@ public class TaskNode {
 	
 	/** a node can have list of children nodes */
 	public ArrayList<TaskNode> children  = new ArrayList<TaskNode>();
+	
+	private Logger logger = Logger.getLogger("TaskNode");
 
 	public TaskNode(String name1) {
 		name = name1;
@@ -88,35 +92,34 @@ public class TaskNode {
 		return ModelParameters.inputDistSys.tasks.get(name).softServerName;
 	}
 
-	public void print() {
-		//System.out.print(" thisnode:" + name + " prob " + prob.value + " sync:" + issync + " packet:" + pktsize.value + " arate:" + arrate + " servername:"
-			//	+ servername);
+	public String toString() {
+		StringBuilder builder = new StringBuilder(name); 
+		builder.append(" prob ").append( prob.value)
+				.append(" sync:").append(issync)
+				.append(" packet:").append(pktsize.value)
+				.append(" arate:").append(arrate)
+				.append(" servername:").append(servername);
 		for(TaskNode child : children){
-			System.out.print("\t" + name + " " + child.name);
-			System.out.print(" prob " + child.prob.value);
-			if(child.issync)
-				System.out.print(" sync ");
-			else
-				System.out.print(" async ");
-			System.out.println();
-			child.print();
+			builder.append("\t").append(name).append(" ").append(child.name).append(" prob ")
+					.append(child.prob.value)
+					.append((child.issync ? " sync " : " async"));
 		}
+		return builder.toString();
 	}
 	
 	// prints the node details
 	public void printFullInfo() {
-		//System.out.print(" thisnode:" + name + " prob " + prob.value + " sync:" + issync + " packet:" + pktsize.value + " arate:" + arrate + " servername:"
+		//logger.debug(" thisnode:" + name + " prob " + prob.value + " sync:" + issync + " packet:" + pktsize.value + " arate:" + arrate + " servername:"
 			//	+ servername);
 		for(TaskNode child : children){
-			System.out.print("\t" + name + " " + child.name);
-			System.out.print(" prob " + child.prob.value);
-			System.out.print(" sync:" + child.issync);
-			System.out.print(" arrate:" + child.arrate);
-			System.out.print(" belongsToCT:" + String.valueOf(child.belongsToCT));
-			System.out.print(" isCT:" + String.valueOf(child.isCT));
-			System.out.print(" isRoot:" + String.valueOf(child.isRoot));
-			System.out.println();
-			child.print();
+			logger.debug("\t" + name + " " + child.name);
+			logger.debug(" prob " + child.prob.value);
+			logger.debug(" sync:" + child.issync);
+			logger.debug(" arrate:" + child.arrate);
+			logger.debug(" belongsToCT:" + String.valueOf(child.belongsToCT));
+			logger.debug(" isCT:" + String.valueOf(child.isCT));
+			logger.debug(" isRoot:" + String.valueOf(child.isRoot));
+			logger.debug(child.toString());
 		}
 	}
 

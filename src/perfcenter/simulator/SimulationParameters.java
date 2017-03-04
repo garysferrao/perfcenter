@@ -114,7 +114,6 @@ public class SimulationParameters {
 		Random r = new Random();
 		double d = r.nextDouble();
 		if (ModelParameters.getRetryProbability() >= d) {
-			// System.out.println("Value:"+d);
 			return true;
 		} else {
 			return false;

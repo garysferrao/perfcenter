@@ -67,7 +67,6 @@ public class VirtualMachine extends Machine{
 
 	public void addDeviceBuffer(String vdevname, Variable buffersize) throws DeviceNotFoundException {
 		if (isDeviceDeployed(vdevname) == false) {
-			//System.out.println(name + " Device Created in addDeviceBuffer");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat);
 			devices.put(vdev.name, vdev);
@@ -78,7 +77,6 @@ public class VirtualMachine extends Machine{
 
 	public void addDeviceSpeedUp(String vdevname, Variable pspeed) throws DeviceNotFoundException {
 		if (isDeviceDeployed(vdevname) == false) {
-			//System.out.println(name + " Device Created in addDeviceSpeedUp");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat);
 			devices.put(vdev.name, vdev);
@@ -88,7 +86,6 @@ public class VirtualMachine extends Machine{
 
 	public void addDeviceSchedPol(String vdevname, SchedulingPolicy pol) throws DeviceNotFoundException {
 		if (isDeviceDeployed(vdevname) == false) {
-			//System.out.println(name + " Device Created in addDeviceSchedPol");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat);
 			devices.put(vdev.name, vdev);
@@ -98,7 +95,6 @@ public class VirtualMachine extends Machine{
 	
 	public void addDeviceBaseSpeed(String vdevname, Variable basespeed) throws DeviceNotFoundException {
 		if (isDeviceDeployed(vdevname) == false) {
-			//System.out.println(name + " Device Created in addDeviceSpeedUp");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getVDevice(vdevname).category;
 			VirtualDevice vdev = new VirtualDevice(vdevname, devcat, basespeed.value);
 			devices.put(vdev.name, vdev);

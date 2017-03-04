@@ -366,7 +366,6 @@ public class DistributedSystemSim extends DistributedSystem {
 			//nadeesh Store the Slot level Metric value
 			metric.setValue(slot, metricSim.getMean(slot));
 			metric.setConfidenceInterval(slot, metricSim.getCI(slot));
-			//System.out.println(slot + " : " + metric.getConfidenceInterval(slot)  + " : " + metricSim.getCI(slot));
 			if (metricSim.getServerList(slot) != null) {
 				Set<String> srvList=metricSim.getServerList(slot);
 				for(String srvName:srvList){
@@ -465,7 +464,6 @@ public class DistributedSystemSim extends DistributedSystem {
 			if(isLink(srcpm.lan, destpm.lan)){
 				LanLink lnk = getLink(srcpm.lan, destpm.lan);
 				double srvrdt = migrationPolicy.computeDownTime((SoftServerSim)srvr, Helper.convertTobps(lnk.trans.getValue(), lnk.transUnit));
-				//System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
 				downtime += srvrdt;
 			}
 		}
@@ -480,7 +478,6 @@ public class DistributedSystemSim extends DistributedSystem {
 			if(isLink(srcpm.lan, destpm.lan)){
 				LanLink lnk = getLink(srcpm.lan, destpm.lan);
 				double srvrdt = migrationPolicy.computeDownTime((SoftServerSim)srvr, Helper.convertTobps(lnk.trans.getValue(), lnk.transUnit));
-				//System.out.println("Server name:" + srvr.name + ":downtime:" + srvrdt);
 				downtime += srvrdt;
 			}
 		}

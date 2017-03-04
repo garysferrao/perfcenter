@@ -95,8 +95,6 @@ public class QueueSim extends Queue {
 		queueBuffer = new ArrayList<QueueBufferSlot>(bufferSize);
 
 		qServerInstances = new ArrayList<QServerInstance>();
-		//System.out.println("In QueueSim constructor:number of qinstances " + numberOfInstances + " name of device:" + devName + " name of server:" + serverName + " name of host:" + hostName);
-
 
 		for (int i = 0; i < numberOfInstances; i++) {
 			qServerInstances.add(new QServerInstance(i, this));
@@ -128,7 +126,6 @@ public class QueueSim extends Queue {
 			// params[2] = resType;
 			params[2] = qs;
 
-			//System.out.println("Scheduling policy is getting initialized. qlength=" + qLength + " noOfInst=" + noOfInst + " QueueServer=" + qs.toString());
 			Constructor cons = c.getConstructor(proto);
 			queueS = (QueueSim) cons.newInstance(params);
 		} catch (Exception e) {
@@ -143,7 +140,6 @@ public class QueueSim extends Queue {
 	 * @return
 	 */
 	public int getIdleInstanceId() {
-		//System.out.println("Number of QServerinstances:"+ numberOfInstances + " qServerInstances.size():" + qServerInstances.size() + " freeQServerInstances.size():" + freeQServerInstances.size());
 		if(freeQServerInstances.empty()) {
 			return -1;
 		} else {
@@ -238,7 +234,6 @@ public class QueueSim extends Queue {
 	// when the service starts update the bookkeeping structures
 	// and transfer control to qserver. akhila
 	public void createStartTaskEvent(Request req, int instanceID, double time) {
-		//System.out.println("In create start task event of queuesim.java");
 		// marks the startime, and sets busy status to true
 		qServerInstances.get(instanceID).startServiceForInstance(req,time);  //added req also as a param nadeesh
 		numBusyInstances++;

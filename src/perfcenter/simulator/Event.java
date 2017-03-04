@@ -96,7 +96,6 @@ public class Event implements Comparable<Event> {
 			String newmname = SimulationParameters.distributedSystemSim.softServerMap.get(reqObj.softServName).machines.get(0);
 			if(newmname.compareTo(reqObj.machineName) != 0){
 				reqObj.machineName = newmname;
-				System.out.println(type.toString() + ":ReqObj.id:" + reqObj.id + " servername:" + reqObj.softServName + " oldMachineName:" + oldname + " machineName:" + reqObj.machineName + " scenarioname:" + reqObj.scenario.name + " tasknodename:" + reqObj.taskName);
 			}
 		}
 	}
@@ -111,7 +110,7 @@ public class Event implements Comparable<Event> {
 		// update current time
 		SimulationParameters.currTime = timestamp;
 		SimulationParameters.totalReqArrived++;
-		if(debug) System.out.println(" Scenario Arrival ts:"+SimulationParameters.currTime);
+		logger.debug(" Scenario Arrival ts:"+SimulationParameters.currTime);
 		// get the request object corresponding to this arrival event from request list
 		logger.debug("request: " + reqObj.scenario);
 
@@ -159,7 +158,7 @@ public class Event implements Comparable<Event> {
 		reqObj.machineName = ((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)).getRandomHostObject().name;
 
 		if(reqObj.machineName == null) {
-			System.out.println(((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)));
+			logger.debug(((SoftServerSim)SimulationParameters.distributedSystemSim.getServer(reqObj.softServName)));
 		}
 		reqObj.softServArrivalTime = SimulationParameters.currTime;
 
@@ -181,7 +180,7 @@ public class Event implements Comparable<Event> {
 	public void hardwareTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
 		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
-		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "HT Starts ts:" + SimulationParameters.currTime);
+		logger.debug("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "HT Starts ts:" + SimulationParameters.currTime);
 		machineObject.getDevice(reqObj.devName).processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
@@ -191,7 +190,7 @@ public class Event implements Comparable<Event> {
 	public void hardwareTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
 		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
-		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "HT Ends ts:" + SimulationParameters.currTime);
+		logger.debug("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "HT Ends ts:" + SimulationParameters.currTime);
 		machineObject.getDevice(reqObj.devName).processTaskEndEvent(reqObj, reqObj.devInstance, SimulationParameters.currTime);
 	}
 
@@ -203,7 +202,7 @@ public class Event implements Comparable<Event> {
 	public void softwareTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
 		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
-		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + ":ST Starts ts:" + SimulationParameters.currTime);
+		logger.debug("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + ":ST Starts ts:" + SimulationParameters.currTime);
 
 		// get the request object
 		logger.debug("request: ");
@@ -227,7 +226,7 @@ public class Event implements Comparable<Event> {
 	public void softwareTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
 		PhysicalMachineSim machineObject = SimulationParameters.distributedSystemSim.machineMap.get(reqObj.machineName);
-		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "ST Ends ts:" + SimulationParameters.currTime);
+		logger.debug("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "ST Ends ts:" + SimulationParameters.currTime);
 		machineObject.getServer(reqObj.softServName).processTaskEndEvent(reqObj, reqObj.threadNum, SimulationParameters.currTime);
 	}
 
@@ -239,7 +238,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void numberOfUserChanged() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + "Number of Users Changed:" + SimulationParameters.currTime);
+		logger.debug("reqId:" + reqObj.id + "\tTask:" + "Number of Users Changed:" + SimulationParameters.currTime);
 		SimulationParameters.recordIntervalSlotRunTime();
 
 		for (Machine host : SimulationParameters.distributedSystemSim.pms.values()) {
@@ -351,7 +350,7 @@ public class Event implements Comparable<Event> {
 	 */
 	public void arrivalRateChanged() {
 		SimulationParameters.currTime = timestamp;
-		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + " Arrival Rate Changed:" + SimulationParameters.currTime);
+		logger.debug("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + " Arrival Rate Changed:" + SimulationParameters.currTime);
 		SimulationParameters.recordIntervalSlotRunTime();
 
 		// Collect all the device metrics value within a interval
@@ -390,14 +389,14 @@ public class Event implements Comparable<Event> {
 
 	public void networkTaskStarts() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "Network Task Starts:" + SimulationParameters.currTime);
+		logger.debug("reqId:" + reqObj.id + "\tTask:" + reqObj.currentTaskNode.name + "Network Task Starts:" + SimulationParameters.currTime);
 		LanLinkSim ln = (LanLinkSim) SimulationParameters.distributedSystemSim.getLink(reqObj.linkName);
 		ln.processTaskStartEvent(reqObj, SimulationParameters.currTime);
 	}
 
 	public void networkTaskEnds() throws Exception {
 		SimulationParameters.currTime = timestamp;
-		if(debug) System.out.println("reqId:" + reqObj.id + "\tTask:" +  reqObj.currentTaskNode.name + "Network Task Ends:" + SimulationParameters.currTime);
+		logger.debug("reqId:" + reqObj.id + "\tTask:" +  reqObj.currentTaskNode.name + "Network Task Ends:" + SimulationParameters.currTime);
 		LanLinkSim ln = (LanLinkSim) SimulationParameters.distributedSystemSim.getLink(reqObj.linkName);
 		ln.processTaskEndEvent(reqObj, reqObj.nwInstance, SimulationParameters.currTime);
 	}
@@ -412,7 +411,7 @@ public class Event implements Comparable<Event> {
 	public void requestCompleted() throws Exception {
 		// get the request object
 		SimulationParameters.currTime = timestamp;
-		if(debug) System.out.println("Request Completed:" + SimulationParameters.currTime);
+		logger.debug("Request Completed:" + SimulationParameters.currTime);
 		// Update the scenario Measures
 		reqObj.scenario.updateMeasuresAtTheEndOfRequestCompletion(reqObj);
 
@@ -441,9 +440,6 @@ public class Event implements Comparable<Event> {
 	 * checks for the simendtime condition.
 	 */
 	private void checkForSimulationCompletionCriteria() {
-//		if(SimulationParameters.currentTime > ModelParameters.getSimulationEndTime()) {
-//			System.out.println("true");
-//		}
 		if(ModelParameters.getTotalNumberOfRequestEnabled()
 				&& SimulationParameters.warmupEnabled
 				&& ModelParameters.getStartUpSampleNumber() == SimulationParameters.getTotalRequestProcessed()) {
@@ -503,21 +499,16 @@ public class Event implements Comparable<Event> {
 	}
 	
 	public void doMigration() throws Exception {
-		//System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$8Handling Migration");
 		String vmname = SimulationParameters.distributedSystemSim.migrationPolicy.getVmName();
 		String destpmname = SimulationParameters.distributedSystemSim.migrationPolicy.getTargetPmName();
 		if(SimulationParameters.distributedSystemSim.checkFeasibilityOfMigration(vmname, destpmname)){
-			//System.out.println("Before migration:" + SimulationParameters.currTime);
 			SimulationParameters.currTime += SimulationParameters.distributedSystemSim.migrate(vmname, destpmname);
-			//System.out.println("After migration:" + SimulationParameters.currTime);
 			SimulationParameters.migrationHappend = true;
 		}
-		
-		
 	}
 
 	public String toString() {
-		return timestamp + ":" + type.toString()+"\n";
+		return new StringBuilder(String.valueOf(timestamp)).append(":").append(type.toString()).append("\n").toString();
 	}
 
 	public PhysicalMachineSim getHostObject() {

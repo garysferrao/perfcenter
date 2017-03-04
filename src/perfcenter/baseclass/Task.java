@@ -80,14 +80,16 @@ public class Task {
 		return tcpy;
 	}
 
-	public void print() {
-		System.out.println("Task " + name);
+	public String toString() {
+		String task = "Task " + name;
 		for (ServiceTime servt : subtaskServiceTimes) {
-			servt.print();
+			task += servt.toString();
 		}
 		for (String sres : softRes) {
-			System.out.println(" Soft Resource name :" + sres);
+			task += sres.toString();
 		}
+		task += "\n";
+		return task;
 	}
 
 	public void validate() {
@@ -103,7 +105,6 @@ public class Task {
 
 	public void addSubTaskServiceTime(ServiceTime st) {// made public by niranjan
 		subtaskServiceTimes.add(st);
-		//System.out.println( "Task " + this.toString() + " " + this.name + " addSubTaskServiceTime 1 " + "Device Category:" + st.devCategory.name  + " basespeed:" + st.basespeed + " subtaskServiceTimes.size():" + this.subtaskServiceTimes.size());
 	}
 
 	
@@ -118,7 +119,6 @@ public class Task {
 			DeviceCategory devcat = ModelParameters.inputDistSys.getDeviceCategory(devcatname);
 			ServiceTime subtaskservt = new ServiceTime(devcat, dist);
 			subtaskServiceTimes.add(subtaskservt);
-			//System.out.println( "Task " + this.toString() + " " + this.name + " createAndAddSubTaskServiceTime 1 " + "Device Category:" + devcat.name  + " subtaskServiceTimes.size():" + this.subtaskServiceTimes.size());
 	}
 	
 	public void createAndAddSubTaskServiceTime(String devcatname, Distribution dist, Variable basespeed) {
@@ -132,7 +132,6 @@ public class Task {
 		DeviceCategory devcat = ModelParameters.inputDistSys.getDeviceCategory(devcatname);
 		ServiceTime subtaskservt = new ServiceTime(devcat, dist, basespeed.value);
 		subtaskServiceTimes.add(subtaskservt);
-		//System.out.println( this.toString() + ":Task " + name  + " "+ this.name + " createAndAddSubTaskServiceTime 2 " + "Device Category:" + devcat.name + " basespeed:" + basespeed.value + " subtaskServiceTimes.size():" + this.subtaskServiceTimes.size());
 	}
 	//TODO: Make sure that this method is called with argument device category instead of device name.
 	//TODO: URGENT: Change this method to modify service time based on sub task id.
@@ -171,7 +170,6 @@ public class Task {
 	/** get the next device name from the device list */
 	public DeviceCategory getNextDeviceCategory(int id) { //MAKECHANGE 
 		if (id < subtaskServiceTimes.size()) {
-			//System.out.println("returning next device category : "+ subtaskServiceTimes.get(id).devCategory.name);
 			return subtaskServiceTimes.get(id).devCategory;
 		}
 
@@ -189,21 +187,10 @@ public class Task {
 
 	/** given the subtask id get its service time distribution */
 	public Distribution getServiceTimeDist(int _stid) {
-		//System.out.print("Task.getServiceTimeDist():" + this.toString() + "Task.subtaskServiceTimes.size():" + this.subtaskServiceTimes.size() );
 		if(_stid < subtaskServiceTimes.size()){
 			return subtaskServiceTimes.get(_stid).dist;
 		}
 		return null;
-		//throw new Error("Sub task id is greater than total sub tasks. This should not happen. BUG !!");
-		/*
-		for (ServiceTime st : subtaskServiceTimes) {
-			System.out.println("Subtask id:" + st.stid + "devCategory:" + st.devCategory);
-			if (st.stid == _stid) {
-				System.out.println("Subtask id:" + _stid + " Distribution:"+ st.dist.name_);
-				return st.dist;
-			}
-		}
-		*/
 	}
 
 	public ServiceTime getSubTaskServt(int _stid) {

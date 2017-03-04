@@ -311,12 +311,13 @@ public class LanLink {
 		}
 	}
 
-	public void print() {
-		System.out.println("Lan link " + name + " Src:" + srclan + " dest:" + destlan);
-		System.out.println(" MTU :" + mtu.getValue() + " " + mtuUnit);
-		System.out.println(" Transmission rate:" + trans.getValue() + " " + transUnit);
-		System.out.println(" Propagation delay:" + prop.getValue() + " " + propUnit);
-		System.out.println(" Header Size:" + headerSize.getValue() + " " + headerSizeUnit);
+	public String toString() {
+		StringBuilder builder = new StringBuilder("Lan link:").append(name).append(" from ").append(srclan).append(" to ").append(destlan);
+		builder.append("\tMTU(").append(mtu.getValue()).append(mtuUnit).append(")\n");
+		builder.append("\tTransmission rate(").append(trans.getValue()).append(transUnit).append(")\n");
+		builder.append("\tPropagation delay(").append(prop.getValue()).append(propUnit).append(")\n");
+		builder.append("\tHeader Size(").append(headerSize.getValue()).append(headerSizeUnit).append(")\n");
+		return builder.toString();
 	}
 
 	/** check whether link is forward or reverse */

@@ -347,7 +347,6 @@ class _TimeAverageMetricLowestLevel extends _MetricSimLowestLevel {
 		try {
 			return confInterval.getMean();
 		} catch (IndexOutOfBoundsException e) {
-			System.out.println("\noops\n");
 			throw new RuntimeException(e);
 			// return totalValue / totalDuration;
 		}

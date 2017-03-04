@@ -48,8 +48,8 @@ public class Variable {
 		value = val;
 	}
 
-	public void print() {
-		System.out.println("Variable: " + name + " " + value);
+	public String toString() {
+		return name + ":" + value;
 	}
 
 	public void updateUsedInfo() {

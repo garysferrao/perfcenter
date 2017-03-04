@@ -125,7 +125,6 @@ public class PhysicalMachine extends Machine {
 
 	public void addDeviceBuffer(String pdevname, Variable buffersize) throws DeviceNotFoundException {
 		if (isDeviceDeployed(pdevname) == false) {
-			//System.out.println(name + " Device Created in addDeviceBuffer");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat);
 			devices.put(pdev.name, pdev);
@@ -136,7 +135,6 @@ public class PhysicalMachine extends Machine {
 
 	public void addDeviceSpeedUp(String pdevname, Variable pspeed) throws DeviceNotFoundException {
 		if (isDeviceDeployed(pdevname) == false) {
-			//System.out.println(name + " Device Created in addDeviceSpeedUp");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat);
 			devices.put(pdev.name, pdev);
@@ -146,7 +144,6 @@ public class PhysicalMachine extends Machine {
 
 	public void addDeviceSchedPol(String pdevname, SchedulingPolicy pol) throws DeviceNotFoundException {
 		if (isDeviceDeployed(pdevname) == false) {
-			//System.out.println(name + " Device Created in addDeviceSchedPol");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat);
 			devices.put(pdev.name, pdev);
@@ -156,7 +153,6 @@ public class PhysicalMachine extends Machine {
 	
 	public void addDeviceBaseSpeed(String pdevname, Variable basespeed) throws DeviceNotFoundException {
 		if (isDeviceDeployed(pdevname) == false) {
-			//System.out.println(name + " Device Created in addDeviceSpeedUp");
 			DeviceCategory devcat = ModelParameters.inputDistSys.getPDevice(pdevname).category;
 			PhysicalDevice pdev = new PhysicalDevice(pdevname, devcat, basespeed.value);
 			devices.put(pdev.name, pdev);
@@ -165,7 +161,6 @@ public class PhysicalMachine extends Machine {
 	}
 	
 	public String getHypervisorName(){
-		String hvname = name.replaceAll("\\[", "").replaceAll("\\]", "") + "_hypervisor";
-		return hvname;
+		return name.replaceAll("\\[", "").replaceAll("\\]", "") + "_hypervisor";	
 	}
 }

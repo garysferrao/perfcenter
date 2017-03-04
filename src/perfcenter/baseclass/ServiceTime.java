@@ -15,7 +15,9 @@
  *   You should have received a copy of the GNU General Public License
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>. 
  */package perfcenter.baseclass;
- import perfcenter.baseclass.enums.DeviceType;
+ import org.apache.log4j.Logger;
+
+import perfcenter.baseclass.enums.DeviceType;
 /**
  * Defines service times. This is used by task and virtual resource, and by analytical perfcenter.
  * 
@@ -29,6 +31,8 @@ public class ServiceTime {
 	// device distribution
 	public Distribution dist;
 	public double basespeed;
+	
+	private Logger logger = Logger.getLogger("ServiceTime");
 
 	// used by analytical part
 	private double responseTime;
@@ -87,8 +91,8 @@ public class ServiceTime {
 		return dist;
 	}
 
-	public void print() {
-		System.out.println(devCategory.name + " servt " + dist.name_ + "(" + dist.value1_.getName() + ":" + dist.value1_.getValue() + ") at " + basespeed);
+	public String toString() {
+		return devCategory.name + " servt " + dist.name_ + "(" + dist.value1_.getName() + ":" + dist.value1_.getValue() + ") at " + basespeed + "\n";
 	}
 
 	// makes a copy of self

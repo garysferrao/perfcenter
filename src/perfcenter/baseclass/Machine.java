@@ -84,21 +84,22 @@ public class Machine {
 		}
 	}
 
-	public void print() {
-		System.out.println("MachineName " + name);
+	public String toString() {
+		StringBuilder builder = new StringBuilder("MachineName ").append(name);
 		for (Device dev : devices.values()) {
-			dev.print();
+			builder.append(dev.toString());
 		}
-		System.out.println(" Deploys ");
+		builder.append(" Deploys \n");
 		for (SoftServer serv : softServers.values()) {
-			serv.print();
+			builder.append(serv.toString());
 		}
 		for (SoftResource sr : softResources.values()) {
-			sr.print();
+			builder.append(sr.toString());
 		}
 		if (lan != null) {
-			System.out.println(" Deployed on " + lan);
+			builder.append(" Deployed on ").append(lan).append("\n");
 		}
+		return builder.toString();
 	}
 
 
@@ -284,7 +285,6 @@ public class Machine {
 			if (dev.name.equalsIgnoreCase(pdevname)) // device type is found
 			{
 				// copy all attributes from device type object to this device
-				// System.out.println("----attributes copying----");
 				pdev.availableSpeedLevels = dev.availableSpeedLevels;
 				pdev.powerConsumptionsLevels = dev.powerConsumptionsLevels;
 				pdev.idlePower = dev.idlePower;
